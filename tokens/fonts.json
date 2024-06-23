@@ -1,0 +1,338 @@
+[
+    {
+        "dir": "merriweather",
+        "family": "Merriweather Web",
+        "file": "Latin-Merriweather-Light",
+        "style": "normal",
+        "weight": "300"
+    },
+    {
+        "dir": "merriweather",
+        "family": "Merriweather Web",
+        "file": "Latin-Merriweather-Regular",
+        "style": "normal",
+        "weight": "400"
+    },
+    {
+        "dir": "merriweather",
+        "family": "Merriweather Web",
+        "file": "Latin-Merriweather-Bold",
+        "style": "normal",
+        "weight": "700"
+    },
+    {
+        "dir": "merriweather",
+        "family": "Merriweather Web",
+        "file": "Latin-Merriweather-Black",
+        "style": "normal",
+        "weight": "900"
+    },
+    {
+        "dir": "merriweather",
+        "family": "Merriweather Web",
+        "file": "Latin-Merriweather-LightItalic",
+        "style": "italic",
+        "weight": "300"
+    },
+    {
+        "dir": "merriweather",
+        "family": "Merriweather Web",
+        "file": "Latin-Merriweather-Italic",
+        "style": "italic",
+        "weight": "400"
+    },
+    {
+        "dir": "merriweather",
+        "family": "Merriweather Web",
+        "file": "Latin-Merriweather-BoldItalic",
+        "style": "italic",
+        "weight": "700"
+    },
+    {
+        "dir": "merriweather",
+        "family": "Merriweather Web",
+        "file": "Latin-Merriweather-BlackItalic",
+        "style": "italic",
+        "weight": "900"
+    },
+    {
+        "dir": "roboto-mono",
+        "family": "Roboto Mono Web",
+        "file": "roboto-mono-v5-latin-100",
+        "style": "normal",
+        "weight": "100"
+    },
+    {
+        "dir": "roboto-mono",
+        "family": "Roboto Mono Web",
+        "file": "roboto-mono-v5-latin-300",
+        "style": "normal",
+        "weight": "300"
+    },
+    {
+        "dir": "roboto-mono",
+        "family": "Roboto Mono Web",
+        "file": "roboto-mono-v5-latin-regular",
+        "style": "normal",
+        "weight": "400"
+    },
+    {
+        "dir": "roboto-mono",
+        "family": "Roboto Mono Web",
+        "file": "roboto-mono-v5-latin-500",
+        "style": "normal",
+        "weight": "500"
+    },
+    {
+        "dir": "roboto-mono",
+        "family": "Roboto Mono Web",
+        "file": "roboto-mono-v5-latin-700",
+        "style": "normal",
+        "weight": "700"
+    },
+    {
+        "dir": "roboto-mono",
+        "family": "Roboto Mono Web",
+        "file": "roboto-mono-v5-latin-100italic",
+        "style": "italic",
+        "weight": "100"
+    },
+    {
+        "dir": "roboto-mono",
+        "family": "Roboto Mono Web",
+        "file": "roboto-mono-v5-latin-300italic",
+        "style": "italic",
+        "weight": "300"
+    },
+    {
+        "dir": "roboto-mono",
+        "family": "Roboto Mono Web",
+        "file": "roboto-mono-v5-latin-italic",
+        "style": "italic",
+        "weight": "400"
+    },
+    {
+        "dir": "roboto-mono",
+        "family": "Roboto Mono Web",
+        "file": "roboto-mono-v5-latin-500italic",
+        "style": "italic",
+        "weight": "500"
+    },
+    {
+        "dir": "roboto-mono",
+        "family": "Roboto Mono Web",
+        "file": "roboto-mono-v5-latin-700italic",
+        "style": "italic",
+        "weight": "700"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-extralight-webfont",
+        "style": "normal",
+        "weight": "200"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-light-webfont",
+        "style": "normal",
+        "weight": "300"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-regular-webfont",
+        "style": "normal",
+        "weight": "400"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-semibold-webfont",
+        "style": "normal",
+        "weight": "600"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-bold-webfont",
+        "style": "normal",
+        "weight": "700"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-black-webfont",
+        "style": "normal",
+        "weight": "900"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-extralightitalic-webfont",
+        "style": "italic",
+        "weight": "200"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-lightitalic-webfont",
+        "style": "italic",
+        "weight": "300"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-italic-webfont",
+        "style": "italic",
+        "weight": "400"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-semibolditalic-webfont",
+        "style": "italic",
+        "weight": "600"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-bolditalic-webfont",
+        "style": "italic",
+        "weight": "700"
+    },
+    {
+        "dir": "source-sans-pro",
+        "family": "Source Sans Pro Web",
+        "file": "sourcesanspro-blackitalic-webfont",
+        "style": "italic",
+        "weight": "900"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-Thin",
+        "style": "normal",
+        "weight": "100"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-ExtraLight",
+        "style": "normal",
+        "weight": "200"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-Light",
+        "style": "normal",
+        "weight": "300"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-Regular",
+        "style": "normal",
+        "weight": "400"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-Medium",
+        "style": "normal",
+        "weight": "500"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-SemiBold",
+        "style": "normal",
+        "weight": "600"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-Bold",
+        "style": "normal",
+        "weight": "700"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-ExtraBold",
+        "style": "normal",
+        "weight": "800"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-Black",
+        "style": "normal",
+        "weight": "900"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-ThinItalic",
+        "style": "italic",
+        "weight": "100"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-ExtraLightItalic",
+        "style": "italic",
+        "weight": "200"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-LightItalic",
+        "style": "italic",
+        "weight": "300"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-Italic",
+        "style": "italic",
+        "weight": "400"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-MediumItalic",
+        "style": "italic",
+        "weight": "500"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-SemiBoldItalic",
+        "style": "italic",
+        "weight": "600"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-BoldItalic",
+        "style": "italic",
+        "weight": "700"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-ExtraBoldItalic",
+        "style": "italic",
+        "weight": "800"
+    },
+    {
+        "dir": "public-sans",
+        "family": "Public Sans Web",
+        "file": "PublicSans-BlackItalic",
+        "style": "italic",
+        "weight": "900"
+    }
+]

@@ -1,6 +1,6 @@
 import plugin from "tailwindcss/plugin";
-import fonts from "../dist/fonts.json";
-import props from "../dist/props.json";
+import fonts from "../tokens/fonts.json";
+import props from "../tokens/props.json";
 
 const DEFAULT_OPTIONS = {
     fontPath: "../fonts",
