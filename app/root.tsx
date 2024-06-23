@@ -3,9 +3,9 @@ import { json } from "@remix-run/node";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
 import { site } from "~/lib/site";
 
-// import tailwind from "~/tailwind.css?url";
 import uswdsReact from "@trussworks/react-uswds/lib/index.css?url";
-import uswds from "@trussworks/react-uswds/lib/uswds.css?url";
+import tailwind from "~/styles/tailwind.css?url";
+import uswdsComponents from "~/styles/uswds-components.css?url";
 
 export async function loader({ request }: LoaderFunctionArgs) {
     return json({ url: request.url });
@@ -20,13 +20,13 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
     { name: "og:type", content: "website" },
     { name: "og:image", content: site.socialMediaImage.light },
     { name: "og:description", content: site.description },
-    { name: "og:url", content: data!.url },
+    data?.url ? { name: "og:url", content: data.url } : {},
 ];
 
 export const links: LinksFunction = () => [
     { rel: "icon", type: "image/svg+xml", href: site.favicon },
-    // { rel: "stylesheet", href: tailwind },
-    { rel: "stylesheet", href: uswds },
+    { rel: "stylesheet", href: tailwind },
+    { rel: "stylesheet", href: uswdsComponents },
     { rel: "stylesheet", href: uswdsReact },
 ];
 
@@ -39,7 +39,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Meta />
                 <Links />
             </head>
-            <body className="bg-base-lightest padding-y-4 padding-x-15">
+            <body className="bg-base-lightest py-4 px-15">
                 {children}
                 <ScrollRestoration />
                 <Scripts />

@@ -9,9 +9,9 @@ export default function Index() {
             <Card>
                 <CardHeader>
                     <h1 className="usa-card__heading">Meeting Spaces</h1>
-                    <p className="font-sans-6 text-base-darker">
+                    <p className="font-sans text-base-darker">
                         Austin Public Library Meeting Spaces are
-                        <strong className="text-bold"> free of charge</strong> and ideal for
+                        <strong className="font-bold"> free of charge</strong> and ideal for
                         discussion groups, panels, and lectures. Both paper and online reservation
                         requests are timestamped and processed in the order they are received.
                     </p>
