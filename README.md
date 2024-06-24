@@ -1,6 +1,6 @@
 # Meeting Room Prototype
 
-This is the source code for the Austin Public Library meeting room booking page cvode prototype.
+This is the source code for the Austin Public Library meeting room booking page code prototype.
 
 ## Development
 
