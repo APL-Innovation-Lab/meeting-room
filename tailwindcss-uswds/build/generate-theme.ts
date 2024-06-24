@@ -158,7 +158,7 @@ async function generateTailwindTokens(variables: JsonObject) {
 
     let colors = unflattenColors(tokensColorSystem);
 
-    let props = {
+    let theme = {
         ...systemProperties,
         borderWidth: {
             standard: {
@@ -200,7 +200,31 @@ async function generateTailwindTokens(variables: JsonObject) {
         },
     };
 
-    return { colors, fonts: parseFonts(systemTypefaceTokens), props };
+    // For some reason, the boxShadow property gets corrupted during this processs
+    // This is a temporary fix until a permenant fix is implemente in bundleSass or getSassVars
+    let boxShadow = theme.boxShadow;
+    let standard = boxShadow.standard;
+
+    for (let key of Object.keys(standard)) {
+        if (typeof standard[key] !== "object") continue;
+        let corruptedValues = standard[key] as Record<string, string>;
+        let values = Object.values(corruptedValues).join(" ");
+        standard[key] = values;
+    }
+
+    theme = {
+        ...theme,
+        boxShadow: {
+            standard: {
+                ...standard,
+            },
+            extended: {
+                ...boxShadow.extended,
+            },
+        },
+    };
+
+    return { fonts: parseFonts(systemTypefaceTokens), theme };
 }
 
 interface GetTokensOptions {
@@ -214,30 +238,6 @@ async function generateTheme(options: GetTokensOptions) {
 
     let bundledSass = await bundleSass({ directory, entryPoint });
     let sassVars = await getSassVars(bundledSass, { camelize: true });
-
-    // For some reason, the boxShadow property gets corrupted during this processs
-    // This is a temporary fix until a permenant fix is implemente in bundleSass or getSassVars
-    let boxShadow = sassVars.boxShadow as JsonObject;
-    let standard = boxShadow.standard as JsonObject;
-
-    for (let key of Object.keys(standard)) {
-        let corruptedValues = standard[key] as Record<string, string>;
-        let values = Object.values(corruptedValues).join(" ");
-        standard[key] = values;
-    }
-
-    sassVars = {
-        ...sassVars,
-        boxShadow: {
-            standard: {
-                ...standard,
-            },
-            extended: {
-                ...(boxShadow.extended as JsonObject),
-            },
-        },
-    };
-
     let uswdsVariables = iterate(sassVars, (key, value) => {
         if (key.toString().toLowerCase().includes("separator")) return value;
         return JSON.parse(value);
@@ -246,7 +246,7 @@ async function generateTheme(options: GetTokensOptions) {
     return await generateTailwindTokens(uswdsVariables);
 }
 
-let { props, fonts } = await generateTheme({
+let { theme, fonts } = await generateTheme({
     uswdsScss: path.resolve("./node_modules/uswds/src/stylesheets/uswds.scss"),
 });
 
@@ -257,8 +257,8 @@ if (!fs.existsSync(DIR_PATH)) {
 }
 
 await fs.promises.writeFile(
-    path.resolve(`./tailwindcss-uswds/tokens/props.json`),
-    JSON.stringify(props, null, 4),
+    path.resolve(`./tailwindcss-uswds/tokens/theme.json`),
+    JSON.stringify(theme, null, 4),
 );
 
 await fs.promises.writeFile(

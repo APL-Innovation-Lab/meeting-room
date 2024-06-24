@@ -2,7 +2,7 @@ import { withOptions } from "tailwindcss/plugin";
 import type { CSSRuleObject } from "tailwindcss/types/config";
 import components from "./tokens/components.json";
 import fonts from "./tokens/fonts.json";
-import props from "./tokens/props.json";
+import theme from "./tokens/theme.json";
 
 const DEFAULT_OPTIONS = {
     fontPath: "../fonts",
@@ -128,16 +128,16 @@ export default function uswds(options?: Partial<typeof DEFAULT_OPTIONS>) {
                 },
             };
 
-            let theme = {
+            let renderedTheme = {
                 theme: Object.keys(opts.overrides).reduce(
                     (acc, key) => {
                         let override = opts.overrides[key as keyof typeof opts.overrides];
 
                         if (override) {
                             acc[key] = {
-                                ...props[key as keyof typeof props].standard,
+                                ...theme[key as keyof typeof theme].standard,
                                 ...(override === "extended"
-                                    ? props[key as keyof typeof props].extended
+                                    ? theme[key as keyof typeof theme].extended
                                     : {}),
                             };
                         }
@@ -148,7 +148,7 @@ export default function uswds(options?: Partial<typeof DEFAULT_OPTIONS>) {
                 ),
             };
 
-            return theme;
+            return renderedTheme;
         },
     )(options);
 }
