@@ -4,12 +4,13 @@
     "type": "module",
     "scripts": {
         "dev": "remix vite:dev",
-        "generate-styles": "npx tsx tailwindcss-uswds/build.ts",
         "format": "prettier -w .",
         "lint": "eslint --fix --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
         "typecheck": "tsc",
         "build": "remix vite:build",
-        "start": "remix-serve ./build/server/index.js"
+        "start": "remix-serve ./build/server/index.js",
+        "styles:build-components": "tsx tailwindcss-uswds/build/build-components.ts",
+        "styles:generate-theme": "tsx tailwindcss-uswds/build/generate-theme.ts"
     },
     "dependencies": {
         "@remix-run/node": "^2.9.2",
@@ -37,6 +38,7 @@
         "sass": "^1.77.6",
         "scss-bundle": "^3.1.2",
         "tailwindcss": "^3.4.4",
+        "tsx": "^4.15.7",
         "typescript": "^5.4.5",
         "uswds": "^2.14.0",
         "vite": "^5.3.1",
