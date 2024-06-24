@@ -208,18 +208,41 @@ interface GetTokensOptions {
 }
 
 async function generateTheme(options: GetTokensOptions) {
-    let pathComponents = new URL(`file://$theme${options.uswdsScss}`).pathname.split("/");
+    let pathComponents = new URL(`file://${options.uswdsScss}`).pathname.split("/");
     let entryPoint = pathComponents.pop()!;
     let directory = pathComponents.join("/");
 
     let bundledSass = await bundleSass({ directory, entryPoint });
-    let uswdsVariables = iterate(
-        await getSassVars(bundledSass, { camelize: true }),
-        (key, value) => {
-            if (key.toString().toLowerCase().includes("separator")) return value;
-            return JSON.parse(value);
+    let sassVars = await getSassVars(bundledSass, { camelize: true });
+
+    // For some reason, the boxShadow property gets corrupted during this processs
+    // This is a temporary fix until a permenant fix is implemente in bundleSass or getSassVars
+    let boxShadow = sassVars.boxShadow as JsonObject;
+    let standard = boxShadow.standard as JsonObject;
+
+    for (let key of Object.keys(standard)) {
+        let corruptedValues = standard[key] as Record<string, string>;
+        let values = Object.values(corruptedValues).join(" ");
+        standard[key] = values;
+    }
+
+    sassVars = {
+        ...sassVars,
+        boxShadow: {
+            standard: {
+                ...standard,
+            },
+            extended: {
+                ...(boxShadow.extended as JsonObject),
+            },
         },
-    );
+    };
+
+    let uswdsVariables = iterate(sassVars, (key, value) => {
+        if (key.toString().toLowerCase().includes("separator")) return value;
+        return JSON.parse(value);
+    });
+
     return await generateTailwindTokens(uswdsVariables);
 }
 
