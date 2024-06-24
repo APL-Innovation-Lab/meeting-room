@@ -1,4 +1,3 @@
-import { transform } from "lightningcss";
 import fs from "node:fs";
 import path from "node:path";
 import postcss from "postcss";
@@ -18,7 +17,6 @@ const BUNDLE_FILE = `
     @import "packages/uswds-components";
 `;
 
-const OUTPUT_FILE_NAME = "uswds-components.css";
 const COMPILED_COMPONENTS_PATH = path.resolve("./tailwindcss-uswds/tokens/components.json");
 
 async function compileUSWDSComponentStyles(
@@ -41,15 +39,7 @@ async function compileUSWDSComponentStyles(
 
     let compiledStyles = await sass.compileStringAsync(bundledScss);
 
-    let { code: rawCSS } = transform({
-        filename: OUTPUT_FILE_NAME,
-        code: Buffer.from(compiledStyles.css),
-        minify: true,
-    });
-
-    let css = new TextDecoder().decode(rawCSS).replaceAll("../fonts", fontsDirectory);
-    // console.log(`@layer components {${css}}`);
-    return css; // `@layer components {${css}}`;
+    return compiledStyles; // `@layer components {${compiledStyles}}`;
 }
 
 let css = await compileUSWDSComponentStyles();
