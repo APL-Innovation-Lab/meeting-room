@@ -1,6 +1,8 @@
-import plugin from "tailwindcss/plugin";
-import fonts from "../tokens/fonts.json";
-import props from "../tokens/props.json";
+import { withOptions } from "tailwindcss/plugin";
+import type { CSSRuleObject } from "tailwindcss/types/config";
+import components from "./tokens/components.json";
+import fonts from "./tokens/fonts.json";
+import props from "./tokens/props.json";
 
 const DEFAULT_OPTIONS = {
     fontPath: "../fonts",
@@ -35,14 +37,8 @@ const DEFAULT_OPTIONS = {
     },
 };
 
-/**
- *
- * @param {Partial<typeof DEFAULT_OPTIONS>} [options]
- * @returns
- */
-export default function (options) {
-    const uswdsPlugin = plugin.withOptions(
-        /** @param {Partial<typeof DEFAULT_OPTIONS> | undefined} options */
+export default function uswds(options?: Partial<typeof DEFAULT_OPTIONS>) {
+    return withOptions<Partial<typeof DEFAULT_OPTIONS> | undefined>(
         (options = {}) => {
             let opts = {
                 ...DEFAULT_OPTIONS,
@@ -53,7 +49,7 @@ export default function (options) {
                 },
             };
 
-            return ({ addBase, addUtilities, e, theme }) => {
+            return ({ addBase, addUtilities, e, theme, addComponents }) => {
                 let base = [
                     {
                         body: {
@@ -63,7 +59,7 @@ export default function (options) {
                         },
                     },
                     ...fonts
-                        .filter(font => Object.values(theme("fontWeight")).includes(font.weight))
+                        .filter(font => Object.values(theme("fontWeight")!).includes(font.weight))
                         .map(font => ({
                             "@font-face": {
                                 fontFamily: font.family,
@@ -77,40 +73,48 @@ export default function (options) {
                         })),
                     ...Object.keys(theme("fontFamily")).map(key => ({
                         [`[class*=${e(`text-${key}`)}]`]: {
-                            fontFamily: theme("fontFamily")
+                            fontFamily: theme("fontFamily")!
                                 [key].split(", ")
-                                .map(s => (s.includes(" ") ? `'${s}'` : s)),
+                                .map((s: string) => (s.includes(" ") ? `'${s}'` : s)),
                         },
                     })),
                 ];
 
-                addBase(base);
+                addBase(base as any);
 
-                let uMeasure = opts.overrides.measure
+                let measureUtils = opts.overrides.measure
                     ? Object.keys(theme("measure")).map(key => ({
-                          [`.${e(`measure-${key}`)}`]: { maxWidth: theme("measure")[key] },
+                          [`.${e(`measure-${key}`)}`]: { maxWidth: theme("measure")![key] },
                       }))
                     : {};
-                let uTabular = opts.overrides.fontFeatureSettings
+                let tabularUtils = opts.overrides.fontFeatureSettings
                     ? Object.keys(theme("fontFeatureSettings")).map(key => ({
                           [`.${e(`text-${key}`)}`]: {
-                              fontFeatureSettings: theme("fontFeatureSettings")[key],
+                              fontFeatureSettings: theme("fontFeatureSettings")![key],
                           },
                       }))
                     : {};
-                let uTextIndent = opts.overrides.textIndent
+                let textIndentUtils = opts.overrides.textIndent
                     ? Object.keys(theme("textIndent")).map(key => ({
                           [`.${e(
                               key.startsWith("-")
                                   ? `-text-indent-${key.slice(1)}`
                                   : `text-indent-${key}`,
                           )}`]: {
-                              textIndent: theme("textIndent")[key],
+                              textIndent: theme("textIndent")![key],
                           },
                       }))
                     : {};
 
-                addUtilities([uMeasure, uTabular, uTextIndent], { variants: ["responsive"] });
+                addUtilities(
+                    [
+                        measureUtils,
+                        tabularUtils,
+                        textIndentUtils,
+                    ] /*, { variants: ["responsive"] }*/,
+                );
+
+                addComponents(components as any as CSSRuleObject);
             };
         },
 
@@ -125,23 +129,26 @@ export default function (options) {
             };
 
             let theme = {
-                theme: Object.keys(opts.overrides).reduce((acc, key) => {
-                    let override = opts.overrides[key];
+                theme: Object.keys(opts.overrides).reduce(
+                    (acc, key) => {
+                        let override = opts.overrides[key as keyof typeof opts.overrides];
 
-                    if (override) {
-                        acc[key] = {
-                            ...props[key].standard,
-                            ...(override === "extended" ? props[key].extended : {}),
-                        };
-                    }
+                        if (override) {
+                            acc[key] = {
+                                ...props[key as keyof typeof props].standard,
+                                ...(override === "extended"
+                                    ? props[key as keyof typeof props].extended
+                                    : {}),
+                            };
+                        }
 
-                    return acc;
-                }, {}),
+                        return acc;
+                    },
+                    {} as Record<string, any>,
+                ),
             };
 
             return theme;
         },
-    );
-
-    return uswdsPlugin(options);
+    )(options);
 }

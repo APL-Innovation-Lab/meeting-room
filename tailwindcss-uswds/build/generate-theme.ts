@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { transform } from "lightningcss";
+import type { JsonObject } from "get-sass-vars";
+import getSassVars from "get-sass-vars";
 import fs from "node:fs";
 import path from "node:path";
-import * as sass from "sass";
 import { Bundler } from "scss-bundle";
+import { COMPILE_WARNINGS_DISABLED, COMPILE_WARNINGS_ENABLED } from "./constants";
 
 const NO_CAMEL_CASE = ["accent-cool", "accent-warm"];
 const REMOVED_PREFIXES = ["ls-", "neg"];
@@ -17,8 +17,6 @@ const REMOVED_PROPS = [
     "text-decoration-color",
 ];
 const RENAMED_PROPS = { breakpoints: "screens", noValue: "default" };
-const BUNDLED_SCSS = path.resolve("./dist/uswds-full.bundled.scss");
-const BUNDLED_COMPONENTS = path.resolve("./dist/uswds-components.css");
 
 function removePrefix(from: string, source: string[]) {
     const regex = new RegExp(source.join("|"), "gi");
@@ -104,10 +102,13 @@ function unflattenColors(obj: any) {
     );
 }
 
-function iterate(object: any, apply: (key: string, str: string) => any) {
-    let newObj = {} as any;
+function iterate<T extends Record<PropertyKey, any>>(
+    object: T,
+    apply: (key: keyof T, str: string) => any,
+) {
+    let newObj = {} as T;
 
-    for (let key of Object.keys(object)) {
+    for (let key of Object.keys(object) as (keyof T)[]) {
         if (object.hasOwnProperty(key)) {
             if (typeof object[key] === "object") {
                 newObj[key] = iterate(object[key], (k, v) => apply(k, v));
@@ -120,57 +121,27 @@ function iterate(object: any, apply: (key: string, str: string) => any) {
     return newObj;
 }
 
-async function bundleSass({ outputPath }: { outputPath: string }) {
-    const projectDirectory = path.resolve("./node_modules/uswds/src/stylesheets");
+type DirectoryPath = string;
+type FilePath = string;
+
+interface BundleSassOptions {
+    directory: DirectoryPath;
+    entryPoint: FilePath;
+}
+
+async function bundleSass({
+    directory: projectDirectory,
+    entryPoint,
+}: BundleSassOptions): Promise<string> {
     const bundler = new Bundler(undefined, projectDirectory);
-    const result = await bundler.bundle("./uswds.scss");
-    await fs.promises.writeFile(outputPath, result.bundledContent!);
-}
-
-async function bundleUSWDSComponentSass({
-    outputPath,
-    fontsDirectory = "./fonts",
-}: {
-    outputPath: string;
-    fontsDirectory?: string;
-}) {
-    let projectDirectory = path.resolve("./node_modules/uswds/src/stylesheets");
-    await fs.promises.writeFile(
-        path.resolve(`${projectDirectory}/uswds-components.scss`),
-        `
-        @import "packages/required";
-        @import "packages/global";
-        @import "packages/uswds-components";
-        `,
-    );
-
-    let bundler = new Bundler(undefined, projectDirectory);
-    let bundlerResult = await bundler.bundle("./uswds-components.scss");
-    let bundledScss = bundlerResult.bundledContent!.replace(
-        `$theme-show-compile-warnings: true !default;\n$theme-show-notifications: true !default;`,
-        `$theme-show-compile-warnings: false !default;\n$theme-show-notifications: false !default;`,
-    );
-
-    let compiledStyles = await sass.compileStringAsync(bundledScss);
-
-    let { code: rawCSS } = transform({
-        filename: "uswds-components.css",
-        code: Buffer.from(compiledStyles.css),
-        minify: true,
-    });
-
-    let css = new TextDecoder().decode(rawCSS).replaceAll("../fonts", fontsDirectory);
-    await fs.promises.writeFile(outputPath, css);
-}
-
-async function exportTokens(parsed: any) {
-    await fs.promises.writeFile(
-        path.resolve(`./dist/tokens.json`),
-        JSON.stringify(parsed, null, 4),
+    const bundlerResult = await bundler.bundle(entryPoint);
+    return bundlerResult.bundledContent!.replace(
+        COMPILE_WARNINGS_ENABLED,
+        COMPILE_WARNINGS_DISABLED,
     );
 }
 
-async function exportTailwindJson(parsed: any) {
+async function generateTailwindTokens(variables: JsonObject) {
     let {
         allProjectColors,
         projectFontWeights,
@@ -183,7 +154,7 @@ async function exportTailwindJson(parsed: any) {
         // tokensColorTheme,
         tokensFontSystem,
         tokensFontTheme,
-    } = parseValues(parsed);
+    } = parseValues(variables);
 
     let colors = unflattenColors(tokensColorSystem);
 
@@ -229,31 +200,45 @@ async function exportTailwindJson(parsed: any) {
         },
     };
 
-    let tailwindConfig = { colors, fonts: parseFonts(systemTypefaceTokens), props };
-
-    for (let key of Object.keys(tailwindConfig)) {
-        fs.promises.writeFile(
-            path.resolve(`./dist/${key}.json`),
-            JSON.stringify(tailwindConfig[key as keyof typeof tailwindConfig], null, 4),
-        );
-    }
+    return { colors, fonts: parseFonts(systemTypefaceTokens), props };
 }
 
-// await bundleSass({ outputPath: BUNDLED_SCSS });
+interface GetTokensOptions {
+    uswdsScss: FilePath;
+}
 
-// let uswdsVariables = iterate(
-//     await getSassVars(await fs.promises.readFile(BUNDLED_SCSS, "utf-8"), {
-//         camelize: true,
-//     }),
-//     (key, value) => {
-//         if (key.toLowerCase().includes("separator")) return value;
-//         return JSON.parse(value);
-//     },
-// );
+async function generateTheme(options: GetTokensOptions) {
+    let pathComponents = new URL(`file://$theme${options.uswdsScss}`).pathname.split("/");
+    let entryPoint = pathComponents.pop()!;
+    let directory = pathComponents.join("/");
 
-// await exportTailwindJson(uswdsVariables);
-// await exportTokens(uswdsVariables);
+    let bundledSass = await bundleSass({ directory, entryPoint });
+    let uswdsVariables = iterate(
+        await getSassVars(bundledSass, { camelize: true }),
+        (key, value) => {
+            if (key.toString().toLowerCase().includes("separator")) return value;
+            return JSON.parse(value);
+        },
+    );
+    return await generateTailwindTokens(uswdsVariables);
+}
 
-// await fs.promises.rm(path.resolve("./dist/uswds.bundled.scss"));
+let { props, fonts } = await generateTheme({
+    uswdsScss: path.resolve("./node_modules/uswds/src/stylesheets/uswds.scss"),
+});
 
-await bundleUSWDSComponentSass({ outputPath: BUNDLED_COMPONENTS });
+const DIR_PATH = path.resolve(`./tailwindcss-uswds/tokens/`);
+
+if (!fs.existsSync(DIR_PATH)) {
+    await fs.promises.mkdir(DIR_PATH, { recursive: true });
+}
+
+await fs.promises.writeFile(
+    path.resolve(`./tailwindcss-uswds/tokens/props.json`),
+    JSON.stringify(props, null, 4),
+);
+
+await fs.promises.writeFile(
+    path.resolve(`./tailwindcss-uswds/tokens/fonts.json`),
+    JSON.stringify(fonts, null, 4),
+);

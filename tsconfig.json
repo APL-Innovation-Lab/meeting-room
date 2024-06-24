@@ -6,7 +6,7 @@
         "**/.server/**/*.tsx",
         "**/.client/**/*.ts",
         "**/.client/**/*.tsx",
-        "tailwindcss-uswds/plugin.js"
+        "tailwindcss-uswds/plugin.ts"
     ],
     "compilerOptions": {
         "lib": ["DOM", "DOM.Iterable", "ES2022", "ESNext"],

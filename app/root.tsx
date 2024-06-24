@@ -5,7 +5,6 @@ import { site } from "~/lib/site";
 
 import uswdsReact from "@trussworks/react-uswds/lib/index.css?url";
 import tailwind from "~/styles/tailwind.css?url";
-import uswdsComponents from "~/styles/uswds-components.css?url";
 
 export async function loader({ request }: LoaderFunctionArgs) {
     return json({ url: request.url });
@@ -26,7 +25,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 export const links: LinksFunction = () => [
     { rel: "icon", type: "image/svg+xml", href: site.favicon },
     { rel: "stylesheet", href: tailwind },
-    { rel: "stylesheet", href: uswdsComponents },
     { rel: "stylesheet", href: uswdsReact },
 ];
 
