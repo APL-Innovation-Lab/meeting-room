@@ -1,0 +1,49 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "script": "dev",
+            "problemMatcher": [],
+            "label": "Run development server",
+            "detail": "remix vite:dev"
+        },
+        {
+            "type": "npm",
+            "script": "build",
+            "group": "build",
+            "problemMatcher": [],
+            "label": "Build application",
+            "detail": "remix vite:build"
+        },
+        {
+            "type": "npm",
+            "script": "format",
+            "problemMatcher": [],
+            "label": "Format workspace",
+            "detail": "prettier -w ."
+        },
+        {
+            "type": "npm",
+            "script": "lint",
+            "problemMatcher": [],
+            "label": "Lint workspace",
+            "detail": "eslint --fix --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint ."
+        }
+        // {
+        //     "type": "npm",
+        //     "script": "styles:build-components",
+        //     "group": "build",
+        //     "problemMatcher": [],
+        //     "label": "[INTERNAL] Build USWDS components styles JSON",
+        //     "detail": "tsx tailwindcss-uswds/build/build-components.ts"
+        // },
+        // {
+        //     "type": "npm",
+        //     "script": "styles:generate-theme",
+        //     "problemMatcher": [],
+        //     "label": "[INTERNAL] Generate USWDS theme tokens JSON",
+        //     "detail": "tsx tailwindcss-uswds/build/generate-theme.ts"
+        // }
+    ]
+}
