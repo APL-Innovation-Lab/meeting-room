@@ -24,6 +24,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 
 export const links: LinksFunction = () => [
     { rel: "icon", type: "image/svg+xml", href: site.favicon },
+    { rel: "apple-touch-icon", href: site.homeScreenIcon },
     { rel: "stylesheet", href: tailwind },
     { rel: "stylesheet", href: uswdsReact },
 ];
