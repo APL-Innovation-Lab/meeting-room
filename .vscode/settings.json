@@ -1,0 +1,39 @@
+{
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit"
+    },
+
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit"
+        }
+    },
+    "typescript.updateImportsOnFileMove.enabled": "always",
+
+    "eslint.enable": true,
+    "eslint.codeActionsOnSave.mode": "all",
+    "eslint.validate": ["ts", "tsx"],
+
+    // "vitest.enable": true,
+
+    "todohighlight.keywords": [
+        "MARK:",
+        {
+            "text": "FIXME:",
+            "backgroundColor": "#F14848"
+        },
+        {
+            "text": "TODO:",
+            "backgroundColor": "#3593FF"
+        }
+    ],
+    "todohighlight.defaultStyle": {
+        "backgroundColor": "#434B54",
+        "color": "#fff",
+        "borderRadius": "2px"
+    }
+}
