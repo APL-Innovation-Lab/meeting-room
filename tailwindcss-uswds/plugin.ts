@@ -49,7 +49,7 @@ export default function uswds(options?: Partial<typeof DEFAULT_OPTIONS>) {
                 },
             };
 
-            return ({ addBase, addUtilities, e, theme, addComponents }) => {
+            return ({ addBase, addUtilities, addComponents, e, theme }) => {
                 let base = [
                     {
                         body: {
