@@ -10,7 +10,7 @@ export default function Index() {
                 <div className="flex justify-center">
                     <img
                         alt="Public Meeting Room"
-                        className="min-w-[36rem] max-w-[62rem] object-contain"
+                        className="min-w-[40rem] max-w-[62rem] object-contain"
                         loading="lazy"
                         src="public\meetingSpacesHeader.jpg"
                     />
