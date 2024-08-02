@@ -13,15 +13,15 @@ export default function Index() {
                         alt="Public Meeting Room"
                         typeof="Image"
                         loading="lazy"
-                        className="min-w-[600px] max-w-[1200px] min-h-[400px] max-h-[300px] object-contain"
+                        className="min-w-[40rem] max-w-[62rem] object-contain"
                     />
                 </div>
             </Header>
-            <CardGroup>
-                <Card>
+            <CardGroup className="flex justify-center">
+                <Card className="m-auto min-w-[40rem] max-w-[63rem]">
                     <CardHeader>
                         <h1 className="font usa-card__heading font-bold py-2">Meeting Spaces</h1>
-                        <p className="font-sans text-base-darker text-left">
+                        <p className="font-sans text-base-darker text-left mx-4">
                             Austin Public Library Meeting Spaces are
                             <strong className="font-bold"> free of charge</strong> and ideal for
                             discussion groups, panels, and lectures. Both paper and online
