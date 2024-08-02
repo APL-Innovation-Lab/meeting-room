@@ -18,7 +18,7 @@ export default function Index() {
                 </div>
             </Header>
             <CardGroup className="flex justify-center">
-                <Card className="m-auto min-w-[40rem] max-w-[63rem]">
+                <Card className="mx-auto min-w-[40rem] max-w-[63rem]">
                     <CardHeader>
                         <h1 className="font usa-card__heading font-bold py-2">Meeting Spaces</h1>
                         <p className="font-sans text-base-darker text-left mx-4">
