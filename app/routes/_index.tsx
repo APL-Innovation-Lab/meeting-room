@@ -7,16 +7,21 @@ export default function Index() {
     return (
         <>
             <Header>
-                <img
-                    src="public\meetingSpacesHeader.jpg"
-                    className="max-w-5xl max-h-52 justify-center"
-                />
+                <div className="flex justify-center">
+                    <img
+                        src="public\meetingSpacesHeader.jpg"
+                        alt="Public Meeting Room"
+                        typeof="Image"
+                        loading="lazy"
+                        className="min-w-[600px] max-w-[1200px] min-h-[400px] max-h-[300px] object-contain"
+                    />
+                </div>
             </Header>
             <CardGroup>
                 <Card>
                     <CardHeader>
-                        <h1 className="usa-card__heading">Meeting Spaces</h1>
-                        <p className="font-sans text-base-darker">
+                        <h1 className="font usa-card__heading font-bold py-2">Meeting Spaces</h1>
+                        <p className="font-sans text-base-darker text-left">
                             Austin Public Library Meeting Spaces are
                             <strong className="font-bold"> free of charge</strong> and ideal for
                             discussion groups, panels, and lectures. Both paper and online
