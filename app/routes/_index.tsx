@@ -1,4 +1,12 @@
-import { Card, CardGroup, CardHeader, Header } from "@trussworks/react-uswds";
+import {
+    Breadcrumb,
+    BreadcrumbBar,
+    BreadcrumbLink,
+    Card,
+    CardGroup,
+    CardHeader,
+    Header,
+} from "@trussworks/react-uswds";
 import { mergeMeta } from "~/lib/merge-meta";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Meeting Spaces • ${parentTitle}` }]);
@@ -12,13 +20,20 @@ export default function Index() {
                         alt="Public Meeting Room"
                         className="min-w-[40rem] max-w-[62rem] object-contain"
                         loading="lazy"
-                        src="public\meetingSpacesHeader.jpg"
+                        src="/meetingSpacesHeader.jpg"
                     />
                 </div>
             </Header>
+            <BreadcrumbBar>
+                <Breadcrumb>
+                    <BreadcrumbLink href="#">
+                        <span>Home</span>
+                    </BreadcrumbLink>
+                </Breadcrumb>
+            </BreadcrumbBar>
             <div className="flex justify-center">
                 <CardGroup className="flex justify-center">
-                    <Card className="mx-auto min-w-[38rem] max-w-[63rem]">
+                    <Card className="mx-auto min-w-[41rem] max-w-[63rem]">
                         <CardHeader>
                             <h1 className="font usa-card__heading font-bold py-2">
                                 Meeting Spaces
