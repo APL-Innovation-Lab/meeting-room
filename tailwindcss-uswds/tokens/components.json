@@ -72,10 +72,7 @@
         "WebkitFontSmoothing": "inherit",
         "color": "#71767a",
         "boxShadow": "none",
-        "textAlign": [
-            "left",
-            "center"
-        ],
+        "textAlign": ["left", "center"],
         "cursor": "pointer",
         "backgroundColor": "#0000",
         "backgroundPosition": "50%",
@@ -145,10 +142,7 @@
         "WebkitFontSmoothing": "inherit",
         "color": "#71767a",
         "boxShadow": "none",
-        "textAlign": [
-            "left",
-            "center"
-        ],
+        "textAlign": ["left", "center"],
         "cursor": "pointer",
         "backgroundColor": "#0000",
         "backgroundPosition": "50%",
@@ -215,10 +209,7 @@
         "WebkitFontSmoothing": "inherit",
         "color": "#71767a",
         "boxShadow": "none",
-        "textAlign": [
-            "left",
-            "center"
-        ],
+        "textAlign": ["left", "center"],
         "cursor": "pointer",
         "backgroundColor": "#0000",
         "backgroundPosition": "50%",
@@ -7245,10 +7236,7 @@
         "WebkitFontSmoothing": "inherit",
         "color": "#fff",
         "boxShadow": "none",
-        "textAlign": [
-            "left",
-            "center"
-        ],
+        "textAlign": ["left", "center"],
         "textTransform": "uppercase",
         "backgroundColor": "#005ea2",
         "border": "0",
@@ -8168,10 +8156,7 @@
         "WebkitFontSmoothing": "inherit",
         "color": "currentColor",
         "boxShadow": "none",
-        "textAlign": [
-            "left",
-            "center"
-        ],
+        "textAlign": ["left", "center"],
         "cssFloat": "right",
         "backgroundColor": "#0000",
         "backgroundImage": "none",
