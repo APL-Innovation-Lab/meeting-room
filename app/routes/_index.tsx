@@ -24,13 +24,15 @@ export default function Index() {
                     />
                 </div>
             </Header>
-            <BreadcrumbBar>
-                <Breadcrumb>
-                    <BreadcrumbLink href="#">
-                        <span>Home</span>
-                    </BreadcrumbLink>
-                </Breadcrumb>
-            </BreadcrumbBar>
+            <div className="flex justify-center">
+                <BreadcrumbBar className="min-w-[40rem]">
+                    <Breadcrumb>
+                        <BreadcrumbLink href="#">
+                            <span>Home</span>
+                        </BreadcrumbLink>
+                    </Breadcrumb>
+                </BreadcrumbBar>
+            </div>
             <div className="flex justify-center">
                 <CardGroup className="flex justify-center">
                     <Card className="min-w-[41rem] max-w-[63rem]">
