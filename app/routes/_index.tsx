@@ -33,7 +33,7 @@ export default function Index() {
             </BreadcrumbBar>
             <div className="flex justify-center">
                 <CardGroup className="flex justify-center">
-                    <Card className="mx-auto min-w-[41rem] max-w-[63rem]">
+                    <Card className="min-w-[41rem] max-w-[63rem]">
                         <CardHeader>
                             <h1 className="font usa-card__heading font-bold py-2">
                                 Meeting Spaces
