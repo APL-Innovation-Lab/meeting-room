@@ -34,7 +34,7 @@ export default function Index() {
                 </BreadcrumbBar>
             </div>
             <div className="flex justify-center">
-                <CardGroup className="flex justify-center">
+                <CardGroup>
                     <Card className="min-w-[41rem] max-w-[63rem]">
                         <CardHeader>
                             <h1 className="font usa-card__heading font-bold py-2">
