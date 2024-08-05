@@ -26,6 +26,7 @@ export default function Index() {
                                 <div className="min-w-[30rem] max-w-[62rem] object-contain">
                                     <img
                                         alt="Public Meeting Room"
+                                        className="rounded-t-md"
                                         loading="lazy"
                                         src="/meetingSpacesHeader.jpg"
                                     />
