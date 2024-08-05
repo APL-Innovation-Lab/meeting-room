@@ -70,7 +70,7 @@ export default function Index() {
                                     </React.Fragment>
                                 </Select>
                                 <div className="my-4">
-                                    <strong className="">Reserve In-Person Instead</strong>
+                                    <strong>Reserve In-Person Instead</strong>
                                     <ul className="list-disc ml-4">
                                         <li>
                                             <Link href="#">Printable Form (PDF)</Link>
