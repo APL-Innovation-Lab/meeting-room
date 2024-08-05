@@ -7,6 +7,7 @@ import {
     CardHeader,
     Header,
     Label,
+    Link,
     Select,
 } from "@trussworks/react-uswds";
 import React from "react";
@@ -19,30 +20,30 @@ export default function Index() {
         <>
             <div className="flex justify-center">
                 <div className="min-w-[30rem] max-w-[62rem]">
-                    <Header>
-                        <div className="min-w-[30rem] max-w-[62rem] object-contain">
-                            <img
-                                alt="Public Meeting Room"
-                                loading="lazy"
-                                src="/meetingSpacesHeader.jpg"
-                            />
-                        </div>
-                        <BreadcrumbBar>
-                            <Breadcrumb>
-                                <BreadcrumbLink href="#">
-                                    <span>Home</span>
-                                </BreadcrumbLink>
-                            </Breadcrumb>
-                            <Breadcrumb>
-                                <BreadcrumbLink href="#">
-                                    <span>Meeting Spaces</span>
-                                </BreadcrumbLink>
-                            </Breadcrumb>
-                        </BreadcrumbBar>
-                    </Header>
                     <CardGroup>
                         <Card>
-                            <CardHeader>
+                            <Header>
+                                <div className="min-w-[30rem] max-w-[62rem] object-contain">
+                                    <img
+                                        alt="Public Meeting Room"
+                                        loading="lazy"
+                                        src="/meetingSpacesHeader.jpg"
+                                    />
+                                </div>
+                                <BreadcrumbBar className="ml-2">
+                                    <Breadcrumb>
+                                        <BreadcrumbLink href="#">
+                                            <span>Home</span>
+                                        </BreadcrumbLink>
+                                    </Breadcrumb>
+                                    <Breadcrumb>
+                                        <BreadcrumbLink href="#">
+                                            <span>Meeting Spaces</span>
+                                        </BreadcrumbLink>
+                                    </Breadcrumb>
+                                </BreadcrumbBar>
+                            </Header>
+                            <CardHeader className="-mt-2">
                                 <h1 className="font usa-card__heading font-bold py-2">
                                     Meeting Spaces
                                 </h1>
@@ -67,6 +68,17 @@ export default function Index() {
                                         </option>
                                     </React.Fragment>
                                 </Select>
+                                <div className="my-4">
+                                    <strong className="">Reserve In-Person Instead</strong>
+                                    <ul className="list-disc ml-4">
+                                        <li>
+                                            <Link href="#">Printable Form (PDF)</Link>
+                                        </li>
+                                        <li>
+                                            <Link href="#">Sala de Reunión Forma de Solicitud</Link>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
                         </Card>
                     </CardGroup>
