@@ -60,7 +60,7 @@ export default function Index() {
                                 <Label htmlFor="reservation-select">Reserve Online</Label>
                                 <Select id="reservation-select" name="reservation-select">
                                     <React.Fragment key=".0">
-                                        <option disabled>- Select - </option>
+                                        <option>- Select - </option>
                                         <option value="non-profit">
                                             Room for Non-Profit/Non-Commercial Activity
                                         </option>
