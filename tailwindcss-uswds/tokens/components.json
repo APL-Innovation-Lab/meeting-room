@@ -6311,7 +6311,9 @@
     ".usa-breadcrumb__list-item": {
         "whiteSpace": "nowrap",
         "display": "inline",
-        "position": "relative"
+        "position": "absolute",
+        "left": "-999em",
+        "right": "auto"
     },
     ".usa-breadcrumb__link": {
         "color": "#005ea2",
