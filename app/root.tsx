@@ -5,6 +5,7 @@ import { site } from "~/lib/site";
 
 import uswdsReact from "@trussworks/react-uswds/lib/index.css?url";
 import tailwind from "~/styles/tailwind.css?url";
+import "~/styles/meeting-room-styles.css";
 
 export async function loader({ request }: LoaderFunctionArgs) {
     return json({ url: request.url });

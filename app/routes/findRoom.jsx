@@ -1,12 +1,9 @@
 import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
-import { mergeMeta } from "~/lib/merge-meta";
 
-
-export const meta = mergeMeta(({ parentTitle }) => [{ title: `Meeting Spaces • ${parentTitle}` }]);
-
-export default function Index() {
+export default function findRoom() {
     return (
         <div>
+
         <CardGroup>
             <Card>
                 <CardHeader>

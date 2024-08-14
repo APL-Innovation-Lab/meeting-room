@@ -1,0 +1,18 @@
+
+.mainHeaderMenu { 
+    width: 100%;
+    background-color: rgb(255, 255, 255);
+}
+
+.subMenu {
+
+    background-color: #4399BA;    
+
+}
+
+ul,
+li {
+    list-style-type: none;
+    display: inline;
+}
+
