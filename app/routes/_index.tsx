@@ -22,7 +22,7 @@ export default function Index() {
                     <Header>
                         <div className="object-contain">
                             <img
-                                alt="Public Meeting Room Header"
+                                alt="A room of people in attendance at a meeting"
                                 className="rounded-t-md"
                                 loading="lazy"
                                 src="/meeting-spaces-header.jpg"
