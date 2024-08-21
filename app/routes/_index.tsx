@@ -10,7 +10,6 @@ import {
     Link,
     Select,
 } from "@trussworks/react-uswds";
-import React from "react";
 import { mergeMeta } from "~/lib/merge-meta";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Meeting Spaces • ${parentTitle}` }]);
@@ -23,10 +22,10 @@ export default function Index() {
                     <Header>
                         <div className="object-contain">
                             <img
-                                alt="Public Meeting Room"
+                                alt="Public Meeting Room Header"
                                 className="rounded-t-md"
                                 loading="lazy"
-                                src="/meetingSpacesHeader.jpg"
+                                src="/meeting-spaces-header.jpg"
                             />
                         </div>
                         <BreadcrumbBar className="ml-2">
@@ -54,16 +53,18 @@ export default function Index() {
                     </CardHeader>
                     <div className="flex-col px-3">
                         <Label htmlFor="reservation-select">Reserve Online</Label>
-                        <Select id="reservation-select" name="reservation-select">
-                            <React.Fragment key=".0">
-                                <option disabled selected value="">
-                                    - Select -{" "}
-                                </option>
-                                <option value="non-profit">
-                                    Room for Non-Profit/Non-Commercial Activity
-                                </option>
-                                <option value="business">Room for Business/Company Work</option>
-                            </React.Fragment>
+                        <Select
+                            defaultValue="empty"
+                            id="reservation-select"
+                            name="reservation-select"
+                        >
+                            <option disabled value="empty">
+                                - Select -{" "}
+                            </option>
+                            <option value="non-profit">
+                                Room for Non-Profit/Non-Commercial Activity
+                            </option>
+                            <option value="business">Room for Business/Company Work</option>
                         </Select>
                         <div className="my-4">
                             <strong>Reserve In-Person Instead</strong>
