@@ -9,7 +9,7 @@
         "typecheck": "tsc",
         "build": "remix vite:build",
         "start": "remix-serve ./build/server/index.js",
-        "styles:build-components": "tsx tailwindcss-uswds/build/build-components.ts",
+        "styles:compile-components": "tsx tailwindcss-uswds/build/compile-components.ts",
         "styles:generate-theme": "tsx tailwindcss-uswds/build/generate-theme.ts"
     },
     "dependencies": {
