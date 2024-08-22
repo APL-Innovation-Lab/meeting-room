@@ -17,7 +17,7 @@ export const meta = mergeMeta(({ parentTitle }) => [{ title: `Meeting Spaces •
 export default function Index() {
     return (
         <div className="flex justify-center">
-            <CardGroup className="min-w-[30rem] max-w-[62rem]">
+            <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
                     <Header>
                         <div className="object-contain">
