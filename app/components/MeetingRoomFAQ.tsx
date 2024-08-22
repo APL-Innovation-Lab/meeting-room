@@ -14,10 +14,10 @@ function MeetingRoomFAQ() {
     );
 
     return (
-        <div>
+        <>
             <h1 className="font-bold text-sans-lg">Frequently Asked Questions</h1>
             <Accordion items={accordionItems} />
-        </div>
+        </>
     );
 }
 
