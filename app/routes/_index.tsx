@@ -1,10 +1,12 @@
 import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
+import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
 import { mergeMeta } from "~/lib/merge-meta";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Meeting Spaces • ${parentTitle}` }]);
 
 export default function Index() {
     return (
+        <>
         <CardGroup>
             <Card>
                 <CardHeader>
@@ -18,5 +20,7 @@ export default function Index() {
                 </CardHeader>
             </Card>
         </CardGroup>
+        <MeetingRoomFAQ />
+    </>
     );
 }
