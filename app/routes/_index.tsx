@@ -10,6 +10,7 @@ import {
     Link,
     Select,
 } from "@trussworks/react-uswds";
+import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
 import { mergeMeta } from "~/lib/merge-meta";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Meeting Spaces • ${parentTitle}` }]);
@@ -78,6 +79,7 @@ export default function Index() {
                             </ul>
                         </div>
                     </div>
+                    <MeetingRoomFAQ />
                 </Card>
             </CardGroup>
         </div>
