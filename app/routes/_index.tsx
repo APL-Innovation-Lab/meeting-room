@@ -1,21 +1,16 @@
-import {
-    Breadcrumb,
-    BreadcrumbBar,
-    BreadcrumbLink,
-    Card,
-    CardGroup,
-    CardHeader,
-    Header,
-    Label,
-    Link,
-    Select,
-} from "@trussworks/react-uswds";
+import { Card, CardGroup, CardHeader, Header, Label, Link, Select } from "@trussworks/react-uswds";
+import Breadcrumbs from "~/components/Breadcrumbs";
 import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
 import { mergeMeta } from "~/lib/merge-meta";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Meeting Spaces • ${parentTitle}` }]);
 
 export default function Index() {
+    const breadcrumbLinks = [
+        { href: "#", text: "Home" },
+        { href: "#", text: "Meeting Spaces" },
+    ];
+
     return (
         <div className="flex justify-center">
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
@@ -29,18 +24,7 @@ export default function Index() {
                                 src="/meeting-spaces-header.jpg"
                             />
                         </div>
-                        <BreadcrumbBar className="ml-2">
-                            <Breadcrumb className="relative left-0">
-                                <BreadcrumbLink href="#">
-                                    <span>Home</span>
-                                </BreadcrumbLink>
-                            </Breadcrumb>
-                            <Breadcrumb className="relative left-0">
-                                <BreadcrumbLink href="#">
-                                    <span>Meeting Spaces</span>
-                                </BreadcrumbLink>
-                            </Breadcrumb>
-                        </BreadcrumbBar>
+                        <Breadcrumbs links={breadcrumbLinks} />
                     </Header>
                     <CardHeader className="-mt-2">
                         <h1 className="font usa-card__heading font-bold py-2">Meeting Spaces</h1>
