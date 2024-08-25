@@ -63,7 +63,9 @@ export default function Index() {
                             </ul>
                         </div>
                     </div>
-                    <MeetingRoomFAQ />
+                    <div className="mx-4 mb-4">
+                        <MeetingRoomFAQ />
+                    </div>
                 </Card>
             </CardGroup>
         </div>
