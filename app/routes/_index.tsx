@@ -16,7 +16,7 @@ export default function Index() {
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
                     <Header>
-                        <div className="object-contain">
+                        <div className="object-contain h-76">
                             <img
                                 alt="A room of people in attendance at a meeting"
                                 className="rounded-t-md"
@@ -24,47 +24,53 @@ export default function Index() {
                                 src="/meeting-spaces-header.jpg"
                             />
                         </div>
-                        <Breadcrumbs links={breadcrumbLinks} />
                     </Header>
-                    <CardHeader className="-mt-2">
-                        <h1 className="font usa-card__heading font-bold py-2">Meeting Spaces</h1>
-                        <p className="font-sans text-base-darker text-left">
-                            Austin Public Library Meeting Spaces are
-                            <strong className="font-bold"> free of charge</strong> and ideal for
-                            discussion groups, panels, and lectures. Both paper and online
-                            reservation requests are timestamped and processed in the order they are
-                            received.
-                        </p>
-                    </CardHeader>
-                    <div className="flex-col px-3">
-                        <Label htmlFor="reservation-select">Reserve Online</Label>
-                        <Select
-                            defaultValue="empty"
-                            id="reservation-select"
-                            name="reservation-select"
-                        >
-                            <option disabled value="empty">
-                                - Select -{" "}
-                            </option>
-                            <option value="non-profit">
-                                Room for Non-Profit/Non-Commercial Activity
-                            </option>
-                            <option value="business">Room for Business/Company Work</option>
-                        </Select>
-                        <div className="my-4">
-                            <strong>Reserve In-Person Instead</strong>
-                            <ul className="list-disc ml-4">
-                                <li>
-                                    <Link href="#">Printable Form (PDF)</Link>
-                                </li>
-                                <li>
-                                    <Link href="#">Sala de Reunión Forma de Solicitud</Link>
-                                </li>
-                            </ul>
+                    <div className="ml-5 mr-5">
+                        <div className="-mt-1 ml-1">
+                            <Breadcrumbs links={breadcrumbLinks} />
                         </div>
-                    </div>
-                    <div className="mx-4 mb-4">
-                        <MeetingRoomFAQ />
+                        <CardHeader className="-mt-3">
+                            <h1 className="font-sans text-[40px] usa-card__heading font-bold py-2">
+                                Meeting Spaces
+                            </h1>
+                            <p className="font-sans text-base-darker text-sans-xs">
+                                Austin Public Library Meeting Spaces are
+                                <strong className="font-bold"> free of charge</strong> and ideal for
+                                discussion groups, panels, and lectures. Both paper and online
+                                reservation requests are timestamped and processed in the order they
+                                are received.
+                            </p>
+                        </CardHeader>
+                        <div className="flex-col px-3">
+                            <Label htmlFor="reservation-select">Reserve Online</Label>
+                            <Select
+                                defaultValue="empty"
+                                id="reservation-select"
+                                name="reservation-select"
+                            >
+                                <option disabled value="empty">
+                                    - Select -{" "}
+                                </option>
+                                <option value="non-profit">
+                                    Room for Non-Profit/Non-Commercial Activity
+                                </option>
+                                <option value="business">Room for Business/Company Work</option>
+                            </Select>
+                            <div className="my-4">
+                                <strong>Reserve In-Person Instead</strong>
+                                <ul className="list-disc ml-4">
+                                    <li>
+                                        <Link href="#">Printable Form (PDF)</Link>
+                                    </li>
+                                    <li>
+                                        <Link href="#">Sala de Reunión Forma de Solicitud</Link>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="mx-4 mb-4">
+                            <MeetingRoomFAQ />
+                        </div>
                     </div>
                 </Card>
             </CardGroup>
