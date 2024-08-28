@@ -16,7 +16,7 @@ export default function Index() {
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
                     <Header>
-                        <div className="object-contain h-76">
+                        <div className="object-contain">
                             <img
                                 alt="A room of people in attendance at a meeting"
                                 className="rounded-t-md"
