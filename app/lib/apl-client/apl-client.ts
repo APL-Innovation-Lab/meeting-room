@@ -1,8 +1,19 @@
 import { openKv } from "@deno/kv";
 import validator from "validator";
 import { z } from "zod";
-import jsonRooms from "../data/library.json";
-import { randomDelay } from "./random-delay";
+import jsonRooms from "../../data/library.json";
+import { randomDelay } from "../random-delay";
+import {
+    CancellationFailedError,
+    NoAvailableTimesError,
+    ReservationDataMismatchError,
+    ReservationNotFoundError,
+    RoomAlreadyReservedError,
+    RoomNotAvailableAtTimeError,
+    RoomNotAvailableOnDateError,
+    RoomNotFoundError,
+    RoomTypeMismatchError,
+} from "./errors";
 
 /**
  * Represents a safe result of an operation that can either be successful with data or fail with an error.
@@ -141,7 +152,7 @@ export const apl = {
      * Retrieves available library rooms based on search options.
      * @param options - Search criteria for filtering rooms.
      * @param timeout - Optional timeout in milliseconds.
-     * @returns A SafeResult containing an array of LibraryRoom or an Error.
+     * @returns A SafeResult containing an array of LibraryRoom or an AplError.
      */
     async getRooms(
         options: Partial<SearchOptions>,
@@ -191,7 +202,7 @@ export const apl = {
         } catch (error: any) {
             return {
                 data: undefined,
-                error,
+                error: error instanceof Error ? error : new Error(`${error}`),
             };
         }
     },
@@ -200,7 +211,7 @@ export const apl = {
      * Reserves a library room based on the provided reservation options.
      * @param options - Reservation details conforming to the ReservationOptionsSchema.
      * @param timeout - Optional timeout in milliseconds.
-     * @returns A SafeResult containing the Reservation or an Error.
+     * @returns A SafeResult containing the Reservation or an AplError.
      */
     async reserveRoom(
         options: z.infer<typeof ReservationOptionsSchema>,
@@ -221,7 +232,7 @@ export const apl = {
             if (!room) {
                 return {
                     data: undefined,
-                    error: new Error("Room not found"),
+                    error: new RoomNotFoundError(validatedOptions.roomId),
                 };
             }
 
@@ -229,21 +240,23 @@ export const apl = {
             if (room.info.type !== validatedOptions.roomType) {
                 return {
                     data: undefined,
-                    error: new Error("Room type mismatch"),
+                    error: new RoomTypeMismatchError(validatedOptions.roomType, room.info.type),
                 };
             }
 
-            // Check date and time availability in room's availableTimes
+            // Check date availability
             if (room.info.date !== validatedOptions.date) {
                 return {
                     data: undefined,
-                    error: new Error("Room not available on the selected date"),
+                    error: new RoomNotAvailableOnDateError(validatedOptions.date),
                 };
             }
+
+            // Check time availability
             if (!room.info.availableTimes.includes(validatedOptions.time)) {
                 return {
                     data: undefined,
-                    error: new Error("Room not available at the selected time"),
+                    error: new RoomNotAvailableAtTimeError(validatedOptions.time),
                 };
             }
 
@@ -256,7 +269,7 @@ export const apl = {
             if (updatedAvailableTimes.length === 0) {
                 return {
                     data: undefined,
-                    error: new Error("No available times left for this room"),
+                    error: new NoAvailableTimesError(),
                 };
             }
 
@@ -299,7 +312,7 @@ export const apl = {
             if (!res.ok) {
                 return {
                     data: undefined,
-                    error: new Error("Room is already reserved at this date and time"),
+                    error: new RoomAlreadyReservedError(),
                 };
             }
 
@@ -310,7 +323,7 @@ export const apl = {
         } catch (error: any) {
             return {
                 data: undefined,
-                error,
+                error: error instanceof Error ? error : new Error(`${error}`),
             };
         }
     },
@@ -319,7 +332,7 @@ export const apl = {
      * Cancels an existing reservation.
      * @param reservation - The reservation to cancel.
      * @param timeout - Optional timeout in milliseconds.
-     * @returns A SafeResult containing the canceled Reservation or an Error.
+     * @returns A SafeResult containing the canceled Reservation or an AplError.
      */
     async cancelReservation(
         reservation: Reservation,
@@ -344,7 +357,7 @@ export const apl = {
             if (!existingReservation) {
                 return {
                     data: undefined,
-                    error: new Error("Reservation not found"),
+                    error: new ReservationNotFoundError(),
                 };
             }
 
@@ -352,7 +365,7 @@ export const apl = {
             if (JSON.stringify(existingReservation) !== JSON.stringify(reservation)) {
                 return {
                     data: undefined,
-                    error: new Error("Reservation data does not match"),
+                    error: new ReservationDataMismatchError(),
                 };
             }
 
@@ -365,7 +378,7 @@ export const apl = {
             if (!room) {
                 return {
                     data: undefined,
-                    error: new Error("Room not found"),
+                    error: new RoomNotFoundError(reservation.roomId),
                 };
             }
 
@@ -395,7 +408,7 @@ export const apl = {
             if (!res.ok) {
                 return {
                     data: undefined,
-                    error: new Error("Failed to cancel reservation due to concurrent modification"),
+                    error: new CancellationFailedError(),
                 };
             }
 
@@ -406,7 +419,7 @@ export const apl = {
         } catch (error: any) {
             return {
                 data: undefined,
-                error,
+                error: error instanceof Error ? error : new Error(`${error}`),
             };
         }
     },

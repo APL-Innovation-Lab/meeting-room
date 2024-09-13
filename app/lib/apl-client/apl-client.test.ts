@@ -1,9 +1,11 @@
 import { beforeAll, describe, expect, it } from "vitest";
+import { z } from "zod";
 import type { Reservation, SearchOptions } from "./apl-client";
 import { apl } from "./apl-client";
+import { ReservationNotFoundError, RoomNotAvailableAtTimeError } from "./errors";
 
 // Mock data for testing
-const testRoomId = "a6z5y4x3-w2v1-0u9t-8s7r-6q5p4o3n2m1l";
+const testRoomId = "a6z5y4x3-w2v1-0u9t-8s7r-6q5p4o3n2m1l"; // Replace with an actual room ID from your data
 const testDate = "2024-10-14";
 const testTime = "2:30 PM";
 const testReservationOptions = {
@@ -14,6 +16,8 @@ const testReservationOptions = {
     date: testDate,
     time: testTime,
     roomType: "shared-learning-room" as const,
+    roomName: "Test Room",
+    branchName: "Test Branch",
 };
 
 describe("Austin Public Library Client", () => {
@@ -21,11 +25,7 @@ describe("Austin Public Library Client", () => {
 
     beforeAll(async () => {
         // Ensure that the test environment is clean
-        await apl.cancelReservation({
-            ...testReservationOptions,
-            roomName: "Test Room",
-            branchName: "Test Branch",
-        });
+        await apl.cancelReservation(testReservationOptions);
     });
 
     describe("getRooms", () => {
@@ -52,6 +52,8 @@ describe("Austin Public Library Client", () => {
             const { error, data } = await apl.getRooms(searchOptions);
             expect(error).toBeDefined();
             expect(data).toBeUndefined();
+            // Since we didn't define a specific error for invalid dates, we can check the error message
+            expect(error?.message).toContain("Invalid time value");
         });
     });
 
@@ -68,6 +70,7 @@ describe("Austin Public Library Client", () => {
             const { error, data } = await apl.reserveRoom(testReservationOptions);
             expect(error).toBeDefined();
             expect(data).toBeUndefined();
+            expect(error).toBeInstanceOf(RoomNotAvailableAtTimeError);
             expect(error?.message).toContain("Room not available at the selected time");
         });
 
@@ -80,6 +83,8 @@ describe("Austin Public Library Client", () => {
             const { error, data } = await apl.reserveRoom(invalidOptions);
             expect(error).toBeDefined();
             expect(data).toBeUndefined();
+            expect(error).toBeInstanceOf(z.ZodError);
+            expect(error?.message).toContain("Invalid email");
         });
     });
 
@@ -97,14 +102,11 @@ describe("Austin Public Library Client", () => {
         });
 
         it("should return an error when cancelling a non-existent reservation", async () => {
-            const { error, data } = await apl.cancelReservation({
-                ...testReservationOptions,
-                roomName: "Test Room",
-                branchName: "Test Branch",
-            });
+            const { error, data } = await apl.cancelReservation(testReservationOptions);
             expect(error).toBeDefined();
             expect(data).toBeUndefined();
-            expect(error?.message).toContain("Reservation not found");
+            expect(error).toBeInstanceOf(ReservationNotFoundError);
+            expect(error?.message).toContain("Reservation not found.");
         });
     });
 });
