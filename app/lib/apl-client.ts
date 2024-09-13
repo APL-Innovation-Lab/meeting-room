@@ -4,6 +4,9 @@ import { z } from "zod";
 import jsonRooms from "../data/library.json";
 import { randomDelay } from "./random-delay";
 
+/**
+ * Represents a safe result of an operation that can either be successful with data or fail with an error.
+ */
 export type SafeResult<Data, Err extends Error = Error> =
     | {
           data: Data;
@@ -14,12 +17,18 @@ export type SafeResult<Data, Err extends Error = Error> =
           error: Err;
       };
 
+/**
+ * Describes the amenities available in a library room.
+ */
 export type Amenities = {
     airplay: boolean;
     hdmi: boolean;
     whiteboard: boolean;
 };
 
+/**
+ * Represents a library branch with its details.
+ */
 export type LibraryBranch = {
     name: string;
     floor: number;
@@ -27,6 +36,9 @@ export type LibraryBranch = {
     image: string;
 };
 
+/**
+ * Represents a library room with its branch, information, and availability.
+ */
 export type LibraryRoom = {
     branch: LibraryBranch;
     info: {
@@ -40,6 +52,9 @@ export type LibraryRoom = {
     };
 };
 
+/**
+ * Options for searching available library rooms.
+ */
 export type SearchOptions = {
     location?: string;
     date?: Date;
@@ -48,6 +63,9 @@ export type SearchOptions = {
     amenities?: Partial<Amenities>;
 };
 
+/**
+ * Schema for validating shared learning room reservation options.
+ */
 export const SharedLearningRoomReservationOptionsSchema = z.object({
     roomId: z.string().uuid(),
     meetingTopic: z.string(),
@@ -57,6 +75,9 @@ export const SharedLearningRoomReservationOptionsSchema = z.object({
     time: z.string(),
 });
 
+/**
+ * Schema for validating meeting room reservation options.
+ */
 export const MeetingRoomReservationOptionsSchema =
     SharedLearningRoomReservationOptionsSchema.extend({
         orgName: z.string(),
@@ -65,6 +86,9 @@ export const MeetingRoomReservationOptionsSchema =
         phoneNumber: z.string().refine(value => validator.isMobilePhone(value, "any")),
     });
 
+/**
+ * Union schema for validating reservation options for any room type.
+ */
 export const ReservationOptionsSchema = z.union([
     MeetingRoomReservationOptionsSchema.extend({ roomType: z.literal("meeting-room") }),
     SharedLearningRoomReservationOptionsSchema.extend({
@@ -72,6 +96,9 @@ export const ReservationOptionsSchema = z.union([
     }),
 ]);
 
+/**
+ * Represents a reservation for a library room.
+ */
 export type Reservation = {
     roomId: string;
     meetingTopic: string;
@@ -106,7 +133,16 @@ await Promise.all(
     }),
 );
 
+/**
+ * Austin Public Library API for managing room reservations.
+ */
 export const apl = {
+    /**
+     * Retrieves available library rooms based on search options.
+     * @param options - Search criteria for filtering rooms.
+     * @param timeout - Optional timeout in milliseconds.
+     * @returns A SafeResult containing an array of LibraryRoom or an Error.
+     */
     async getRooms(
         options: Partial<SearchOptions>,
         timeout = TIMEOUT,
@@ -160,6 +196,12 @@ export const apl = {
         }
     },
 
+    /**
+     * Reserves a library room based on the provided reservation options.
+     * @param options - Reservation details conforming to the ReservationOptionsSchema.
+     * @param timeout - Optional timeout in milliseconds.
+     * @returns A SafeResult containing the Reservation or an Error.
+     */
     async reserveRoom(
         options: z.infer<typeof ReservationOptionsSchema>,
         timeout = TIMEOUT,
@@ -273,6 +315,12 @@ export const apl = {
         }
     },
 
+    /**
+     * Cancels an existing reservation.
+     * @param reservation - The reservation to cancel.
+     * @param timeout - Optional timeout in milliseconds.
+     * @returns A SafeResult containing the canceled Reservation or an Error.
+     */
     async cancelReservation(
         reservation: Reservation,
         timeout = TIMEOUT,
