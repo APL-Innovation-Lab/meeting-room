@@ -67,7 +67,7 @@ export type SearchOptions = {
  * Schema for validating shared learning room reservation options.
  */
 export const SharedLearningRoomReservationOptionsSchema = z.object({
-    roomId: z.string().uuid(),
+    roomId: z.string(),
     meetingTopic: z.string(),
     fullName: z.string(),
     emailAddress: z.string().email(),
