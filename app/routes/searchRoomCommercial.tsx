@@ -5,7 +5,7 @@ import { mergeMeta } from "~/lib/merge-meta";
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Search for a room - Commercial • ${parentTitle}` }]);
 
 
-export default function searchRoomCommercial() {
+export default function SearchRoomCommercial() {
     const breadcrumbLinks = [
         { href: "#", text: "Home" },
         { href: "#", text: "Meeting Spaces" },
@@ -32,14 +32,13 @@ export default function searchRoomCommercial() {
                             <Breadcrumbs links={breadcrumbLinks} />
                         </div>
                         <CardHeader className="-mt-3">
-                            <h1 className="font-sans text-[40px] usa-card__heading font-bold py-2">
-                                FIND A ROOM
+                            <h1 className="font-sans text-sans-2xl usa-card__heading font-bold">
+                                Find a Room
                             </h1>
-                            <h1 className="usa-card__heading">COMMERCIAL/BUSINESS</h1>
-                            <br/>
+                            <h2 className="usa-card__heading">COMMERCIAL/BUSINESS</h2>
 
-                            <p className="font-sans text-base-darker text-sans-xs">
-                            <strong className="font-bold">Rooms for commercial work purposes are only available at capacities of 4, 8, and 10. </strong>
+                            <p className="font-sans text-base-darker text-sans-xs pt-4">
+                            <strong>Rooms for commercial work purposes are only available at capacities of 4, 8, and 10. </strong>
                             Rooms can be booked in 15 min time blocks up to 2-hours, and up to 2 weeks out.
                             </p>
                         </CardHeader>

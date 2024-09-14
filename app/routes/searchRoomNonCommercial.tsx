@@ -4,7 +4,7 @@ import { mergeMeta } from "~/lib/merge-meta";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Search for a room - Non-Commercial • ${parentTitle}` }]);
 
-export default function searchRoomNonCommercial() {
+export default function SearchRoomNonCommercial() {
     const breadcrumbLinks = [
         { href: "#", text: "Home" },
         { href: "#", text: "Meeting Spaces" },
@@ -31,11 +31,10 @@ export default function searchRoomNonCommercial() {
                             <Breadcrumbs links={breadcrumbLinks} />
                         </div>
                         <CardHeader className="-mt-3">
-                            <h1 className="font-sans text-[40px] usa-card__heading font-bold py-2">
-                                FIND A ROOM
+                            <h1 className="font-sans text-sans-2xl font-sans text-sans-lg font-bold">
+                                Find a Room
                             </h1>
-
-                            <p className="font-sans text-base-darker text-sans-xs">
+                            <p className="font-sans text-base-darker text-sans-xs pt-4">
                             For smaller groups, please consider our Shared Learning Rooms with capacities of 4, 8, and 10. 
                             Groups up to 20+ to 100 people are better for Meeting Rooms.
                             </p>
