@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
+import { BranchCard } from "~/components/BranchCard";
 import Breadcrumbs from "~/components/Breadcrumbs";
 import { mergeMeta } from "~/lib/merge-meta";
 import { breadcrumbLinks as indexBreadcrumbs } from "./_index";
@@ -53,6 +54,12 @@ export default function FindARoom() {
                         </CardHeader>
                     </div>
                 </Card>
+                <BranchCard
+                    address="someAddress"
+                    availability="somethning"
+                    links={[]}
+                    title="someTitle"
+                />
             </CardGroup>
         </div>
     );
