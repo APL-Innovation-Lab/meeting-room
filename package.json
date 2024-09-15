@@ -7,19 +7,27 @@
         "format": "prettier -w .",
         "lint": "eslint --fix --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
         "typecheck": "tsc",
+        "test": "npm run test:run",
+        "test:dev": "vitest dev",
+        "test:run": "vitest run",
         "build": "remix vite:build",
         "start": "remix-serve ./build/server/index.js",
         "styles:compile-components": "tsx tailwindcss-uswds/build/compile-components.ts",
         "styles:generate-theme": "tsx tailwindcss-uswds/build/generate-theme.ts"
     },
     "dependencies": {
+        "@deno/kv": "^0.8.2",
         "@remix-run/node": "^2.9.2",
         "@remix-run/react": "^2.9.2",
         "@remix-run/serve": "^2.9.2",
+        "@std/async": "npm:@jsr/std__async@^1.0.5",
         "@trussworks/react-uswds": "^9.0.0",
         "isbot": "^4.1.0",
         "react": "^18.2.0",
-        "react-dom": "^18.2.0"
+        "react-dom": "^18.2.0",
+        "validator": "^13.12.0",
+        "vitest": "^2.1.1",
+        "zod": "^3.23.8"
     },
     "devDependencies": {
         "@remix-run/dev": "^2.9.2",
@@ -27,6 +35,7 @@
         "@types/postcss-js": "^4.0.4",
         "@types/react": "^18.2.20",
         "@types/react-dom": "^18.2.7",
+        "@types/validator": "^13.12.1",
         "autoprefixer": "^10.4.19",
         "eslint": "^8.51.0",
         "get-sass-vars": "^4.0.2",

@@ -1,0 +1,842 @@
+[
+    {
+        "branch": {
+            "name": "Central Library",
+            "floor": 1,
+            "address": "710 W. César Chávez St.",
+            "image": "/library/ncl_location_page_large%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "c0f91a24-42ba-5d37-8e04-1ea425d1c642",
+            "name": "Conference Room A",
+            "type": "meeting-room",
+            "capacity": 20,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": true
+            },
+            "availableTimes": ["9:00 AM", "9:30 AM", "10:00 AM"],
+            "date": "2024-10-07"
+        }
+    },
+    {
+        "branch": {
+            "name": "Central Library",
+            "floor": 2,
+            "address": "710 W. César Chávez St.",
+            "image": "/library/ncl_location_page_large%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "6f1fd8f2-fcec-5bc7-9d1a-b3a1db61c21a",
+            "name": "Study Room B",
+            "type": "shared-learning-room",
+            "capacity": 8,
+            "amenities": {
+                "airplay": false,
+                "hdmi": true,
+                "whiteboard": true
+            },
+            "availableTimes": ["10:30 AM", "11:00 AM", "11:30 AM"],
+            "date": "2024-10-07"
+        }
+    },
+    {
+        "branch": {
+            "name": "Carver Branch",
+            "floor": 1,
+            "address": "1161 Angelina St.",
+            "image": "/library/acb_1a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "b0795e6a-327d-536c-bcdf-5e1c98ab4b5d",
+            "name": "Meeting Room C",
+            "type": "meeting-room",
+            "capacity": 15,
+            "amenities": {
+                "airplay": true,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["1:00 PM", "1:30 PM", "2:00 PM"],
+            "date": "2024-10-08"
+        }
+    },
+    {
+        "branch": {
+            "name": "Carver Branch",
+            "floor": 2,
+            "address": "1161 Angelina St.",
+            "image": "/library/acb_1a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "a1d9e4a6-79dc-5df1-9e3f-9b1f08c7e917",
+            "name": "Study Room D",
+            "type": "shared-learning-room",
+            "capacity": 10,
+            "amenities": {
+                "airplay": false,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["2:30 PM", "3:00 PM", "3:30 PM"],
+            "date": "2024-10-08"
+        }
+    },
+    {
+        "branch": {
+            "name": "Hampton Branch at Oak Hill",
+            "floor": 1,
+            "address": "5125 Convict Hill Rd.",
+            "image": "/library/aok_exterior2019sm4%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "f3c29b74-2d52-5ca6-8f17-8e1f6c5c9f12",
+            "name": "Conference Room E",
+            "type": "meeting-room",
+            "capacity": 18,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["9:00 AM", "9:30 AM", "10:00 AM"],
+            "date": "2024-10-09"
+        }
+    },
+    {
+        "branch": {
+            "name": "Hampton Branch at Oak Hill",
+            "floor": 2,
+            "address": "5125 Convict Hill Rd.",
+            "image": "/library/aok_exterior2019sm4%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "ab8e2b66-6f2f-53e8-8e9a-8c0e5d3d4f1d",
+            "name": "Study Room F",
+            "type": "shared-learning-room",
+            "capacity": 6,
+            "amenities": {
+                "airplay": false,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["10:30 AM", "11:00 AM", "11:30 AM"],
+            "date": "2024-10-09"
+        }
+    },
+    {
+        "branch": {
+            "name": "North Village Branch",
+            "floor": 1,
+            "address": "2505 Steck Ave.",
+            "image": "/library/anv_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "dfd2bead-d6b4-5d4e-b2d1-9ea56e9b3f1c",
+            "name": "Community Room G",
+            "type": "shared-learning-room",
+            "capacity": 25,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": true
+            },
+            "availableTimes": ["1:00 PM", "1:30 PM", "2:00 PM"],
+            "date": "2024-10-10"
+        }
+    },
+    {
+        "branch": {
+            "name": "North Village Branch",
+            "floor": 2,
+            "address": "2505 Steck Ave.",
+            "image": "/library/anv_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "4afdb2a4-5f1e-5d6a-9c1e-0b1a3d7f9e2c",
+            "name": "Study Room H",
+            "type": "shared-learning-room",
+            "capacity": 12,
+            "amenities": {
+                "airplay": false,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["2:30 PM", "3:00 PM", "3:30 PM"],
+            "date": "2024-10-10"
+        }
+    },
+    {
+        "branch": {
+            "name": "Little Walnut Creek Branch",
+            "floor": 1,
+            "address": "835 W. Rundberg Ln.",
+            "image": "/library/alw_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "2b9e7c4d-1f2b-52a8-9e3d-1e5a7c9b0f3e",
+            "name": "Conference Room I",
+            "type": "meeting-room",
+            "capacity": 14,
+            "amenities": {
+                "airplay": true,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["9:00 AM", "9:30 AM", "10:00 AM"],
+            "date": "2024-10-11"
+        }
+    },
+    {
+        "branch": {
+            "name": "Little Walnut Creek Branch",
+            "floor": 2,
+            "address": "835 W. Rundberg Ln.",
+            "image": "/library/alw_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "3e1f9b5a-7c4d-5b2e-9d1a-0f2c5a6e7b8d",
+            "name": "Study Room J",
+            "type": "shared-learning-room",
+            "capacity": 8,
+            "amenities": {
+                "airplay": false,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["10:30 AM", "11:00 AM", "11:30 AM"],
+            "date": "2024-10-11"
+        }
+    },
+    {
+        "branch": {
+            "name": "Terrazas Branch",
+            "floor": 1,
+            "address": "1105 E. César Chávez St.",
+            "image": "/library/atb_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "7b6c5d4e-3f2a-5e1d-9c0b-1a2d3e4f5g6h",
+            "name": "Meeting Room K",
+            "type": "meeting-room",
+            "capacity": 16,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["1:00 PM", "1:30 PM", "2:00 PM"],
+            "date": "2024-10-12"
+        }
+    },
+    {
+        "branch": {
+            "name": "Terrazas Branch",
+            "floor": 2,
+            "address": "1105 E. César Chávez St.",
+            "image": "/library/atb_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "8c7d6e5f-4g3h-5i2j-9k1l-0m9n8o7p6q5r",
+            "name": "Study Room L",
+            "type": "shared-learning-room",
+            "capacity": 9,
+            "amenities": {
+                "airplay": false,
+                "hdmi": true,
+                "whiteboard": true
+            },
+            "availableTimes": ["2:30 PM", "3:00 PM", "3:30 PM"],
+            "date": "2024-10-12"
+        }
+    },
+    {
+        "branch": {
+            "name": "Yarborough Branch",
+            "floor": 1,
+            "address": "2200 Hancock Dr.",
+            "image": "/library/apl_yarborough.jpg"
+        },
+        "info": {
+            "id": "1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
+            "name": "Conference Room M",
+            "type": "meeting-room",
+            "capacity": 20,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": true
+            },
+            "availableTimes": ["9:00 AM", "9:30 AM", "10:00 AM"],
+            "date": "2024-10-13"
+        }
+    },
+    {
+        "branch": {
+            "name": "Yarborough Branch",
+            "floor": 2,
+            "address": "2200 Hancock Dr.",
+            "image": "/library/apl_yarborough.jpg"
+        },
+        "info": {
+            "id": "0p9o8n7m-6l5k-4j3i-2h1g-0f9e8d7c6b5a",
+            "name": "Study Room N",
+            "type": "shared-learning-room",
+            "capacity": 7,
+            "amenities": {
+                "airplay": false,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["10:30 AM", "11:00 AM", "11:30 AM"],
+            "date": "2024-10-13"
+        }
+    },
+    {
+        "branch": {
+            "name": "Milwood Branch",
+            "floor": 1,
+            "address": "12500 Amherst Dr.",
+            "image": "/library/ami_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "9e8d7c6b-5a4f-3e2d-1c0b-9a8b7c6d5e4f",
+            "name": "Community Room O",
+            "type": "shared-learning-room",
+            "capacity": 22,
+            "amenities": {
+                "airplay": true,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["1:00 PM", "1:30 PM", "2:00 PM"],
+            "date": "2024-10-14"
+        }
+    },
+    {
+        "branch": {
+            "name": "Milwood Branch",
+            "floor": 2,
+            "address": "12500 Amherst Dr.",
+            "image": "/library/ami_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "f1e2d3c4-b5a6-7c8d-9e0f-1g2h3i4j5k6l",
+            "name": "Study Room P",
+            "type": "shared-learning-room",
+            "capacity": 11,
+            "amenities": {
+                "airplay": false,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["2:30 PM", "3:00 PM", "3:30 PM"],
+            "date": "2024-10-14"
+        }
+    },
+    {
+        "branch": {
+            "name": "Pleasant Hill Branch",
+            "floor": 1,
+            "address": "211 E. William Cannon Dr.",
+            "image": "/library/aph_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "a2b3c4d5-e6f7-8g9h-0i1j-2k3l4m5n6o7p",
+            "name": "Conference Room Q",
+            "type": "meeting-room",
+            "capacity": 17,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["9:00 AM", "9:30 AM", "10:00 AM"],
+            "date": "2024-10-15"
+        }
+    },
+    {
+        "branch": {
+            "name": "Pleasant Hill Branch",
+            "floor": 2,
+            "address": "211 E. William Cannon Dr.",
+            "image": "/library/aph_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "0p9o8n7m-6l5k-4j3i-2h1g-0f9e8d7c6b5a",
+            "name": "Study Room R",
+            "type": "shared-learning-room",
+            "capacity": 9,
+            "amenities": {
+                "airplay": false,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["10:30 AM", "11:00 AM", "11:30 AM"],
+            "date": "2024-10-15"
+        }
+    },
+    {
+        "branch": {
+            "name": "Spicewood Springs Branch",
+            "floor": 1,
+            "address": "8637 Spicewood Springs Rd.",
+            "image": "/library/asr_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "b1c2d3e4-f5g6-7h8i-9j0k-1l2m3n4o5p6q",
+            "name": "Meeting Room S",
+            "type": "meeting-room",
+            "capacity": 19,
+            "amenities": {
+                "airplay": true,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["1:00 PM", "1:30 PM", "2:00 PM"],
+            "date": "2024-10-16"
+        }
+    },
+    {
+        "branch": {
+            "name": "Spicewood Springs Branch",
+            "floor": 2,
+            "address": "8637 Spicewood Springs Rd.",
+            "image": "/library/asr_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "6q5p4o3n-2m1l-0k9j-8i7h-6g5f4e3d2c1b",
+            "name": "Study Room T",
+            "type": "shared-learning-room",
+            "capacity": 8,
+            "amenities": {
+                "airplay": false,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["2:30 PM", "3:00 PM", "3:30 PM"],
+            "date": "2024-10-16"
+        }
+    },
+    {
+        "branch": {
+            "name": "Twin Oaks Branch",
+            "floor": 1,
+            "address": "1800 S. Fifth St.",
+            "image": "/library/ato_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "c1d2e3f4-g5h6-7i8j-9k0l-1m2n3o4p5q6r",
+            "name": "Conference Room U",
+            "type": "meeting-room",
+            "capacity": 15,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": true
+            },
+            "availableTimes": ["9:00 AM", "9:30 AM", "10:00 AM"],
+            "date": "2024-10-17"
+        }
+    },
+    {
+        "branch": {
+            "name": "Twin Oaks Branch",
+            "floor": 2,
+            "address": "1800 S. Fifth St.",
+            "image": "/library/ato_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "7r6q5p4o-3n2m-1l0k-9j8i-7h6g5f4e3d2c",
+            "name": "Study Room V",
+            "type": "shared-learning-room",
+            "capacity": 7,
+            "amenities": {
+                "airplay": false,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["10:30 AM", "11:00 AM", "11:30 AM"],
+            "date": "2024-10-17"
+        }
+    },
+    {
+        "branch": {
+            "name": "Windsor Park Branch",
+            "floor": 1,
+            "address": "5833 Westminster Dr.",
+            "image": "/library/awp_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "d3e4f5g6-h7i8-9j0k-1l2m-3n4o5p6q7r8s",
+            "name": "Meeting Room W",
+            "type": "meeting-room",
+            "capacity": 18,
+            "amenities": {
+                "airplay": true,
+                "hdmi": false,
+                "whiteboard": false
+            },
+            "availableTimes": ["1:00 PM", "1:30 PM", "2:00 PM"],
+            "date": "2024-10-18"
+        }
+    },
+    {
+        "branch": {
+            "name": "Windsor Park Branch",
+            "floor": 2,
+            "address": "5833 Westminster Dr.",
+            "image": "/library/awp_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "8s7r6q5p-4o3n-2m1l-0k9j-8i7h6g5f4e3d",
+            "name": "Study Room X",
+            "type": "shared-learning-room",
+            "capacity": 10,
+            "amenities": {
+                "airplay": false,
+                "hdmi": true,
+                "whiteboard": true
+            },
+            "availableTimes": ["2:30 PM", "3:00 PM", "3:30 PM"],
+            "date": "2024-10-18"
+        }
+    },
+    {
+        "branch": {
+            "name": "Menchaca Road Branch",
+            "floor": 1,
+            "address": "5500 Menchaca Rd.",
+            "image": "/library/amr_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "e4f5g6h7-i8j9-0k1l-2m3n-4o5p6q7r8s9t",
+            "name": "Conference Room Y",
+            "type": "meeting-room",
+            "capacity": 16,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["9:00 AM", "9:30 AM", "10:00 AM"],
+            "date": "2024-10-07"
+        }
+    },
+    {
+        "branch": {
+            "name": "Menchaca Road Branch",
+            "floor": 2,
+            "address": "5500 Menchaca Rd.",
+            "image": "/library/amr_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "9t8s7r6q-5p4o-3n2m-1l0k-9j8i7h6g5f4e",
+            "name": "Study Room Z",
+            "type": "shared-learning-room",
+            "capacity": 9,
+            "amenities": {
+                "airplay": false,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["10:30 AM", "11:00 AM", "11:30 AM"],
+            "date": "2024-10-07"
+        }
+    },
+    {
+        "branch": {
+            "name": "Cepeda Branch",
+            "floor": 1,
+            "address": "651 N. Pleasant Valley Rd.",
+            "image": "/library/acp%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "f5g6h7i8-j9k0-1l2m-3n4o-5p6q7r8s9t0u",
+            "name": "Community Room AA",
+            "type": "shared-learning-room",
+            "capacity": 20,
+            "amenities": {
+                "airplay": true,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["1:00 PM", "1:30 PM", "2:00 PM"],
+            "date": "2024-10-08"
+        }
+    },
+    {
+        "branch": {
+            "name": "Cepeda Branch",
+            "floor": 2,
+            "address": "651 N. Pleasant Valley Rd.",
+            "image": "/library/acp%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "0u9t8s7r-6q5p-4o3n-2m1l-0k9j8i7h6g5f",
+            "name": "Study Room BB",
+            "type": "shared-learning-room",
+            "capacity": 8,
+            "amenities": {
+                "airplay": false,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["2:30 PM", "3:00 PM", "3:30 PM"],
+            "date": "2024-10-08"
+        }
+    },
+    {
+        "branch": {
+            "name": "Ruiz Branch",
+            "floor": 1,
+            "address": "1600 Grove Blvd.",
+            "image": "/library/arz_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "g6h7i8j9-k0l1-2m3n-4o5p-6q7r8s9t0u1v",
+            "name": "Conference Room CC",
+            "type": "meeting-room",
+            "capacity": 17,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": true
+            },
+            "availableTimes": ["9:00 AM", "9:30 AM", "10:00 AM"],
+            "date": "2024-10-09"
+        }
+    },
+    {
+        "branch": {
+            "name": "Ruiz Branch",
+            "floor": 2,
+            "address": "1600 Grove Blvd.",
+            "image": "/library/arz_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "v1u0t9s8-r7q6-5p4o-3n2m-1l0k9j8i7h6g",
+            "name": "Study Room DD",
+            "type": "shared-learning-room",
+            "capacity": 7,
+            "amenities": {
+                "airplay": false,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["10:30 AM", "11:00 AM", "11:30 AM"],
+            "date": "2024-10-09"
+        }
+    },
+    {
+        "branch": {
+            "name": "St. John Branch",
+            "floor": 1,
+            "address": "7500 Blessing Ave.",
+            "image": "/library/asj_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "h7i8j9k0-l1m2-3n4o-5p6q-7r8s9t0u1v2w",
+            "name": "Community Room EE",
+            "type": "shared-learning-room",
+            "capacity": 21,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["1:00 PM", "1:30 PM", "2:00 PM"],
+            "date": "2024-10-10"
+        }
+    },
+    {
+        "branch": {
+            "name": "St. John Branch",
+            "floor": 2,
+            "address": "7500 Blessing Ave.",
+            "image": "/library/asj_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "w2v1u0t9-s8r7-6q5p-4o3n-2m1l0k9j8i7h",
+            "name": "Study Room FF",
+            "type": "shared-learning-room",
+            "capacity": 9,
+            "amenities": {
+                "airplay": false,
+                "hdmi": true,
+                "whiteboard": true
+            },
+            "availableTimes": ["2:30 PM", "3:00 PM", "3:30 PM"],
+            "date": "2024-10-10"
+        }
+    },
+    {
+        "branch": {
+            "name": "Southeast Branch",
+            "floor": 1,
+            "address": "5803 Nuckols Crossing Rd.",
+            "image": "/library/ase_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "i8j9k0l1-m2n3-4o5p-6q7r-8s9t0u1v2w3x",
+            "name": "Conference Room GG",
+            "type": "meeting-room",
+            "capacity": 16,
+            "amenities": {
+                "airplay": true,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["9:00 AM", "9:30 AM", "10:00 AM"],
+            "date": "2024-10-11"
+        }
+    },
+    {
+        "branch": {
+            "name": "Southeast Branch",
+            "floor": 2,
+            "address": "5803 Nuckols Crossing Rd.",
+            "image": "/library/ase_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "x3w2v1u0-t9s8-7r6q-5p4o-3n2m1l0k9j8i",
+            "name": "Study Room HH",
+            "type": "shared-learning-room",
+            "capacity": 8,
+            "amenities": {
+                "airplay": false,
+                "hdmi": false,
+                "whiteboard": false
+            },
+            "availableTimes": ["10:30 AM", "11:00 AM", "11:30 AM"],
+            "date": "2024-10-11"
+        }
+    },
+    {
+        "branch": {
+            "name": "Willie Mae Kirk Branch",
+            "floor": 1,
+            "address": "3101 Oak Springs Dr.",
+            "image": "/library/awk_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "j9k0l1m2-n3o4-5p6q-7r8s-9t0u1v2w3x4y",
+            "name": "Community Room II",
+            "type": "shared-learning-room",
+            "capacity": 19,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": true
+            },
+            "availableTimes": ["1:00 PM", "1:30 PM", "2:00 PM"],
+            "date": "2024-10-12"
+        }
+    },
+    {
+        "branch": {
+            "name": "Willie Mae Kirk Branch",
+            "floor": 2,
+            "address": "3101 Oak Springs Dr.",
+            "image": "/library/awk_0a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "y4x3w2v1-u0t9-8s7r-6q5p-4o3n2m1l0k9j",
+            "name": "Study Room JJ",
+            "type": "shared-learning-room",
+            "capacity": 10,
+            "amenities": {
+                "airplay": false,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["2:30 PM", "3:00 PM", "3:30 PM"],
+            "date": "2024-10-12"
+        }
+    },
+    {
+        "branch": {
+            "name": "Austin History Center",
+            "floor": 1,
+            "address": "810 Guadalupe St.",
+            "image": "/library/ahc_1a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "k0l1m2n3-o4p5-6q7r-8s9t-0u1v2w3x4y5z",
+            "name": "Conference Room KK",
+            "type": "meeting-room",
+            "capacity": 14,
+            "amenities": {
+                "airplay": true,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["9:00 AM", "9:30 AM", "10:00 AM"],
+            "date": "2024-10-13"
+        }
+    },
+    {
+        "branch": {
+            "name": "Austin History Center",
+            "floor": 2,
+            "address": "810 Guadalupe St.",
+            "image": "/library/ahc_1a%5B1%5D_0.jpg"
+        },
+        "info": {
+            "id": "z5y4x3w2-v1u0-9t8s-7r6q-5p4o3n2m1l0k",
+            "name": "Study Room LL",
+            "type": "shared-learning-room",
+            "capacity": 6,
+            "amenities": {
+                "airplay": false,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["10:30 AM", "11:00 AM", "11:30 AM"],
+            "date": "2024-10-13"
+        }
+    },
+    {
+        "branch": {
+            "name": "Recycled Reads Bookstore",
+            "floor": 1,
+            "address": "5335 Burnet Rd.",
+            "image": "/library/recycled_readssm.jpg"
+        },
+        "info": {
+            "id": "l1m2n3o4-p5q6-7r8s-9t0u-1v2w3x4y5z6a",
+            "name": "Community Room MM",
+            "type": "shared-learning-room",
+            "capacity": 12,
+            "amenities": {
+                "airplay": true,
+                "hdmi": true,
+                "whiteboard": false
+            },
+            "availableTimes": ["1:00 PM", "1:30 PM", "2:00 PM"],
+            "date": "2024-10-14"
+        }
+    },
+    {
+        "branch": {
+            "name": "Recycled Reads Bookstore",
+            "floor": 2,
+            "address": "5335 Burnet Rd.",
+            "image": "/library/recycled_readssm.jpg"
+        },
+        "info": {
+            "id": "a6z5y4x3-w2v1-0u9t-8s7r-6q5p4o3n2m1l",
+            "name": "Study Room NN",
+            "type": "shared-learning-room",
+            "capacity": 7,
+            "amenities": {
+                "airplay": false,
+                "hdmi": false,
+                "whiteboard": true
+            },
+            "availableTimes": ["2:30 PM", "3:00 PM", "3:30 PM"],
+            "date": "2024-10-14"
+        }
+    }
+]
