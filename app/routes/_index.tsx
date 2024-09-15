@@ -1,3 +1,4 @@
+import { useNavigate } from "@remix-run/react";
 import { Card, CardGroup, CardHeader, Header, Label, Link, Select } from "@trussworks/react-uswds";
 import Breadcrumbs from "~/components/Breadcrumbs";
 import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
@@ -5,11 +6,13 @@ import { mergeMeta } from "~/lib/merge-meta";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Meeting Spaces • ${parentTitle}` }]);
 
+export const breadcrumbLinks = [
+    { href: "https://library.austintexas.gov", text: "Home" },
+    { href: "/", text: "Meeting Spaces" },
+];
+
 export default function Index() {
-    const breadcrumbLinks = [
-        { href: "#", text: "Home" },
-        { href: "#", text: "Meeting Spaces" },
-    ];
+    const navigate = useNavigate();
 
     return (
         <div className="flex justify-center">
@@ -47,11 +50,17 @@ export default function Index() {
                                 defaultValue="empty"
                                 id="reservation-select"
                                 name="reservation-select"
+                                onInput={event => {
+                                    const value = (event.target as HTMLSelectElement)
+                                        .selectedOptions[0].value;
+                                    const param = new URLSearchParams({ "org-type": value });
+                                    navigate(`/find-a-room?${param}`);
+                                }}
                             >
                                 <option disabled value="empty">
                                     - Select -{" "}
                                 </option>
-                                <option value="non-profit">
+                                <option value="nonprofit">
                                     Room for Non-Profit/Non-Commercial Activity
                                 </option>
                                 <option value="business">Room for Business/Company Work</option>
