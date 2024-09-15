@@ -1,0 +1,21 @@
+[
+    { "branch": "Central Library", "lngLat": [-97.7543461, 30.2659493] },
+    { "branch": "Carver Branch", "lngLat": [-97.7266216, 30.2695438] },
+    { "branch": "Cepeda Branch", "lngLat": [-97.711451, 30.2590449] },
+    { "branch": "Hampton Branch at Oak Hill", "lngLat": [-97.857603, 30.2176432] },
+    { "branch": "Howson Branch", "lngLat": [-97.7701679, 30.2982571] },
+    { "branch": "John Gillum Branch (North Village)", "lngLat": [-97.7330849, 30.3621695] },
+    { "branch": "Little Walnut Creek Branch", "lngLat": [-97.7010141, 30.3632587] },
+    { "branch": "Menchaca Road Branch", "lngLat": [-97.7999033, 30.2166124] },
+    { "branch": "Milwood Branch", "lngLat": [-97.7187446, 30.4223518] },
+    { "branch": "Pleasant Hill Branch", "lngLat": [-97.7797747, 30.19227] },
+    { "branch": "Ruiz Branch", "lngLat": [-97.7096667, 30.2298405] },
+    { "branch": "St. John Branch", "lngLat": [-97.6959673, 30.3326245] },
+    { "branch": "Southeast Branch", "lngLat": [-97.7445422, 30.1876349] },
+    { "branch": "Spicewood Springs Branch", "lngLat": [-97.7764523, 30.43325] },
+    { "branch": "Terrazas Branch", "lngLat": [-97.7360551, 30.2599103] },
+    { "branch": "Twin Oaks Branch", "lngLat": [-97.76496, 30.248678] },
+    { "branch": "University Hills Branch", "lngLat": [-97.6691362, 30.30868] },
+    { "branch": "Windsor Park Branch", "lngLat": [-97.6927867, 30.3116342] },
+    { "branch": "Yarborough Branch", "lngLat": [-97.7432691, 30.3234289] }
+]

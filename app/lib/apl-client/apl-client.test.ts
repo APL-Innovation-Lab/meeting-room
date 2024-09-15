@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
-import type { Reservation, SearchOptions } from "./apl-client";
-import { apl } from "./apl-client";
+import type { Reservation, SearchOptions } from "./apl-client.server";
+import { apl } from "./apl-client.server";
 import { ReservationNotFoundError, RoomNotAvailableAtTimeError } from "./errors";
 
 // Mock data for testing

@@ -155,7 +155,7 @@ export const apl = {
      * @returns A SafeResult containing an array of LibraryRoom or an AplError.
      */
     async getRooms(
-        options: Partial<SearchOptions>,
+        options: Partial<SearchOptions> = {},
         timeout = TIMEOUT,
     ): Promise<SafeResult<LibraryRoom[]>> {
         await randomDelay(timeout);
