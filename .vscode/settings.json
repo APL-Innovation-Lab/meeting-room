@@ -35,5 +35,8 @@
         "backgroundColor": "#434B54",
         "color": "#fff",
         "borderRadius": "2px"
+    },
+    "[dotenv]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
     }
 }
