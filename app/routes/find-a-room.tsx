@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, useLoaderData } from "@remix-run/react";
 import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
+import { BranchCard } from "~/components/BranchCard";
 import Breadcrumbs from "~/components/Breadcrumbs";
 import { Map } from "~/components/Map";
 import lngLat from "~/data/lng-lat.json";
@@ -62,6 +63,12 @@ export default function FindARoom() {
                         <Map branchLngLats={branchLngLats} token={mapboxToken} />
                     </div>
                 </Card>
+                <BranchCard
+                    address="someAddress"
+                    availability="somethning"
+                    links={[]}
+                    title="someTitle"
+                />
             </CardGroup>
         </div>
     );
