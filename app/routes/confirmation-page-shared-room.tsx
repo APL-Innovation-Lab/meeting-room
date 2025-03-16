@@ -22,11 +22,12 @@ export default function confirmationPageSharedRoom() {
                                 <strong className="font-bold text-center"> Status: Awaiting Confirmation</strong>
                             </p> */}
 
-                            <div className="my-4">
+                            <div className="bg-gray-100 usa-dark-background" style={{ background: '#F0F0F0', padding: 10, textAlign: "center", textDecoration: "none" }}>
 
-                                <p className="font-sans text-base-darker text-sans-xs text-center">
-                                <strong className="font-bold text-center"> Please Note</strong>
-                            </p>
+
+                                <h1 className="font-sans text-base-darker text-sans-xs text-center">
+                                    <strong className="font-bold text-center"> Please Note</strong>
+                                </h1>
                                 <ul className="list-disc ml-4">
                                     <li>
                                         Beverages with lids are allowed. Please no food in the rooms
@@ -36,23 +37,25 @@ export default function confirmationPageSharedRoom() {
                                     </li>
                                 </ul>
                             </div>
+                            </CardHeader>
+                            <br/>
                             <p className="font-sans text-sans-xs text-center">
                                 The following room has been reserved. A confirmation email has been sent.
                             </p>
-                        </CardHeader>
+
 
                         <div className="flex-col px-3">
 
                             <div className="my-5">
-                                
+
                                 <p className="font-sans text-sans-xs text-center">
-                                <strong>Austin Central Library, #3</strong> 
-                                    
+                                    <strong>Austin Central Library, #3</strong>
+
                                 </p>
                                 <p className="font-sans text-sans-xs text-center">
-                                710 W Cesar Chavez St, Austin, TX 78702
+                                    710 W Cesar Chavez St, Austin, TX 78702
                                 </p>
-                                <br/>
+                                <br />
                                 <p className="font-sans text-sans-xs text-center">
                                     Mon 3/4/24
                                 </p>
@@ -62,28 +65,28 @@ export default function confirmationPageSharedRoom() {
                                 <p className="font-sans text-sans-xs text-center">
                                     Capacity: 100
                                 </p>
-                                <br/>
+                                <br />
 
                                 <div className="flex justify-center">
-                                <Link href="#">
-                                    <Button className="font-sans text-sans-xs" type='button'>
-                                    Back to Meeting Spaces
-                                    </Button>
+                                    <Link href="#">
+                                        <Button className="font-sans text-sans-xs" type='button'>
+                                            Back to Meeting Spaces
+                                        </Button>
                                     </Link>
                                 </div>
-                                <br/>
+                                <br />
                                 <div className="flex justify-center">
-                                <Link href="#">
-                                    <Button className="font-sans text-sans-xs usa-button usa-button--outline" type='button'>
-                                    Add to Calendar
-                                    </Button>
+                                    <Link href="#">
+                                        <Button className="font-sans text-sans-xs usa-button usa-button--outline" type='button'>
+                                            Add to Calendar
+                                        </Button>
                                     </Link>
                                 </div>
-                                <br/>
+                                <br />
 
-                                <div className="flex justify-center">                                        
+                                <div className="flex justify-center">
                                     <Link href="#">Cancel Reservation</Link>
-                                    </div>
+                                </div>
 
                             </div>
                         </div>

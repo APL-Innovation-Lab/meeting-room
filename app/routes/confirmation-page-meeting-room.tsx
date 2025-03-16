@@ -21,36 +21,40 @@ export default function confirmationPageMeetingRoom() {
                             <p className="font-sans text-base-darker text-sans-xs text-center">
                                 <strong className="font-bold"> Status: Awaiting Confirmation</strong>
                             </p>
-                            <br/>
-                            <div className="bg-gray-100">
-                                <p className="font-sans text-base-darker text-sans-xs text-center">
-                                    <strong className="font-bold"> Please Note</strong>
-                                </p>
-                                <p className="font-sans text-base-darker text-sans-xs text-center">
+                            <br />
+
+                            <div className="bg-gray-100 usa-dark-background" style={{ background: '#F0F0F0', padding: 10, textAlign: "center", textDecoration: "none", color: "#343434" }}>
+
+                                <h1 className="font-sans text-base-darker text-sans-xs text-center" >
+                                    <strong className="font-bold text-center"> Please Note</strong>
+                                </h1>
+                                <h6 className="font-sans text-base-darker text-sans-xs text-center" style={{ color: "#343434" }}>
                                     If you are booking less than three days in
                                     advance of your planned event, please contact the branch directly to
                                     assure your request is processed in time.
-                                </p>
-                                <br/>
-
+                                </h6>
+                            </div>
+                            <br />
+                            <div>
                                 <p className="font-sans text-sans-xs text-center">
                                     Thank you for requesting a Meeting Room. We will process your request within two
                                     business days. Please check your email for updates on the status of your request.
                                 </p>
                             </div>
+
                         </CardHeader>
 
                         <div className="flex-col px-3 ">
 
                             <div className="my-4">
-                                
-                            <p className="font-sans text-sans-xs text-center">
-                                <strong>Carver Branch #1</strong> 
+
+                                <p className="font-sans text-sans-xs text-center">
+                                    <strong>Carver Branch #1</strong>
                                 </p>
                                 <p className="font-sans text-sans-xs text-center">
                                     1161 Angelina St, Austin, TX
                                 </p>
-                                <br/>
+                                <br />
                                 <p className="font-sans text-sans-xs text-center">
                                     Mon 3/4/24
                                 </p>
@@ -60,17 +64,17 @@ export default function confirmationPageMeetingRoom() {
                                 <p className="font-sans text-sans-xs text-center">
                                     Capacity: 100
                                 </p>
-                                <br/>
+                                <br />
 
                                 <div className="flex justify-center">
                                     <Link href="#">
-                                    <Button className="font-sans text-sans-xs " type='button'>
-                                    Back to Meeting Spaces
-                                    </Button>
+                                        <Button className="font-sans text-sans-xs " type='button'>
+                                            Back to Meeting Spaces
+                                        </Button>
                                     </Link>
 
                                 </div>
-                                <br/>
+                                <br />
 
                                 <div className="flex justify-center">
                                     <Link href="#">Cancel Request</Link>
