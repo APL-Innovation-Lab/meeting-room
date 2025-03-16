@@ -2,7 +2,7 @@ import { useNavigate } from "@remix-run/react";
 import { Button, Card, CardGroup, CardHeader, Header, Label, Link, Select } from "@trussworks/react-uswds";
 import { mergeMeta } from "~/lib/merge-meta";
 
-export const meta = mergeMeta(({ parentTitle }) => [{ title: `Confirmation page • Shared Room ${parentTitle}` }]);
+export const meta = mergeMeta(({ parentTitle }) => [{ title: `Confirmation page • Shared Room` }]);
 
 
 export default function confirmationPageSharedRoom() {
@@ -37,7 +37,7 @@ export default function confirmationPageSharedRoom() {
                                 </ul>
                             </div>
                             <p className="font-sans text-sans-xs text-center">
-                                The following room has been reserved. A confirmation email has been.
+                                The following room has been reserved. A confirmation email has been sent.
                             </p>
                         </CardHeader>
 
@@ -66,15 +66,15 @@ export default function confirmationPageSharedRoom() {
 
                                 <div className="flex justify-center">
                                 <Link href="#">
-                                    <Button className="font-sans text-sans-xs">
-                                    Back to meeting Spaces
+                                    <Button className="font-sans text-sans-xs" type='button'>
+                                    Back to Meeting Spaces
                                     </Button>
                                     </Link>
                                 </div>
                                 <br/>
                                 <div className="flex justify-center">
                                 <Link href="#">
-                                    <Button className="font-sans text-sans-xs">
+                                    <Button className="font-sans text-sans-xs usa-button usa-button--outline" type='button'>
                                     Add to Calendar
                                     </Button>
                                     </Link>
@@ -82,7 +82,7 @@ export default function confirmationPageSharedRoom() {
                                 <br/>
 
                                 <div className="flex justify-center">                                        
-                                    <Link href="#">Cancel Request</Link>
+                                    <Link href="#">Cancel Reservation</Link>
                                     </div>
 
                             </div>
