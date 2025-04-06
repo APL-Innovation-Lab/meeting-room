@@ -1,11 +1,11 @@
-import { useNavigate } from "@remix-run/react";
+// import { useNavigate } from "@remix-run/react";
 import { Button, Card, CardGroup, CardHeader, Header, Label, Link, Select } from "@trussworks/react-uswds";
 import { mergeMeta } from "~/lib/merge-meta";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Confirmation page • Meeting Room` }]);
 
-export default function confirmationPageMeetingRoom() {
-    const navigate = useNavigate();
+export default function ConfirmationPageMeetingRoom() {
+    // const navigate = useNavigate();
 
     return (
         <div className="flex justify-center">

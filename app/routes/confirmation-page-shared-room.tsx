@@ -1,12 +1,12 @@
-import { useNavigate } from "@remix-run/react";
+// import { useNavigate } from "@remix-run/react";
 import { Button, Card, CardGroup, CardHeader, Header, Label, Link, Select } from "@trussworks/react-uswds";
 import { mergeMeta } from "~/lib/merge-meta";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Confirmation page • Shared Room` }]);
 
 
-export default function confirmationPageSharedRoom() {
-    const navigate = useNavigate();
+export default function ConfirmationPageSharedRoom() {
+    // const navigate = useNavigate();
 
     return (
         <div className="flex justify-center">
@@ -18,9 +18,6 @@ export default function confirmationPageSharedRoom() {
                             <h1 className="font-sans text-[40px] usa-card__heading font-bold py-2 text-center">
                                 Submitted!
                             </h1>
-                            {/* <p className="font-sans text-base-darker text-sans-xs text-center">
-                                <strong className="font-bold text-center"> Status: Awaiting Confirmation</strong>
-                            </p> */}
 
                             <div className="bg-gray-100 usa-dark-background" style={{ background: '#F0F0F0', padding: 10, textAlign: "center", textDecoration: "none" }}>
 
@@ -28,7 +25,7 @@ export default function confirmationPageSharedRoom() {
                                 <h1 className="font-sans text-base-darker text-sans-xs text-center">
                                     <strong className="font-bold text-center"> Please Note</strong>
                                 </h1>
-                                <ul className="list-disc ml-4">
+                                <ul className="list-disc list-inside ml-4">
                                     <li>
                                         Beverages with lids are allowed. Please no food in the rooms
                                     </li>
