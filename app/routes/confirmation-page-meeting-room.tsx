@@ -68,7 +68,7 @@ export default function ConfirmationPageMeetingRoom() {
 
                                 <div className="flex justify-center">
                                     <Link href="#">
-                                        <Button className="font-sans text-sans-xs " type='button'>
+                                        <Button className="font-sans text-sans-xs " type='button' style={{ background: '#1E6F98', paddingTop: 15, paddingBottom: 15, paddingLeft: 41, paddingRight: 41, color: "#FFFFFFFF" }}>
                                             Back to Meeting Spaces
                                         </Button>
                                     </Link>

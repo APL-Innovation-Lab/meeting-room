@@ -66,7 +66,7 @@ export default function ConfirmationPageSharedRoom() {
 
                                 <div className="flex justify-center">
                                     <Link href="#">
-                                        <Button className="font-sans text-sans-xs" type='button'>
+                                        <Button className="font-sans text-sans-xs" type='button' style={{ background: '#1E6F98', paddingTop: 15, paddingBottom: 15, paddingLeft: 41, paddingRight: 41, color: "#FFFFFFFF" }}>
                                             Back to Meeting Spaces
                                         </Button>
                                     </Link>
@@ -74,7 +74,7 @@ export default function ConfirmationPageSharedRoom() {
                                 <br />
                                 <div className="flex justify-center">
                                     <Link href="#">
-                                        <Button className="font-sans text-sans-xs usa-button usa-button--outline" type='button'>
+                                        <Button className="font-sans text-sans-xs usa-button usa-button--outline" type='button' style={{ paddingTop: 15, paddingBottom: 15, paddingLeft: 68, paddingRight: 68 }}>
                                             Add to Calendar
                                         </Button>
                                     </Link>
