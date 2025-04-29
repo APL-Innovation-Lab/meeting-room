@@ -6,7 +6,6 @@ export const meta = mergeMeta(({ parentTitle }) => [{ title: `Confirmation page 
 
 
 export default function ConfirmationPageSharedRoom() {
-    // const navigate = useNavigate();
 
     return (
         <div className="flex justify-center">
@@ -23,7 +22,7 @@ export default function ConfirmationPageSharedRoom() {
 
 
                                 <h1 className="font-sans text-base-darker text-sans-xs text-center">
-                                    <strong className="font-bold text-center"> Please Note</strong>
+                                    <strong className="text-bold text-center" style={{ color: "#000000FF" }}> Please Note</strong>
                                 </h1>
                                 <ul className="list-disc list-inside ml-4">
                                     <li>

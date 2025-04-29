@@ -5,7 +5,6 @@ import { mergeMeta } from "~/lib/merge-meta";
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Confirmation page • Meeting Room` }]);
 
 export default function ConfirmationPageMeetingRoom() {
-    // const navigate = useNavigate();
 
     return (
         <div className="flex justify-center">
@@ -26,7 +25,7 @@ export default function ConfirmationPageMeetingRoom() {
                             <div className="bg-gray-100 usa-dark-background" style={{ background: '#F0F0F0', padding: 10, textAlign: "center", textDecoration: "none", color: "#343434" }}>
 
                                 <h1 className="font-sans text-base-darker text-sans-xs text-center" >
-                                    <strong className="font-bold text-center"> Please Note</strong>
+                                    <strong className="text-bold text-center" style={{ color: "#000000FF" }}> Please Note</strong>
                                 </h1>
                                 <h6 className="font-sans text-base-darker text-sans-xs text-center" style={{ color: "#343434" }}>
                                     If you are booking less than three days in
