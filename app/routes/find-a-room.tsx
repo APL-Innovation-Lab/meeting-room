@@ -13,7 +13,7 @@ export const breadcrumbLinks = [...indexBreadcrumbs, { href: "/find-a-room", tex
 export async function loader({ request }: Route.LoaderArgs) {
     return {
         orgType: new URL(request.url).searchParams.get("org-type") as "business" | "nonprofit",
-        accessToken: process.env.MAPBOX_TOKEN!,
+        accessToken: import.meta.env.VITE_APP_MAPBOX_TOKEN,
         branchLngLats: lngLat.map(branch => branch.lngLat as [number, number]),
     };
 }
