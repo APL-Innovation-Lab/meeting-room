@@ -1,6 +1,6 @@
-import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
+import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "react-router";
+import { json } from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import { site } from "~/lib/site";
 
 import uswdsReact from "@trussworks/react-uswds/lib/index.css?url";

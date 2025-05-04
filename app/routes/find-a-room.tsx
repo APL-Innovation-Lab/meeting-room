@@ -1,5 +1,5 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json, useLoaderData } from "@remix-run/react";
+import type { LoaderFunctionArgs } from "react-router";
+import { json, useLoaderData } from "react-router";
 import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
 import Breadcrumbs from "~/components/Breadcrumbs";
 import { Map } from "~/components/Map";
