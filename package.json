@@ -17,6 +17,7 @@
     },
     "dependencies": {
         "@deno/kv": "^0.8.2",
+        "@react-router/fs-routes": "^7.5.3",
         "@react-router/node": "^7.0.0",
         "@react-router/serve": "^7.0.0",
         "@std/async": "npm:@jsr/std__async@^1.0.5",
