@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router";
 import { Card, CardGroup, CardHeader, Header, Label, Link, Select } from "@trussworks/react-uswds";
+import { useNavigate } from "react-router";
 import Breadcrumbs from "~/components/Breadcrumbs";
 import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
 import { mergeMeta } from "~/lib/merge-meta";
@@ -51,8 +51,7 @@ export default function Index() {
                                 id="reservation-select"
                                 name="reservation-select"
                                 onInput={event => {
-                                    const value = (event.target as HTMLSelectElement)
-                                        .selectedOptions[0].value;
+                                    const value = event.currentTarget.selectedOptions[0].value;
                                     const param = new URLSearchParams({ "org-type": value });
                                     navigate(`/find-a-room?${param}`);
                                 }}

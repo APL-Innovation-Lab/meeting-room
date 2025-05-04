@@ -1,26 +1,25 @@
-import type { LoaderFunctionArgs } from "react-router";
-import { json, useLoaderData } from "react-router";
 import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
 import Breadcrumbs from "~/components/Breadcrumbs";
 import { Map } from "~/components/Map";
 import lngLat from "~/data/lng-lat.json";
 import { mergeMeta } from "~/lib/merge-meta";
+import { Route } from "./+types/find-a-room";
 import { breadcrumbLinks as indexBreadcrumbs } from "./_index";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Find a Room • ${parentTitle}` }]);
 
 export const breadcrumbLinks = [...indexBreadcrumbs, { href: "/find-a-room", text: "Find a Room" }];
 
-export async function loader({ request }: LoaderFunctionArgs) {
-    return json({
+export async function loader({ request }: Route.LoaderArgs) {
+    return {
         orgType: new URL(request.url).searchParams.get("org-type") as "business" | "nonprofit",
         accessToken: process.env.MAPBOX_TOKEN!,
         branchLngLats: lngLat.map(branch => branch.lngLat as [number, number]),
-    });
+    };
 }
 
-export default function FindARoom() {
-    const { orgType, accessToken: mapboxToken, branchLngLats } = useLoaderData<typeof loader>();
+export default function FindARoom({ loaderData }: Route.ComponentProps) {
+    const { orgType, accessToken: mapboxToken, branchLngLats } = loaderData;
     const isBusiness = orgType === "business";
 
     return (
