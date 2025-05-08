@@ -1,9 +1,11 @@
-node_modules
+.DS_Store
+.env
+/node_modules/
 
+# React Router
+/.react-router/
 /.cache
 /build
-.env
-
-.DS_Store
-
+/public/build
+.output
 /dist

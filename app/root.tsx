@@ -1,16 +1,16 @@
-import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
+import type { LinksFunction } from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import { site } from "~/lib/site";
 
 import uswdsReact from "@trussworks/react-uswds/lib/index.css?url";
 import tailwind from "~/styles/tailwind.css?url";
+import { Route } from "./+types/root";
 
-export async function loader({ request }: LoaderFunctionArgs) {
-    return json({ url: request.url });
+export async function loader({ request }: Route.LoaderArgs) {
+    return { url: request.url };
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
+export const meta: Route.MetaFunction = ({ data }) => [
     { charSet: "utf-8" },
     { title: site.title },
     { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -19,7 +19,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
     { name: "og:type", content: "website" },
     { name: "og:image", content: site.socialMediaImage.light },
     { name: "og:description", content: site.description },
-    data?.url ? { name: "og:url", content: data.url } : {},
+    { name: "og:url", content: data.url },
 ];
 
 export const links: LinksFunction = () => [
