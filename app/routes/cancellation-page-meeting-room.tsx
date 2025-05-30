@@ -49,7 +49,7 @@ export default function CancellationPageMeetingRoom() {
                                             }}
                                             type="button"
                                         >
-                                            Yes, Cancel Reservation
+                                            Yes, Cancel Request
                                         </Button>
                                     </Link>
                                 </div>

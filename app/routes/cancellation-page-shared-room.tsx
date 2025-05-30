@@ -17,7 +17,7 @@ export default function CancellationPageSharedRoom() {
 
                         <br />
                         <h3 className="font-sans text-sans-xs text-center">
-                            Are you sure you want to cancel your booking for the room?
+                            Are you sure you want to cancel your booking for the room below?
                         </h3>
 
                         <div className="flex-col px-3">
