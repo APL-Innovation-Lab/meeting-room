@@ -75,13 +75,19 @@ export function getYahooCalendarUrl({
             .replace(/[-:]|\.\d\d\d/g, "")
             .slice(0, 15);
 
+    // unlike .ics and Google, Yahoo doesn't take an end time, only start and duration
     const durationMinutes = Math.floor((end.getTime() - start.getTime()) / 60000);
+
+    // converts total minutes into HHMM format
     const hours = Math.floor(durationMinutes / 60)
         .toString()
         .padStart(2, "0");
     const minutes = (durationMinutes % 60).toString().padStart(2, "0");
+
+    // Yahoo's format for duration, basically an end time
     const duration = `${hours}${minutes}`;
 
+    // Yahoo's specific params
     const url = new URL("https://calendar.yahoo.com/");
     url.searchParams.set("v", "60");
     url.searchParams.set("title", title);
