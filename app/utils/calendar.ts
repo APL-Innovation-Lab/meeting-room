@@ -1,3 +1,4 @@
+// generate .ics file
 export function generateICS({
     title,
     description,
