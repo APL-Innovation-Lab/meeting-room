@@ -1,4 +1,4 @@
-// generate .ics file
+// generate .ics file (Outlook, Apple)
 export function generateICS({
     title,
     description,
@@ -30,6 +30,33 @@ END:VEVENT
 END:VCALENDAR`.trim();
 }
 
+// generate the link containing the .ics file
+export function getICSDownloadUrl({
+    baseUrl,
+    title,
+    description,
+    location,
+    start,
+    end,
+}: {
+    baseUrl: string;
+    title: string;
+    description: string;
+    location: string;
+    start: Date;
+    end: Date;
+}) {
+    const url = new URL("/calendar.ics", baseUrl);
+    url.searchParams.set("title", title);
+    url.searchParams.set("description", description);
+    url.searchParams.set("location", location);
+    url.searchParams.set("start", start.toISOString());
+    url.searchParams.set("end", end.toISOString());
+
+    return url.toString();
+}
+
+// Google's calendar
 export function getGoogleCalendarUrl({
     title,
     description,
@@ -56,6 +83,7 @@ export function getGoogleCalendarUrl({
     return url.toString();
 }
 
+// Yahoo's calendar
 export function getYahooCalendarUrl({
     title,
     description,
