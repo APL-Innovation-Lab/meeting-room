@@ -1,6 +1,14 @@
 import { LoaderFunctionArgs } from "react-router";
 import { generateICS } from "~/utils/calendar";
 
+/*
+////// Test Email Export\
+
+http://localhost:3000/calendar.ics?title=Demo%20Event&description=This%20is%20a%20test%20event&location=Online&start=2025-06-01T10:00:00Z&end=2025-06-01T11:00:00Z
+
+
+*/
+
 // create calendar template for reservation
 export async function loader({ request }: LoaderFunctionArgs) {
     const url = new URL(request.url);
