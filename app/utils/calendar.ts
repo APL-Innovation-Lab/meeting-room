@@ -30,7 +30,7 @@ END:VEVENT
 END:VCALENDAR`.trim();
 }
 
-// generate the link containing the .ics file
+// generate the link containing the .ics file, to be used in email
 export function getICSDownloadUrl({
     baseUrl,
     title,
