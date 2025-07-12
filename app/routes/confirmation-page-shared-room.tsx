@@ -2,13 +2,7 @@ import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-usw
 import CalendarButton from "~/components/CalendarButton";
 import { mergeMeta } from "~/lib/merge-meta";
 import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
-/*
-////// Test Email Export\
 
-http://localhost:3000/calendar.ics?title=Demo%20Event&description=This%20is%20a%20test%20event&location=Online&start=2025-06-01T10:00:00Z&end=2025-06-01T11:00:00Z
-
-
-*/
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Confirmation page • Shared Room` }]);
 
 export default function ConfirmationPageSharedRoom() {
