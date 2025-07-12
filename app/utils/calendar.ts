@@ -46,7 +46,10 @@ export function getICSDownloadUrl({
     start: Date;
     end: Date;
 }) {
-    const url = new URL("/calendar.ics", baseUrl);
+    // url fallback for dev testing
+    const fallbackBase = baseUrl || "http://localhost:5173";
+    const url = new URL("/calendar.ics", fallbackBase);
+
     url.searchParams.set("title", title);
     url.searchParams.set("description", description);
     url.searchParams.set("location", location);
