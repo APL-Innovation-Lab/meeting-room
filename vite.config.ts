@@ -4,14 +4,12 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 // the following imports are used for calendar export functionality
-import react from "@vitejs/plugin-react";
 import { generateICS } from "./app/utils/calendar";
 
 export default defineConfig({
     plugins: [
         reactRouter(),
         tsconfigPaths(),
-        react(),
         env(),
         {
             name: "calendar-ics-endpoint",
