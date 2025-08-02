@@ -2,13 +2,66 @@
 
 This is the source code for the Austin Public Library meeting room booking page code prototype.
 
-## Development
+## Frameworks & Technology
 
-There is a short guide for [setting up a local development environment](https://github.com/APL-Innovation-Lab/meeting-room-prototype/wiki/Setting-up-a-Local-Development-Environment) if you wish to contribute changes, fixes, and improvements to the Meeting Room prototype.
+* [TypeScript v5.8](https://www.typescriptlang.org/docs/handbook/intro.html)
+* [React v18](https://18.react.dev)
+* [React Router v7](https://reactrouter.com/home)
+    * [File system routing](https://reactrouter.com/how-to/file-route-conventions)
+    * [Zod](https://zod.dev) [form validation](https://reactrouter.com/how-to/form-validation)
+    * [Route Module Type Safety](https://reactrouter.com/explanation/type-safety)
+    * [Progressive enhancement](https://reactrouter.com/explanation/progressive-enhancement)
+    * [Sessions & cookies](https://reactrouter.com/explanation/sessions-and-cookies)
+* [Tailwind CSS v3](https://v3.tailwindcss.com)
+* [USWDS](https://designsystem.digital.gov)
+    * [trussworks/react-uswds](https://trussworks.github.io/react-uswds/?path=/docs/welcome--docs)
+* [Node Version Manager](https://github.com/nvm-sh/nvm)
+* [npm](https://docs.npmjs.com/cli/v11)
+* [Prettier](https://prettier.io/docs)
+    * [Prettier plugin for Tailwind CSS](https://tailwindcss.com/blog/automatic-class-sorting-with-prettier)
+* [ESLint v8](https://eslint.org/docs/v8.x)
+* [Build-time environment variable validation](https://github.com/Julien-R44/vite-plugin-validate-env)
+* [@deno/kv](https://github.com/denoland/denokv/tree/main/npm)
+* [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides)
+* [Visual Studio Code](https://code.visualstudio.com) (or one of its derivatives)
+
+# Project Layout
+
+```
+.
+├── app
+│   ├── components
+│   │   └── ...
+│   ├── data
+│   │   └── ...
+│   ├── lib
+│   │   └── ...
+│   ├── root.tsx
+│   ├── routes
+│   │   └── ...
+│   ├── routes.ts
+│   ├── shared
+│   │   └── ...
+│   └── styles
+│       └── tailwind.css
+├── .env
+├── env.ts
+├── env.d.ts
+├── package.json
+├── postcss.config.js
+├── react-router.config.ts
+├── tailwind.config.ts
+├── tailwindcss-uswds
+│   └── ...
+├── tsconfig.json
+└── vite.config.ts
+```
 
 ## Contributing
 
 This prototype is built and maintained by a small team of mostly volunteers – we'd love your help to fix bugs and add features!
+
+There is a short guide for setting up a local development environment in [CONTRIBUTING.md](./CONTRIBUTING.md) if you wish to contribute changes, fixes, and improvements to the Meeting Room prototype.
 
 Before submitting a pull request, please discuss with the core team by creating or commenting in an issue on GitHub – we'd also love to hear from you in the discussions. This way we can ensure that an approach is agreed on before code is written. This will result in a much higher likelihood of your code being accepted.
 
@@ -18,34 +71,16 @@ If you’re looking for ways to get started, here's a list of ways to help us im
 -   Developer happiness and documentation
 -   Bugs and other issues listed on GitHub
 
-<!-- ## Architecture
-
-If you're interested in contributing or learning more about the prototype's codebase, please refer to the [architecture page](https://github.com/APL-Innovation-Lab/meeting-room-prototype/wiki/Prototype-Architecture) first for a high level overview of how the application is put together.
-
-## Debugging
-
-TODO: How to debug with VS Code
-
 ## Tests
 
 We aim to have sufficient test coverage for critical parts of the prototype and aren't aiming for 100% unit test coverage.
 
-To add new tests, write your tests with Vitest and add a file with .test.ts extension next to the tested code.
+To add new tests, write your tests with Vitest and add a file with `.test.ts` extension in the same directory as the tested code.
 
 ```sh
 # To run all tests
-make test
+npm run test
 
-# To run backend tests in watch mode
-make watch
-Once the test database is created with make test you may individually run frontend and backend tests directly.
-
-# To run backend tests
-yarn test:server
-
-# To run a specific backend test
-yarn test:server myTestFile
-
-# To run frontend tests
-yarn test:app
-``` -->
+# To run tests in dev watch mode
+npm run test:dev
+```
