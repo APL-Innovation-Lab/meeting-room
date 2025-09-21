@@ -1,26 +1,22 @@
-import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
+import { Button, Card, CardGroup, Link } from "@trussworks/react-uswds";
 
 import { mergeMeta } from "~/lib/merge-meta";
 
-export const meta = mergeMeta(({ parentTitle }) => [{ title: `Cancellation page • Shared Room` }]);
+export const meta = mergeMeta(({ parentTitle }) => [{ title: `Cancellation Confirmation page • Shared Room` }]);
 
-export default function CancellationPageSharedRoom() {
+// TODO: Eventually need to pass booking details data.
+export default function CancellationConfirmationPageSharedRoom() {
     return (
         <div className="flex justify-center">
             <CardGroup className="min-w-[50rem] max-w-[49rem]">
                 <Card>
-                    <br />
-                    <br />
                     <div className="justify-center ml-5 mr-5">
-                        <CardHeader className="-mt-3">
-
-                        </CardHeader>
-
-                        <br />
+                        <h1 className="font-sans text-[40px] font-bold text-center">
+                            Canceled
+                        </h1>
                         <h3 className="font-sans text-sans-xs text-center">
-                            Are you sure you want to cancel your booking for the room below?
+                            The following has been canceled.
                         </h3>
-
                         <div className="flex-col px-3">
                             <div className="my-5">
                                 <h3 className="font-sans text-[22px] font-bold text-center">
@@ -36,9 +32,9 @@ export default function CancellationPageSharedRoom() {
                                 </p>
                                 <p className="font-sans text-sans-xs text-center">Capacity: 4</p>
                                 <br />
-
+                                <br />
                                 <div className="flex justify-center">
-                                    <Link href="cancellation-confirmation-page-shared-room">
+                                    <Link href="/">
                                         <Button
                                             className="font-sans text-sans-xs"
                                             style={{
@@ -51,24 +47,7 @@ export default function CancellationPageSharedRoom() {
                                             }}
                                             type="button"
                                         >
-                                            Yes, Cancel Reservation
-                                        </Button>
-                                    </Link>
-                                </div>
-                                <br />
-                                <div className="flex justify-center">
-                                    <Link href="/">
-                                        <Button
-                                            className="font-sans text-sans-xs usa-button usa-button--outline"
-                                            style={{
-                                                paddingTop: 15,
-                                                paddingBottom: 15,
-                                                paddingLeft: 35,
-                                                paddingRight: 35,
-                                            }}
-                                            type="button"
-                                        >
-                                            No, Back to Meeting Spaces
+                                            Back to Meeting Spaces
                                         </Button>
                                     </Link>
                                 </div>
@@ -77,13 +56,11 @@ export default function CancellationPageSharedRoom() {
                                 <br />
                                 <br />
                                 <br />
-
                             </div>
                         </div>
                     </div>
                 </Card>
             </CardGroup>
-
         </div>
     );
 }

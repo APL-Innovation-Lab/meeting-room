@@ -1,14 +1,16 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
+
 import { mergeMeta } from "~/lib/merge-meta";
+import { useNavigate } from "react-router";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Cancellation page • Meeting Room` }]);
 
 export default function CancellationPageMeetingRoom() {
     return (
         <div className="flex justify-center">
-             <CardGroup className="min-w-[50rem] max-w-[49rem]">
+            <CardGroup className="min-w-[50rem] max-w-[49rem]">
                 <Card>
-                    
+
                     <div className="justify-center ml-5 mr-5">
                         <CardHeader className="-mt-3">
 
@@ -36,7 +38,7 @@ export default function CancellationPageMeetingRoom() {
                                 <br />
 
                                 <div className="flex justify-center">
-                                    <Link href="#">
+                                    <Link href="cancellation-confirmation-page-meeting-room">
                                         <Button
                                             className="font-sans text-sans-xs"
                                             style={{
@@ -55,7 +57,7 @@ export default function CancellationPageMeetingRoom() {
                                 </div>
                                 <br />
                                 <div className="flex justify-center">
-                                    <Link href="#">
+                                    <Link href="/">
                                         <Button
                                             className="font-sans text-sans-xs usa-button usa-button--outline"
                                             style={{
