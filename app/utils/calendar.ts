@@ -24,17 +24,18 @@ export function generateICS({
     const formatDate = (date: Date) => date.toISOString().replace(/[-:]|\.\d\d\d/g, "");
 
     // all .ics files must adhere to this format, based on RFC 5545
-    return `
-BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-SUMMARY:${title}
-DESCRIPTION:${description}
-LOCATION:${location}
-DTSTART:${formatDate(start)}
-DTEND:${formatDate(end)}
-END:VEVENT
-END:VCALENDAR`.trim();
+    return [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "BEGIN:VEVENT",
+        `SUMMARY:${title}`,
+        `DESCRIPTION:${description}`,
+        `LOCATION:${location}`,
+        `DTSTART:${formatDate(start)}`,
+        `DTEND:${formatDate(end)}`,
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ].join("\r\n");
 }
 
 /**
