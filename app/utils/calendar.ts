@@ -5,6 +5,8 @@
  * @param {string} location - The address of the library branch.
  * @param {Date} start - Start time; expects a Date constructor, such as: new Date("2024-03-04T11:00:00-06:00")
  * @param {Date} end - End time; expects a Date constructor, such as: new Date("2024-03-04T13:00:00-06:00")
+ *
+ * @returns A string with CRLF (`\r\n`) line breaks for compatibility with all .ics calendar services.
  */
 export function generateICS({
     title,
