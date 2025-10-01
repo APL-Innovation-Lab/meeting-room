@@ -1,26 +1,29 @@
 /**
- * Generates an .ics file for Outlook and Apple calendar formats.
+ * Parameters used across all calendar events (Google, Yahoo, Outlook/Apple/ICS files)
+ *
+ * @param baseUrl - Required for the `getICSDownloadUrl` function
  * @param {string} title - The specific library branch.
  * @param {string} description - The type of reservation and at what library branch.
  * @param {string} location - The address of the library branch.
  * @param {Date} start - Start time; expects a Date constructor, such as: new Date("2024-03-04T11:00:00-06:00")
  * @param {Date} end - End time; expects a Date constructor, such as: new Date("2024-03-04T13:00:00-06:00")
- *
- * @returns A string with CRLF (`\r\n`) line breaks for compatibility with all .ics calendar services.
  */
-export function generateICS({
-    title,
-    description,
-    location,
-    start,
-    end,
-}: {
+export interface CalendarEventParams {
+    baseUrl?: string;
     title: string;
     description: string;
     location: string;
     start: Date;
     end: Date;
-}) {
+}
+
+/**
+ * Generates an .ics file for Outlook and Apple calendar formats.
+ * @returns A string with CRLF (`\r\n`) line breaks for compatibility with all .ics calendar services.
+ */
+export function generateICS(params: CalendarEventParams): string {
+    const { title, description, location, start, end } = params;
+
     // regex to capture default output from Date and format it for .ics, GCal, etc. This
     // is a standardized date format for all calendar export files
     const formatDate = (date: Date) => date.toISOString().replace(/[-:]|\.\d\d\d/g, "");
@@ -42,28 +45,11 @@ export function generateICS({
 
 /**
  * Generates a link containing the .ics file
- * @param {string} baseUrl - URL containing the .ics file.
- * @param {string} title - The specific library branch.
- * @param {string} description - The type of reservation and at what library branch.
- * @param {string} location - The address of the library branch.
- * @param {Date} start - Start time; expects a Date constructor, such as: new Date("2024-03-04T11:00:00-06:00")
- * @param {Date} end - End time; expects a Date constructor, such as: new Date("2024-03-04T13:00:00-06:00")
+ * @returns - A URL containing the .ics file
  */
-export function getICSDownloadUrl({
-    baseUrl,
-    title,
-    description,
-    location,
-    start,
-    end,
-}: {
-    baseUrl: string;
-    title: string;
-    description: string;
-    location: string;
-    start: Date;
-    end: Date;
-}) {
+export function getICSDownloadUrl(params: CalendarEventParams): string {
+    const { baseUrl, title, description, location, start, end } = params;
+
     // url fallback for dev testing
     const fallbackBase = baseUrl || "http://localhost:5173";
     const url = new URL("/calendar.ics", fallbackBase);
@@ -79,25 +65,11 @@ export function getICSDownloadUrl({
 
 /**
  * Generates a Google Calendar URL
- * @param {string} title - The specific library branch.
- * @param {string} description - The type of reservation and at what library branch.
- * @param {string} location - The address of the library branch.
- * @param {Date} start - Start time; expects a Date constructor, such as: new Date("2024-03-04T11:00:00-06:00")
- * @param {Date} end - End time; expects a Date constructor, such as: new Date("2024-03-04T13:00:00-06:00")
+ * @returns - A URL containing the Google Calendar reservation
  */
-export function getGoogleCalendarUrl({
-    title,
-    description,
-    location,
-    start,
-    end,
-}: {
-    title: string;
-    description: string;
-    location: string;
-    start: Date;
-    end: Date;
-}) {
+export function getGoogleCalendarUrl(params: CalendarEventParams): string {
+    const { title, description, location, start, end } = params;
+
     const formatDate = (date: Date) => date.toISOString().replace(/[-:]|\.\d\d\d/g, "");
 
     // Google's specific parameters
@@ -113,25 +85,11 @@ export function getGoogleCalendarUrl({
 
 /**
  * Generates a Yahoo! Calendar URL
- * @param {string} title - The specific library branch.
- * @param {string} description - The type of reservation and at what library branch.
- * @param {string} location - The address of the library branch.
- * @param {Date} start - Start time; expects a Date constructor, such as: new Date("2024-03-04T11:00:00-06:00")
- * @param {Date} end - End time; expects a Date constructor, such as: new Date("2024-03-04T13:00:00-06:00")
+ * @returns - A URL containing the Yahoo! Calendar reservation
  */
-export function getYahooCalendarUrl({
-    title,
-    description,
-    location,
-    start,
-    end,
-}: {
-    title: string;
-    description: string;
-    location: string;
-    start: Date;
-    end: Date;
-}) {
+export function getYahooCalendarUrl(params: CalendarEventParams): string {
+    const { title, description, location, start, end } = params;
+
     const formatYahooDate = (date: Date) =>
         date
             .toISOString()
