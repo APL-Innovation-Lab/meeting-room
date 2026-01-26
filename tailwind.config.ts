@@ -8,6 +8,13 @@ export default {
         // so Tailwind can purge our styles better
         "./node_modules/@trussworks/react-uswds/lib/index.js",
     ],
+    theme: {
+        extend: {
+            colors: {
+                "apl-green": "#1e6f98",
+            },
+        },
+    },
     plugins: [uswds()],
     darkMode: "media",
 } satisfies Config;

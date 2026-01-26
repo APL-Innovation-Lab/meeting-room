@@ -1,9 +1,26 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
+import CalendarButton from "~/components/CalendarButton";
 import { mergeMeta } from "~/lib/merge-meta";
+import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Confirmation page • Shared Room` }]);
 
 export default function ConfirmationPageSharedRoom() {
+    // dynamic url generation for absolute or relative paths; window vs email
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+
+    // hard-coded data to be changed later with form submission data
+    const title = "Austin Central Library, #3";
+    const description = "Shared room reservation confirmation for Austin Central Library";
+    const location = "710 W Cesar Chavez St, Austin, TX 78702";
+    const start = new Date("2024-03-04T11:00:00-06:00");
+    const end = new Date("2024-03-04T11:15:00-06:00");
+
+    // calendar export links
+    const googleLink = getGoogleCalendarUrl({ title, description, location, start, end });
+    const yahooLink = getYahooCalendarUrl({ title, description, location, start, end });
+    const icsLink = getICSDownloadUrl({ baseUrl, title, description, location, start, end });
+
     return (
         <div className="flex justify-center">
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
@@ -84,20 +101,21 @@ export default function ConfirmationPageSharedRoom() {
                                     </Link>
                                 </div>
                                 <br />
-                                <div className="flex justify-center">
-                                    <Link href="#">
-                                        <Button
-                                            className="font-sans text-sans-xs usa-button usa-button--outline"
-                                            style={{
-                                                paddingTop: 15,
-                                                paddingBottom: 15,
-                                                paddingLeft: 68,
-                                                paddingRight: 68,
-                                            }}
-                                            type="button"
-                                        >
-                                            Add to Calendar
-                                        </Button>
+                                <div className="flex justify-center mb-3">
+                                    <strong>Add to Calendar:</strong>
+                                </div>
+                                <div className="flex justify-center space-x-1">
+                                    <Link href={googleLink} target="_blank" rel="noreferrer">
+                                        <CalendarButton>Google</CalendarButton>
+                                    </Link>
+                                    <Link href={icsLink} download="reservation.ics">
+                                        <CalendarButton>Outlook</CalendarButton>
+                                    </Link>
+                                    <Link href={icsLink} download="reservation.ics">
+                                        <CalendarButton>iCal</CalendarButton>
+                                    </Link>
+                                    <Link href={yahooLink} target="_blank" rel="noreferrer">
+                                        <CalendarButton>Yahoo!</CalendarButton>
                                     </Link>
                                 </div>
                                 <br />
