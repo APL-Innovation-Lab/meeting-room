@@ -1,0 +1,11 @@
+# Changelog
+
+## 2026-02-02
+
+- Converted routing from file-system conventions to an explicit route map using `@withsprinkles/react-router-route-map`, introducing `app/route-map.ts` and switching `app/routes.ts` to `createRoutes`, plus normalizing route names and paths around `/:roomType` and adding new `review` and `cancel` routes (`8498ba0`).
+- Added the devtools JSON Vite plugin so tooling can read a devtools manifest during development (`2e57577`).
+- Updated React Router future flags to the v8 keys and enabled `v8_middleware` to align the config with the latest router future flags (`aecc2f0`).
+- Removed ESLint from the project, deleting config, lint task, and editor integration hints so formatting relies on Prettier instead of linting rules (`548edcf`).
+- Performed major dependency upgrades, including React 19, react-uswds 11, Zod 4, Vitest 4, Vite 7, and the v2 validate-env plugin, which may impact APIs and build/test behavior (`c3887fb`).
+- Rolled forward minor versions across most dependencies and devDependencies (React Router 7.13, Mapbox GL 3.18, TypeScript 5.9, etc.), plus set the Node engine floor to `>=24.0.0` (`2d510b7`).
+- Bumped the project’s `.nvmrc` from Node `v22.3.0` to `v24` to match the new engine baseline (`6468d0f`).
