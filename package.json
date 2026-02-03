@@ -67,6 +67,7 @@
             "prettier-plugin-organize-imports",
             "@xeonlink/prettier-plugin-organize-attributes"
         ],
+        "tailwindConfig": "./tailwind.config.ts",
         "attributeGroups": [
             "^className$",
             "^(id|name|htmlFor)$",
