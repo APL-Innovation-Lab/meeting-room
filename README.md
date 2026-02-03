@@ -4,26 +4,25 @@ This is the source code for the Austin Public Library meeting room booking page 
 
 ## Frameworks & Technology
 
-* [TypeScript v5.8](https://www.typescriptlang.org/docs/handbook/intro.html)
-* [React v18](https://18.react.dev)
-* [React Router v7](https://reactrouter.com/home)
-    * [File system routing](https://reactrouter.com/how-to/file-route-conventions)
-    * [Zod](https://zod.dev) [form validation](https://reactrouter.com/how-to/form-validation)
-    * [Route Module Type Safety](https://reactrouter.com/explanation/type-safety)
-    * [Progressive enhancement](https://reactrouter.com/explanation/progressive-enhancement)
-    * [Sessions & cookies](https://reactrouter.com/explanation/sessions-and-cookies)
-* [Tailwind CSS v3](https://v3.tailwindcss.com)
-* [USWDS](https://designsystem.digital.gov)
-    * [trussworks/react-uswds](https://trussworks.github.io/react-uswds/?path=/docs/welcome--docs)
-* [Node Version Manager](https://github.com/nvm-sh/nvm)
-* [npm](https://docs.npmjs.com/cli/v11)
-* [Prettier](https://prettier.io/docs)
-    * [Prettier plugin for Tailwind CSS](https://tailwindcss.com/blog/automatic-class-sorting-with-prettier)
-* [ESLint v8](https://eslint.org/docs/v8.x)
-* [Build-time environment variable validation](https://github.com/Julien-R44/vite-plugin-validate-env)
-* [@deno/kv](https://github.com/denoland/denokv/tree/main/npm)
-* [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides)
-* [Visual Studio Code](https://code.visualstudio.com) (or one of its derivatives)
+- [TypeScript v5.8](https://www.typescriptlang.org/docs/handbook/intro.html)
+- [React v18](https://18.react.dev)
+- [React Router v7](https://reactrouter.com/home)
+    - [File system routing](https://reactrouter.com/how-to/file-route-conventions)
+    - [Zod](https://zod.dev) [form validation](https://reactrouter.com/how-to/form-validation)
+    - [Route Module Type Safety](https://reactrouter.com/explanation/type-safety)
+    - [Progressive enhancement](https://reactrouter.com/explanation/progressive-enhancement)
+    - [Sessions & cookies](https://reactrouter.com/explanation/sessions-and-cookies)
+- [Tailwind CSS v3](https://v3.tailwindcss.com)
+- [USWDS](https://designsystem.digital.gov)
+    - [trussworks/react-uswds](https://trussworks.github.io/react-uswds/?path=/docs/welcome--docs)
+- [Node Version Manager](https://github.com/nvm-sh/nvm)
+- [npm](https://docs.npmjs.com/cli/v11)
+- [Prettier](https://prettier.io/docs)
+    - [Prettier plugin for Tailwind CSS](https://tailwindcss.com/blog/automatic-class-sorting-with-prettier)
+- [Build-time environment variable validation](https://github.com/Julien-R44/vite-plugin-validate-env)
+- [@deno/kv](https://github.com/denoland/denokv/tree/main/npm)
+- [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides)
+- [Visual Studio Code](https://code.visualstudio.com) (or one of its derivatives)
 
 # Project Layout
 
@@ -67,9 +66,9 @@ Before submitting a pull request, please discuss with the core team by creating 
 
 If you’re looking for ways to get started, here's a list of ways to help us improve this prototype:
 
--   Issues with [good first issue label](https://github.com/APL-Innovation-Lab/meeting-room-prototype/labels/good%20first%20issue)
--   Developer happiness and documentation
--   Bugs and other issues listed on GitHub
+- Issues with [good first issue label](https://github.com/APL-Innovation-Lab/meeting-room-prototype/labels/good%20first%20issue)
+- Developer happiness and documentation
+- Bugs and other issues listed on GitHub
 
 ## Tests
 

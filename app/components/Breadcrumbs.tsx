@@ -1,6 +1,6 @@
-import { Link } from "react-router";
 import { Breadcrumb, BreadcrumbBar, BreadcrumbLink } from "@trussworks/react-uswds";
 import React from "react";
+import { Link } from "react-router";
 
 interface BreadcrumbItem {
     href: string;
@@ -12,7 +12,6 @@ interface BreadcrumbsProps {
 }
 
 function RemixLink({ href, ...props }: any) {
-    // eslint-disable-next-line
     return <Link {...props} to={href} />;
 }
 

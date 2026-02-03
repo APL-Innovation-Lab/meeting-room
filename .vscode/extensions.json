@@ -2,8 +2,7 @@
     "recommendations": [
         "bradlc.vscode-tailwindcss",
         "christian-kohler.npm-intellisense",
-        "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode",
+        "prettier.prettier-vscode",
         "vitest.explorer",
         "wayou.vscode-todo-highlight",
         "github.vscode-github-actions"

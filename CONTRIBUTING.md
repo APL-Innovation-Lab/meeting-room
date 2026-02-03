@@ -57,7 +57,6 @@ It's recommended to use [Visual Studio Code](https://formulae.brew.sh/cask/visua
 
 It's also recommended that you install these extensions for VS Code:
 
-- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) for inline linting errors and auto-fix-on-save support
 - [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for format-on-save support
 - [npm Intellisense](https://marketplace.visualstudio.com/items?itemName=christian-kohler.npm-intellisense) for autocomplete in `package.json` and quick npm script actions in the sidebar
 - [Tailwind CSS Intellisense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss) for:

@@ -5,7 +5,6 @@
     "scripts": {
         "dev": "vite dev --host",
         "format": "prettier -w .",
-        "lint": "eslint --fix --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
         "typecheck": "react-router typegen && tsc",
         "test": "npm run test:run",
         "test:dev": "vitest dev",
@@ -40,7 +39,6 @@
         "@types/react-dom": "^19.2.3",
         "@types/validator": "^13.15.10",
         "autoprefixer": "^10.4.24",
-        "eslint": "^8.57.1",
         "get-sass-vars": "^4.0.3",
         "postcss": "^8.5.6",
         "postcss-js": "^4.1.0",

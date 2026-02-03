@@ -14,10 +14,6 @@
     },
     "typescript.updateImportsOnFileMove.enabled": "always",
 
-    "eslint.enable": true,
-    "eslint.codeActionsOnSave.mode": "all",
-    "eslint.validate": ["ts", "tsx"],
-
     "unocss.disable": true,
 
     // "vitest.enable": true,
