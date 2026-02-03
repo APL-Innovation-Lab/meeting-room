@@ -5,22 +5,16 @@ import { RoomType, routes } from "~/route-map";
 import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
 import type { Route } from "./+types/confirm";
 
-export default function Confirmation({ params }: Route.ComponentProps) {
-    const roomType = params.roomType as RoomType;
-    const isMeetingRoom = roomType === RoomType.MeetingRoom;
-
-    if (isMeetingRoom) {
-        return <MeetingRoomConfirmation roomType={roomType} />;
+export default function Component({ params }: Route.ComponentProps) {
+    if (params.roomType === RoomType.MeetingRoom) {
+        return <MeetingRoomConfirmation />;
     }
 
-    return <SharedRoomConfirmation roomType={roomType} />;
+    return <SharedLearningRoomConfirmation />;
 }
 
-type ConfirmationProps = {
-    roomType: RoomType;
-};
-
-function SharedRoomConfirmation({ roomType }: ConfirmationProps) {
+function SharedLearningRoomConfirmation() {
+    // TODO: Move all of this to a server-side loader
     // dynamic url generation for absolute or relative paths; window vs email
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -137,7 +131,11 @@ function SharedRoomConfirmation({ roomType }: ConfirmationProps) {
                                 <br />
 
                                 <div className="flex justify-center">
-                                    <Link href={routes.cancel.href({ roomType })}>
+                                    <Link
+                                        href={routes.cancel.href({
+                                            roomType: RoomType.SharedLearningRoom,
+                                        })}
+                                    >
                                         Cancel Reservation
                                     </Link>
                                 </div>
@@ -150,7 +148,7 @@ function SharedRoomConfirmation({ roomType }: ConfirmationProps) {
     );
 }
 
-function MeetingRoomConfirmation({ roomType }: ConfirmationProps) {
+function MeetingRoomConfirmation() {
     return (
         <div className="flex justify-center">
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
@@ -243,7 +241,11 @@ function MeetingRoomConfirmation({ roomType }: ConfirmationProps) {
                                 <br />
 
                                 <div className="flex justify-center">
-                                    <Link href={routes.cancel.href({ roomType })}>
+                                    <Link
+                                        href={routes.cancel.href({
+                                            roomType: RoomType.MeetingRoom,
+                                        })}
+                                    >
                                         Cancel Request
                                     </Link>
                                 </div>

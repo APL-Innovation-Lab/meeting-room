@@ -7,16 +7,14 @@ import { RoomType } from "~/route-map";
 import { Route } from "./+types/search";
 
 export async function loader({ params }: Route.LoaderArgs) {
-    const roomType = params.roomType as RoomType;
-
     return {
-        roomType,
+        roomType: params.roomType as RoomType,
         accessToken: import.meta.env.VITE_APP_MAPBOX_TOKEN,
         branchLngLats: lngLat.map(branch => branch.lngLat as [number, number]),
     };
 }
 
-export default function FindARoom({ loaderData }: Route.ComponentProps) {
+export default function Component({ loaderData }: Route.ComponentProps) {
     const { roomType, accessToken: mapboxToken, branchLngLats } = loaderData;
     const isMeetingRoom = roomType === RoomType.MeetingRoom;
 

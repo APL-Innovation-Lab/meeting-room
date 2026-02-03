@@ -4,21 +4,14 @@ import { RoomType, routes } from "~/route-map";
 import type { Route } from "./+types/cancel";
 
 export default function Cancellation({ params }: Route.ComponentProps) {
-    const roomType = params.roomType as RoomType;
-    const isMeetingRoom = roomType === RoomType.MeetingRoom;
-
-    if (isMeetingRoom) {
-        return <MeetingRoomCancellation roomType={roomType} />;
+    if (params.roomType === RoomType.MeetingRoom) {
+        return <MeetingRoomCancellation />;
     }
 
-    return <SharedRoomCancellation roomType={roomType} />;
+    return <SharedLearningRoomCancellation />;
 }
 
-type CancellationProps = {
-    roomType: RoomType;
-};
-
-function MeetingRoomCancellation({ roomType }: CancellationProps) {
+function MeetingRoomCancellation() {
     return (
         <div className="flex justify-center">
             <title>{`Cancellation • ${site.title}`}</title>
@@ -68,7 +61,11 @@ function MeetingRoomCancellation({ roomType }: CancellationProps) {
                                 </div>
                                 <br />
                                 <div className="flex justify-center">
-                                    <Link href={routes.confirm.href({ roomType })}>
+                                    <Link
+                                        href={routes.confirm.href({
+                                            roomType: RoomType.MeetingRoom,
+                                        })}
+                                    >
                                         <Button
                                             className="font-sans text-sans-xs usa-button usa-button--outline"
                                             style={{
@@ -96,7 +93,7 @@ function MeetingRoomCancellation({ roomType }: CancellationProps) {
     );
 }
 
-function SharedRoomCancellation({ roomType }: CancellationProps) {
+function SharedLearningRoomCancellation() {
     return (
         <div className="flex justify-center">
             <CardGroup className="min-w-[50rem] max-w-[49rem]">
@@ -147,7 +144,11 @@ function SharedRoomCancellation({ roomType }: CancellationProps) {
                                 </div>
                                 <br />
                                 <div className="flex justify-center">
-                                    <Link href={routes.confirm.href({ roomType })}>
+                                    <Link
+                                        href={routes.confirm.href({
+                                            roomType: RoomType.SharedLearningRoom,
+                                        })}
+                                    >
                                         <Button
                                             className="font-sans text-sans-xs usa-button usa-button--outline"
                                             style={{

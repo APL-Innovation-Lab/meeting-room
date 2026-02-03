@@ -5,7 +5,7 @@ import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
 import { site } from "~/lib/site";
 import { RoomType, routes } from "~/route-map";
 
-export default function Index() {
+export default function Component() {
     const navigate = useNavigate();
 
     return (

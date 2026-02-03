@@ -3,7 +3,7 @@ import { site } from "~/lib/site";
 import { RoomType, routes } from "~/route-map";
 import type { Route } from "./+types/review";
 
-export default function Review({ params }: Route.ComponentProps) {
+export default function Component({ params }: Route.ComponentProps) {
     const roomType = params.roomType as RoomType;
     const isMeetingRoom = roomType === RoomType.MeetingRoom;
 
