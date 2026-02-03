@@ -21,6 +21,7 @@
         "@react-router/serve": "^7.13.0",
         "@std/async": "npm:@jsr/std__async@^1.1.1",
         "@trussworks/react-uswds": "^11.0.0",
+        "@withsprinkles/react-router-route-map": "^0.2.0",
         "isbot": "^4.4.0",
         "mapbox-gl": "^3.18.1",
         "react": "^19.2.4",
@@ -52,6 +53,7 @@
         "typescript": "^5.9.3",
         "uswds": "^2.14.0",
         "vite": "^7.3.1",
+        "vite-plugin-devtools-json": "^1.0.0",
         "vite-tsconfig-paths": "^5.1.4"
     },
     "prettier": {
