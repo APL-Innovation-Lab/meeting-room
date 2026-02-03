@@ -14,28 +14,27 @@ export namespace Breadcrumbs {
 
     export interface Props {
         links: Breadcrumbs.Item[];
+        className?: string;
     }
 }
 
-export function Breadcrumbs({ links }: Breadcrumbs.Props) {
+export function Breadcrumbs({ links, className }: Breadcrumbs.Props) {
     return (
-        <>
-            <BreadcrumbBar className="ml-2">
-                {links.map((item, idx) => {
-                    const isCurrent = idx === links.length - 1;
-                    return (
-                        <Breadcrumb className="relative left-0" key={item.href} current={isCurrent}>
-                            {isCurrent ? (
-                                item.text
-                            ) : (
-                                <BreadcrumbLink asCustom={Link} href={item.href}>
-                                    {item.text}
-                                </BreadcrumbLink>
-                            )}
-                        </Breadcrumb>
-                    );
-                })}
-            </BreadcrumbBar>
-        </>
+        <BreadcrumbBar className={`ml-2 ${className}`}>
+            {links.map((item, idx) => {
+                const isCurrent = idx === links.length - 1;
+                return (
+                    <Breadcrumb className="relative left-0" key={item.href} current={isCurrent}>
+                        {isCurrent ? (
+                            item.text
+                        ) : (
+                            <BreadcrumbLink asCustom={Link} href={item.href}>
+                                {item.text}
+                            </BreadcrumbLink>
+                        )}
+                    </Breadcrumb>
+                );
+            })}
+        </BreadcrumbBar>
     );
 }
