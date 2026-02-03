@@ -4,8 +4,8 @@ This is the source code for the Austin Public Library meeting room booking page 
 
 ## Frameworks & Technology
 
-- [TypeScript v5.8](https://www.typescriptlang.org/docs/handbook/intro.html)
-- [React v18](https://18.react.dev)
+- [TypeScript](https://www.typescriptlang.org/docs/handbook/intro.html)
+- [React](https://react.dev)
 - [React Router v7](https://reactrouter.com/home)
     - [File system routing](https://reactrouter.com/how-to/file-route-conventions)
     - [Zod](https://zod.dev) [form validation](https://reactrouter.com/how-to/form-validation)
