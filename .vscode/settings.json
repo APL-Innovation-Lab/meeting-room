@@ -18,6 +18,8 @@
     "eslint.codeActionsOnSave.mode": "all",
     "eslint.validate": ["ts", "tsx"],
 
+    "unocss.disable": true,
+
     // "vitest.enable": true,
 
     "todohighlight.keywords": [
