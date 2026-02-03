@@ -2,10 +2,8 @@ import { Card, CardGroup, CardHeader, Header, Label, Link, Select } from "@truss
 import { useNavigate } from "react-router";
 import Breadcrumbs from "~/components/Breadcrumbs";
 import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
-import { mergeMeta } from "~/lib/merge-meta";
+import { site } from "~/lib/site";
 import { RoomType, routes } from "~/route-map";
-
-export const meta = mergeMeta(({ parentTitle }) => [{ title: `Meeting Spaces • ${parentTitle}` }]);
 
 export const breadcrumbLinks = [
     { href: "https://library.austintexas.gov", text: "Home" },
@@ -17,6 +15,7 @@ export default function Index() {
 
     return (
         <div className="flex justify-center">
+            <title>{`Meeting Spaces • ${site.title}`}</title>
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
                     <Header>

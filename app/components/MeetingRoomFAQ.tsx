@@ -1,6 +1,6 @@
 import { Accordion } from "@trussworks/react-uswds";
 import type { AccordionItemProps } from "node_modules/@trussworks/react-uswds/lib/components/Accordion/Accordion";
-import { FAQ_DATA } from "~/shared/constants";
+import { FAQ_DATA } from "~/lib/constants";
 
 function MeetingRoomFAQ() {
     const accordionItems: AccordionItemProps[] = FAQ_DATA.map(

@@ -2,12 +2,10 @@ import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
 import Breadcrumbs from "~/components/Breadcrumbs";
 import { Map } from "~/components/Map";
 import lngLat from "~/data/lng-lat.json";
-import { mergeMeta } from "~/lib/merge-meta";
+import { site } from "~/lib/site";
 import { RoomType, routes } from "~/route-map";
 import { Route } from "./+types/search";
 import { breadcrumbLinks as indexBreadcrumbs } from "./home";
-
-export const meta = mergeMeta(({ parentTitle }) => [{ title: `Find a Room • ${parentTitle}` }]);
 
 export const breadcrumbLinks = (roomType: RoomType) => [
     ...indexBreadcrumbs,
@@ -30,6 +28,7 @@ export default function FindARoom({ loaderData }: Route.ComponentProps) {
 
     return (
         <div className="flex justify-center max-h-viewport overflow-scroll">
+            <title>{`Find a Room • ${site.title}`}</title>
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
                     <div className="pl-5 pr-5">

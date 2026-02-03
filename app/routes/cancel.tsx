@@ -1,9 +1,7 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
-import { mergeMeta } from "~/lib/merge-meta";
+import { site } from "~/lib/site";
 import { RoomType, routes } from "~/route-map";
 import type { Route } from "./+types/cancel";
-
-export const meta = mergeMeta(({ parentTitle }) => [{ title: `Cancellation • ${parentTitle}` }]);
 
 export default function Cancellation({ params }: Route.ComponentProps) {
     const roomType = params.roomType as RoomType;
@@ -23,6 +21,7 @@ type CancellationProps = {
 function MeetingRoomCancellation({ roomType }: CancellationProps) {
     return (
         <div className="flex justify-center">
+            <title>{`Cancellation • ${site.title}`}</title>
             <CardGroup className="min-w-[50rem] max-w-[49rem]">
                 <Card>
                     <div className="justify-center ml-5 mr-5">

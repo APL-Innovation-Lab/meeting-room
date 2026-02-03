@@ -1,11 +1,7 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
-import { mergeMeta } from "~/lib/merge-meta";
+import { site } from "~/lib/site";
 import { RoomType, routes } from "~/route-map";
 import type { Route } from "./+types/review";
-
-export const meta = mergeMeta(({ parentTitle }) => [
-    { title: `Review reservation • ${parentTitle}` },
-]);
 
 export default function Review({ params }: Route.ComponentProps) {
     const roomType = params.roomType as RoomType;
@@ -13,6 +9,7 @@ export default function Review({ params }: Route.ComponentProps) {
 
     return (
         <div className="flex justify-center">
+            <title>{`Review Reservation • ${site.title}`}</title>
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
                     <div className="justify-center ml-5 mr-5">

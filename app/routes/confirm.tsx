@@ -1,11 +1,9 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
 import CalendarButton from "~/components/CalendarButton";
-import { mergeMeta } from "~/lib/merge-meta";
+import { site } from "~/lib/site";
 import { RoomType, routes } from "~/route-map";
 import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
 import type { Route } from "./+types/confirm";
-
-export const meta = mergeMeta(({ parentTitle }) => [{ title: `Confirmation • ${parentTitle}` }]);
 
 export default function Confirmation({ params }: Route.ComponentProps) {
     const roomType = params.roomType as RoomType;
@@ -40,6 +38,7 @@ function SharedRoomConfirmation({ roomType }: ConfirmationProps) {
 
     return (
         <div className="flex justify-center">
+            <title>{`Confirmation • ${site.title}`}</title>
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
                     <div className="justify-center ml-5 mr-5">
@@ -67,7 +66,9 @@ function SharedRoomConfirmation({ roomType }: ConfirmationProps) {
                                     </strong>
                                 </h1>
                                 <ul className="list-disc list-inside ml-4">
-                                    <li>Beverages with lids are allowed. Please no food in the rooms</li>
+                                    <li>
+                                        Beverages with lids are allowed. Please no food in the rooms
+                                    </li>
                                     <li>
                                         If the reserving party is more than 15 minutes late, they
                                         forfeit the reservation
@@ -136,7 +137,9 @@ function SharedRoomConfirmation({ roomType }: ConfirmationProps) {
                                 <br />
 
                                 <div className="flex justify-center">
-                                    <Link href={routes.cancel.href({ roomType })}>Cancel Reservation</Link>
+                                    <Link href={routes.cancel.href({ roomType })}>
+                                        Cancel Reservation
+                                    </Link>
                                 </div>
                             </div>
                         </div>
@@ -158,7 +161,10 @@ function MeetingRoomConfirmation({ roomType }: ConfirmationProps) {
                                 Submitted!
                             </h1>
                             <p className="font-sans text-base-darker text-sans-xs text-center">
-                                <strong className="font-bold"> Status: Awaiting Confirmation</strong>
+                                <strong className="font-bold">
+                                    {" "}
+                                    Status: Awaiting Confirmation
+                                </strong>
                             </p>
                             <br />
 
@@ -237,7 +243,9 @@ function MeetingRoomConfirmation({ roomType }: ConfirmationProps) {
                                 <br />
 
                                 <div className="flex justify-center">
-                                    <Link href={routes.cancel.href({ roomType })}>Cancel Request</Link>
+                                    <Link href={routes.cancel.href({ roomType })}>
+                                        Cancel Request
+                                    </Link>
                                 </div>
                             </div>
                         </div>
