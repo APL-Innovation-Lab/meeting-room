@@ -39,6 +39,7 @@
         "@types/react": "^19.2.10",
         "@types/react-dom": "^19.2.3",
         "@types/validator": "^13.15.10",
+        "@xeonlink/prettier-plugin-organize-attributes": "^1.1.0",
         "autoprefixer": "^10.4.24",
         "get-sass-vars": "^4.0.3",
         "postcss": "^8.5.6",
@@ -63,7 +64,14 @@
         "arrowParens": "avoid",
         "plugins": [
             "prettier-plugin-tailwindcss",
-            "prettier-plugin-organize-imports"
+            "prettier-plugin-organize-imports",
+            "@xeonlink/prettier-plugin-organize-attributes"
+        ],
+        "attributeGroups": [
+            "^className$",
+            "^(id|name|htmlFor)$",
+            "$DEFAULT",
+            "^aria-"
         ]
     },
     "engines": {

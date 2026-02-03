@@ -8,8 +8,8 @@ type Props = {
 export default function CalendarButton({ children }: Props) {
     return (
         <Button
-            type="button"
             className="text-apl-green border-apl-green w-[75px] border-[3px] border-solid bg-white py-[12px] p-0 pointer-events-none"
+            type="button"
         >
             {children}
         </Button>

@@ -1,10 +1,9 @@
 ---
 name: User Story
 about: Brief description of a feature from the perspective of the end-user
-title: ''
+title: ""
 labels: User Story
-assignees: ''
-
+assignees: ""
 ---
 
 ### Description
@@ -37,10 +36,12 @@ So that [a benefit or value]
 - **Performance Considerations**: Any performance optimizations that should be considered.
 
 ### Notes
+
 - **Assumptions**: Any assumptions that are made in relation to the user story.
 - **Dependencies**: Any dependencies that this user story has.
 - **Additional Information**: Any other relevant information, context, or background.
 
 ### Attachments
+
 - [Link to design mockup](#)
 - [Link to relevant documentation](#)

@@ -22,7 +22,7 @@
             "problemMatcher": [],
             "label": "Format workspace",
             "detail": "prettier -w ."
-        },
+        }
         // {
         //     "type": "npm",
         //     "script": "styles:build-components",

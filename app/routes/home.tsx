@@ -16,8 +16,8 @@ export default function Component() {
                     <Header>
                         <div className="object-contain">
                             <img
-                                alt="A room of people in attendance at a meeting"
                                 className="rounded-t-md"
+                                alt="A room of people in attendance at a meeting"
                                 loading="lazy"
                                 src="/meeting-spaces-header.jpg"
                             />
@@ -42,9 +42,9 @@ export default function Component() {
                         <div className="flex-col px-3">
                             <Label htmlFor="reservation-select">Reserve Online</Label>
                             <Select
-                                defaultValue="empty"
                                 id="reservation-select"
                                 name="reservation-select"
+                                defaultValue="empty"
                                 onChange={event => {
                                     const value = event.currentTarget.selectedOptions[0].value;
                                     if (value === "empty") {

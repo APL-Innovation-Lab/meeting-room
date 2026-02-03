@@ -15,7 +15,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <html lang="en">
             <head>
                 <meta charSet="utf-8" />
-                <meta content="width=device-width, initial-scale=1" name="viewport" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
 
                 <title>{site.title}</title>
                 <meta name="og:title" content={site.title} />
