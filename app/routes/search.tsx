@@ -1,16 +1,10 @@
 import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
-import Breadcrumbs from "~/components/Breadcrumbs";
+import { Breadcrumbs } from "~/components/Breadcrumbs";
 import { Map } from "~/components/Map";
 import lngLat from "~/data/lng-lat.json";
 import { site } from "~/lib/site";
-import { RoomType, routes } from "~/route-map";
+import { RoomType } from "~/route-map";
 import { Route } from "./+types/search";
-import { breadcrumbLinks as indexBreadcrumbs } from "./home";
-
-export const breadcrumbLinks = (roomType: RoomType) => [
-    ...indexBreadcrumbs,
-    { href: routes.search.href({ roomType }), text: "Find a Room" },
-];
 
 export async function loader({ params }: Route.LoaderArgs) {
     const roomType = params.roomType as RoomType;
@@ -32,7 +26,7 @@ export default function FindARoom({ loaderData }: Route.ComponentProps) {
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
                     <div className="pl-5 pr-5">
-                        <Breadcrumbs links={breadcrumbLinks(roomType)} />
+                        <Breadcrumbs links={site.breadcrumbs.search(roomType)} />
                         <CardHeader className="-mt-3">
                             <h1 className="font-sans text-sans-2xl usa-card__heading font-bold py-[0.25rem]">
                                 Find a Room

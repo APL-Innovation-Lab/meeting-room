@@ -1,14 +1,9 @@
 import { Card, CardGroup, CardHeader, Header, Label, Link, Select } from "@trussworks/react-uswds";
 import { useNavigate } from "react-router";
-import Breadcrumbs from "~/components/Breadcrumbs";
+import { Breadcrumbs } from "~/components/Breadcrumbs";
 import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
 import { site } from "~/lib/site";
 import { RoomType, routes } from "~/route-map";
-
-export const breadcrumbLinks = [
-    { href: "https://library.austintexas.gov", text: "Home" },
-    { href: routes.home.href(), text: "Meeting Spaces" },
-];
 
 export default function Index() {
     const navigate = useNavigate();
@@ -30,7 +25,7 @@ export default function Index() {
                     </Header>
                     <div className="ml-5 mr-5">
                         <div className="-mt-1 ml-1">
-                            <Breadcrumbs links={breadcrumbLinks} />
+                            <Breadcrumbs links={site.breadcrumbs.home} />
                         </div>
                         <CardHeader className="-mt-3">
                             <h1 className="font-sans text-[40px] usa-card__heading font-bold py-2">

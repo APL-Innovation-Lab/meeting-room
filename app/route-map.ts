@@ -5,6 +5,10 @@ export const enum RoomType {
     MeetingRoom = "meeting-room",
 }
 
+export function displayName(roomType: RoomType): string {
+    return roomType === RoomType.MeetingRoom ? "Meeting Rooms" : "Shared Learning Rooms";
+}
+
 export const routes = {
     home: index("./routes/home.tsx"),
     search: route("/:roomType", "./routes/search.tsx"),
