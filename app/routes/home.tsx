@@ -3,12 +3,13 @@ import { useNavigate } from "react-router";
 import Breadcrumbs from "~/components/Breadcrumbs";
 import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
 import { mergeMeta } from "~/lib/merge-meta";
+import { RoomType, routes } from "~/route-map";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Meeting Spaces • ${parentTitle}` }]);
 
 export const breadcrumbLinks = [
     { href: "https://library.austintexas.gov", text: "Home" },
-    { href: "/", text: "Meeting Spaces" },
+    { href: routes.home.href(), text: "Meeting Spaces" },
 ];
 
 export default function Index() {
@@ -50,10 +51,18 @@ export default function Index() {
                                 defaultValue="empty"
                                 id="reservation-select"
                                 name="reservation-select"
-                                onInput={event => {
+                                onChange={event => {
                                     const value = event.currentTarget.selectedOptions[0].value;
-                                    const param = new URLSearchParams({ "org-type": value });
-                                    navigate(`/find-a-room?${param}`);
+                                    if (value === "empty") {
+                                        return;
+                                    }
+
+                                    const roomType =
+                                        value === "business"
+                                            ? RoomType.MeetingRoom
+                                            : RoomType.SharedLearningRoom;
+
+                                    navigate(routes.search.href({ roomType }));
                                 }}
                             >
                                 <option disabled value="empty">

@@ -3,40 +3,46 @@ import Breadcrumbs from "~/components/Breadcrumbs";
 import { Map } from "~/components/Map";
 import lngLat from "~/data/lng-lat.json";
 import { mergeMeta } from "~/lib/merge-meta";
-import { Route } from "./+types/find-a-room";
-import { breadcrumbLinks as indexBreadcrumbs } from "./_index";
+import { RoomType, routes } from "~/route-map";
+import { Route } from "./+types/search";
+import { breadcrumbLinks as indexBreadcrumbs } from "./home";
 
 export const meta = mergeMeta(({ parentTitle }) => [{ title: `Find a Room • ${parentTitle}` }]);
 
-export const breadcrumbLinks = [...indexBreadcrumbs, { href: "/find-a-room", text: "Find a Room" }];
+export const breadcrumbLinks = (roomType: RoomType) => [
+    ...indexBreadcrumbs,
+    { href: routes.search.href({ roomType }), text: "Find a Room" },
+];
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ params }: Route.LoaderArgs) {
+    const roomType = params.roomType as RoomType;
+
     return {
-        orgType: new URL(request.url).searchParams.get("org-type") as "business" | "nonprofit",
+        roomType,
         accessToken: import.meta.env.VITE_APP_MAPBOX_TOKEN,
         branchLngLats: lngLat.map(branch => branch.lngLat as [number, number]),
     };
 }
 
 export default function FindARoom({ loaderData }: Route.ComponentProps) {
-    const { orgType, accessToken: mapboxToken, branchLngLats } = loaderData;
-    const isBusiness = orgType === "business";
+    const { roomType, accessToken: mapboxToken, branchLngLats } = loaderData;
+    const isMeetingRoom = roomType === RoomType.MeetingRoom;
 
     return (
         <div className="flex justify-center max-h-viewport overflow-scroll">
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
                     <div className="pl-5 pr-5">
-                        <Breadcrumbs links={breadcrumbLinks} />
+                        <Breadcrumbs links={breadcrumbLinks(roomType)} />
                         <CardHeader className="-mt-3">
                             <h1 className="font-sans text-sans-2xl usa-card__heading font-bold py-[0.25rem]">
                                 Find a Room
                             </h1>
-                            {isBusiness && (
-                                <h2 className="font-sans text-sans-sm">COMMERCIAL/BUSINESS</h2>
+                            {isMeetingRoom && (
+                                <h2 className="font-sans text-sans-sm">MEETING ROOM</h2>
                             )}
                             <p className="font-sans text-base-darker text-sans-xs pt-4">
-                                {isBusiness ? (
+                                {isMeetingRoom ? (
                                     <>
                                         <strong>
                                             Rooms for commercial work purposes are only available at
