@@ -3,7 +3,7 @@ import getSassVars from "get-sass-vars";
 import fs from "node:fs";
 import path from "node:path";
 import { Bundler } from "scss-bundle";
-import { COMPILE_WARNINGS_DISABLED, COMPILE_WARNINGS_ENABLED } from "./constants";
+import { COMPILE_WARNINGS_DISABLED, COMPILE_WARNINGS_ENABLED } from "./constants.ts";
 
 const NO_CAMEL_CASE = ["accent-cool", "accent-warm"];
 const REMOVED_PREFIXES = ["ls-", "neg"];

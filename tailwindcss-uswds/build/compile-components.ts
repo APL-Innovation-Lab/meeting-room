@@ -4,7 +4,7 @@ import postcss from "postcss";
 import postcssJs from "postcss-js";
 import * as sass from "sass";
 import { Bundler } from "scss-bundle";
-import { COMPILE_WARNINGS_DISABLED, COMPILE_WARNINGS_ENABLED } from "./constants";
+import { COMPILE_WARNINGS_DISABLED, COMPILE_WARNINGS_ENABLED } from "./constants.ts";
 
 const PROJECT_DIR = path.resolve("./node_modules/uswds/src/stylesheets");
 const DIR_PATH = path.resolve(`./tailwindcss-uswds/tokens/`);
