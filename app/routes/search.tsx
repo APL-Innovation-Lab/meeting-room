@@ -1,4 +1,15 @@
-import { Card, CardGroup, CardHeader, Label, Select } from "@trussworks/react-uswds";
+import {
+    Button,
+    Card,
+    CardGroup,
+    CardHeader,
+    Checkbox,
+    DatePicker,
+    FormGroup,
+    Label,
+    Select,
+    TextInputMask,
+} from "@trussworks/react-uswds";
 import { Form, Link, LinkProps } from "react-router";
 import { Breadcrumbs } from "~/components/Breadcrumbs";
 import { Map } from "~/components/Map";
@@ -9,6 +20,7 @@ import { Route } from "./+types/search";
 
 export async function loader({ params }: Route.LoaderArgs) {
     return {
+        currentDate: new Intl.DateTimeFormat("en-CA").format(new Date()),
         branches: lngLat.map(location => location.branch),
         roomType: params.roomType as RoomType,
         accessToken: import.meta.env.VITE_APP_MAPBOX_TOKEN,
@@ -25,7 +37,7 @@ function ExternalLink({ children, className, ...props }: LinkProps) {
 }
 
 export default function Component({ loaderData }: Route.ComponentProps) {
-    const { branches, roomType, accessToken: mapboxToken, branchLngLats } = loaderData;
+    const { currentDate, branches, roomType, accessToken: mapboxToken, branchLngLats } = loaderData;
     const isMeetingRoom = roomType === RoomType.MeetingRoom;
     const title = displayName(roomType);
 
@@ -68,14 +80,81 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                             </p>
                         </CardHeader>
 
-                        <Form className="px-3">
-                            <Label htmlFor="location">Location</Label>
-                            <Select className="w-full max-w-none" id="location" name="location">
-                                <option value="all">All Available Locations</option>
-                                {branches.map(branch => (
-                                    <option value={branch}>{branch}</option>
-                                ))}
-                            </Select>
+                        <Form className="flex flex-col px-3 w-full max-w-none">
+                            <div className="w-full">
+                                <Label className="font-bold" htmlFor="location" id="location-label">
+                                    Location
+                                </Label>
+                                <Select className="max-w-none" id="location" name="location">
+                                    <option value="all">All Available Locations</option>
+                                    {branches.map(branch => (
+                                        <option key={branch} value={branch}>
+                                            {branch}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+
+                            <div className="flex gap-[1.25rem] justify-between">
+                                <div className="w-full">
+                                    <Label className="font-bold" htmlFor="date" id="date-label">
+                                        Date
+                                    </Label>
+                                    <DatePicker
+                                        id="date"
+                                        name="date"
+                                        defaultValue={currentDate}
+                                        aria-labelledby="date-label"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label
+                                        className="font-bold"
+                                        htmlFor="duration"
+                                        id="duration-label"
+                                    >
+                                        Duration
+                                    </Label>
+                                    <Select className="w-[10rem]" id="duration" name="duration">
+                                        <option value="120">2 hr</option>
+                                    </Select>
+                                </div>
+
+                                <div className="w-full">
+                                    <Label
+                                        className="font-bold"
+                                        id="number-of-people-label"
+                                        htmlFor="number-of-people"
+                                    >
+                                        Number of People
+                                    </Label>
+                                    <TextInputMask
+                                        className="w-full"
+                                        id="number-of-people"
+                                        name="number-of-people"
+                                        type="number"
+                                        mask="___"
+                                        pattern="\d{3}"
+                                        aria-labelledby="number-of-people-label"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-[1.25rem] mt-3 justify-between items-center">
+                                <div className="flex gap-[1.25rem] " id="amenities">
+                                    <Checkbox id="display" name="display" label="Display/Screen" />
+                                    <Checkbox id="hdmi" name="hdmi" label="HDMI" />
+                                    <Checkbox
+                                        id="whiteboard"
+                                        name="whiteboard"
+                                        label="Whiteboard"
+                                    />
+                                </div>
+                                <Button className="w-auto" type="submit">
+                                    Search
+                                </Button>
+                            </div>
                         </Form>
 
                         <div className="grid grid-cols-2 gap-4 p-4">
