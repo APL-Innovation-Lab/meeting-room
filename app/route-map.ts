@@ -11,7 +11,7 @@ export function displayName(roomType: RoomType): string {
 
 export const routes = {
     home: index("./routes/home.tsx"),
-    search: route("/:roomType", "./routes/search.tsx"),
+    search: route("/:roomType", "./routes/search/search.tsx"),
     review: route("/:roomType/review", "./routes/review.tsx"),
     confirm: route("/:roomType/confirm", "./routes/confirm.tsx"),
     cancel: route("/:roomType/cancel", "./routes/cancel.tsx"),

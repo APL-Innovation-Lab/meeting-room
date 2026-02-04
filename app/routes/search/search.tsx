@@ -17,9 +17,40 @@ import lngLat from "~/data/lng-lat.json";
 import { site } from "~/lib/site";
 import { displayName, RoomType } from "~/route-map";
 import { Route } from "./+types/search";
+import { SearchResult } from "./SearchResult";
 
 export async function loader({ params }: Route.LoaderArgs) {
     return {
+        searchResults: [
+            {
+                branch: "Carver Branch",
+                address: "1161 Angelina St.",
+                distance: "2.5",
+                roomsAvailable: 1,
+                image: "https://library.austintexas.gov/library/slr-522.jpg",
+            },
+            {
+                branch: "Cepeda Branch",
+                address: "651 N Pleasant Valley Rd.",
+                distance: "2.9",
+                roomsAvailable: 2,
+                image: "https://library.austintexas.gov/library/slr-509.jpg",
+            },
+            {
+                branch: "Central Library",
+                address: "710 W. César Chávez St.",
+                distance: "3.5",
+                roomsAvailable: 2,
+                image: "https://library.austintexas.gov/library/slr-471.jpg",
+            },
+            {
+                branch: "North Village Branch",
+                address: "2505 Steck Ave.",
+                distance: "4.6",
+                roomsAvailable: 3,
+                image: "https://library.austintexas.gov/library/slr-408.jpg",
+            },
+        ],
         currentDate: new Intl.DateTimeFormat("en-CA").format(new Date()),
         branches: lngLat.map(location => location.branch),
         roomType: params.roomType as RoomType,
@@ -37,7 +68,14 @@ function ExternalLink({ children, className, ...props }: LinkProps) {
 }
 
 export default function Component({ loaderData }: Route.ComponentProps) {
-    const { currentDate, branches, roomType, accessToken: mapboxToken, branchLngLats } = loaderData;
+    const {
+        searchResults,
+        currentDate,
+        branches,
+        roomType,
+        accessToken: mapboxToken,
+        branchLngLats,
+    } = loaderData;
     const isMeetingRoom = roomType === RoomType.MeetingRoom;
     const title = displayName(roomType);
 
@@ -157,8 +195,20 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                             </div>
                         </Form>
 
-                        <div className="grid grid-cols-2 gap-4 p-4">
-                            <div className="h-[30rem]" />
+                        <div className="grid grid-cols-2 gap-[1rem] p-4">
+                            <ul className="flex flex-col divide-y-[1px] divide-base-default gap-[1rem]">
+                                {searchResults.map((result, idx) => (
+                                    <SearchResult
+                                        key={result.branch}
+                                        index={idx + 1}
+                                        image={result.image}
+                                        branch={result.branch}
+                                        distance={result.distance}
+                                        address={result.address}
+                                        roomsAvailable={result.roomsAvailable}
+                                    />
+                                ))}
+                            </ul>
                             <Map
                                 className="w-full h-full"
                                 branchLngLats={branchLngLats}
