@@ -247,7 +247,7 @@ async function generateTheme(options: GetTokensOptions) {
 }
 
 let { theme, fonts } = await generateTheme({
-    uswdsScss: path.resolve("./node_modules/uswds/src/stylesheets/uswds.scss"),
+    uswdsScss: path.resolve("./node_modules/@uswds/uswds/src/stylesheets/uswds.scss"),
 });
 
 const DIR_PATH = path.resolve(`./tailwindcss-uswds/tokens/`);
