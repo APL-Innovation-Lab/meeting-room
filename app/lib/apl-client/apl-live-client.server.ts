@@ -1,6 +1,118 @@
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
+import validator from "validator";
 import { z } from "zod";
-import type { Amenities, LibraryRoom, SafeResult, SearchOptions } from "./apl-client.server";
+
+/**
+ * Represents a safe result of an operation that can either be successful with data or fail with an error.
+ */
+export type SafeResult<Data, Err extends Error = Error> =
+    | {
+          data: Data;
+          error: undefined;
+      }
+    | {
+          data: undefined;
+          error: Err;
+      };
+
+/**
+ * Describes the amenities available in a library room.
+ */
+export type Amenities = {
+    airplay: boolean;
+    hdmi: boolean;
+    whiteboard: boolean;
+};
+
+/**
+ * Represents a library branch with its details.
+ */
+export type LibraryBranch = {
+    name: string;
+    floor: number;
+    address: string;
+    image: string;
+};
+
+/**
+ * Represents a library room with its branch, information, and availability.
+ */
+export type LibraryRoom = {
+    branch: LibraryBranch;
+    info: {
+        id: string;
+        name: string;
+        type: "shared-learning-room" | "meeting-room";
+        capacity: number;
+        amenities: Amenities;
+        availableTimes: string[];
+        date: string;
+    };
+};
+
+/**
+ * Options for searching available library rooms.
+ */
+export type SearchOptions = {
+    location?: string;
+    date?: Date;
+    time?: string;
+    capacity?: number;
+    amenities?: Partial<Amenities>;
+};
+
+/**
+ * Schema for validating shared learning room reservation options.
+ */
+export const SharedLearningRoomReservationOptionsSchema = z.object({
+    roomId: z.string(),
+    meetingTopic: z.string(),
+    fullName: z.string(),
+    emailAddress: z.email(),
+    date: z.string(),
+    time: z.string(),
+});
+
+/**
+ * Schema for validating meeting room reservation options.
+ */
+export const MeetingRoomReservationOptionsSchema =
+    SharedLearningRoomReservationOptionsSchema.extend({
+        orgName: z.string(),
+        orgPurpose: z.string(),
+        website: z.url().optional(),
+        phoneNumber: z.string().refine(value => validator.isMobilePhone(value, "any")),
+    });
+
+/**
+ * Union schema for validating reservation options for any room type.
+ */
+export const ReservationOptionsSchema = z.union([
+    MeetingRoomReservationOptionsSchema.extend({ roomType: z.literal("meeting-room") }),
+    SharedLearningRoomReservationOptionsSchema.extend({
+        roomType: z.literal("shared-learning-room"),
+    }),
+]);
+
+/**
+ * Represents a reservation for a library room.
+ */
+export type Reservation = {
+    roomId: string;
+    meetingTopic: string;
+    fullName: string;
+    emailAddress: string;
+    date: string;
+    time: string;
+    roomType: "shared-learning-room" | "meeting-room";
+    roomName: string;
+    branchName: string;
+    // Optional fields for meeting rooms
+    orgName?: string;
+    orgPurpose?: string;
+    website?: string;
+    phoneNumber?: string;
+};
 
 const DEFAULT_BASE_URL = "https://library.austintexas.gov";
 const CACHE_TTL_MS = 5 * 60 * 1000;
