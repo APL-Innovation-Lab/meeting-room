@@ -58,6 +58,11 @@ export type LiveBranchDirectoryEntry = {
     image: string;
 };
 
+export type LiveBranchCoordinate = {
+    branch: string;
+    lngLat: [number, number];
+};
+
 const RoomStateSchema = z.object({
     room_id: z.string(),
     location_id: z.string(),
@@ -80,6 +85,8 @@ let cachedMeetingRoomBranches: LiveMeetingRoomBranch[] | undefined;
 let cachedMeetingRoomBranchesAt = 0;
 let cachedBranchDirectory: LiveBranchDirectoryEntry[] | undefined;
 let cachedBranchDirectoryAt = 0;
+let cachedBranchCoordinates: LiveBranchCoordinate[] | undefined;
+let cachedBranchCoordinatesAt = 0;
 
 function normalizeBaseUrl(baseUrl: string): string {
     return baseUrl.replace(/\/+$/, "");
@@ -193,7 +200,10 @@ function parseBranchDirectory(html: string): LiveBranchDirectoryEntry[] {
 
             const teaserNodes = walkNodes(node);
             const titleElement = teaserNodes.find(
-                child => isElement(child) && child.tagName === "h2" && getClassList(child).includes("field-title"),
+                child =>
+                    isElement(child) &&
+                    child.tagName === "h2" &&
+                    getClassList(child).includes("field-title"),
             );
             if (!titleElement || !isElement(titleElement)) return undefined;
 
@@ -201,10 +211,13 @@ function parseBranchDirectory(html: string): LiveBranchDirectoryEntry[] {
             if (!branch) return undefined;
 
             const imageElement = teaserNodes.find(
-                child => isElement(child) && child.tagName === "img" && Boolean(getAttr(child, "src")),
+                child =>
+                    isElement(child) && child.tagName === "img" && Boolean(getAttr(child, "src")),
             );
             const image =
-                imageElement && isElement(imageElement) ? cleanText(getAttr(imageElement, "src") ?? "") : "";
+                imageElement && isElement(imageElement)
+                    ? cleanText(getAttr(imageElement, "src") ?? "")
+                    : "";
 
             const phoneAddressElement = teaserNodes.find(
                 child =>
@@ -242,7 +255,10 @@ function parseRoomMarkup(markup: string): Omit<LiveRoom, "locationId" | "publish
     const roomRoot = nodes.find(node => {
         if (!isElement(node)) return false;
         const classList = getClassList(node);
-        return classList.includes("room-option") && classList.some(className => /^option-\d+$/.test(className));
+        return (
+            classList.includes("room-option") &&
+            classList.some(className => /^option-\d+$/.test(className))
+        );
     });
     if (!roomRoot || !isElement(roomRoot)) return undefined;
 
@@ -255,7 +271,8 @@ function parseRoomMarkup(markup: string): Omit<LiveRoom, "locationId" | "publish
     const name = cleanText(strong ? getTextContent(strong) : `Room ${id}`);
 
     const firstImage = roomNodes.find(node => isElement(node) && node.tagName === "img");
-    const image = firstImage && isElement(firstImage) ? cleanText(getAttr(firstImage, "src") ?? "") : "";
+    const image =
+        firstImage && isElement(firstImage) ? cleanText(getAttr(firstImage, "src") ?? "") : "";
 
     const listItems = roomNodes.filter(node => isElement(node) && node.tagName === "li");
     let capacity = 0;
@@ -304,6 +321,43 @@ function parseRoomMarkup(markup: string): Omit<LiveRoom, "locationId" | "publish
         image,
         amenities,
     };
+}
+
+function normalizeKmlBranchName(value: string): string {
+    return cleanText(value)
+        .replace(/\s*[|,]\s*Austin Public Library$/i, "")
+        .replace(/^Austin Public Library\s+/i, "")
+        .trim();
+}
+
+function parseBranchCoordinatesKml(kml: string): LiveBranchCoordinate[] {
+    const entries: LiveBranchCoordinate[] = [];
+    const placemarkRe =
+        /<Placemark>[\s\S]*?<name>([\s\S]*?)<\/name>[\s\S]*?<coordinates>\s*([-\d.]+),([-\d.]+)(?:,[-\d.]*)?\s*<\/coordinates>[\s\S]*?<\/Placemark>/gi;
+
+    let match: RegExpExecArray | null = placemarkRe.exec(kml);
+    while (match) {
+        const branch = normalizeKmlBranchName(match[1] ?? "");
+        const lng = Number.parseFloat(match[2] ?? "");
+        const lat = Number.parseFloat(match[3] ?? "");
+
+        if (branch && Number.isFinite(lng) && Number.isFinite(lat)) {
+            entries.push({
+                branch,
+                lngLat: [lng, lat],
+            });
+        }
+
+        match = placemarkRe.exec(kml);
+    }
+
+    const seen = new Set<string>();
+    return entries.filter(entry => {
+        const key = entry.branch.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -364,7 +418,9 @@ async function fetchLiveRooms(baseUrl = DEFAULT_BASE_URL): Promise<LiveRoom[]> {
     return rooms;
 }
 
-async function fetchMeetingRoomBranches(baseUrl = DEFAULT_BASE_URL): Promise<LiveMeetingRoomBranch[]> {
+async function fetchMeetingRoomBranches(
+    baseUrl = DEFAULT_BASE_URL,
+): Promise<LiveMeetingRoomBranch[]> {
     const now = Date.now();
     if (cachedMeetingRoomBranches && now - cachedMeetingRoomBranchesAt < CACHE_TTL_MS) {
         return cachedMeetingRoomBranches;
@@ -387,7 +443,9 @@ async function fetchMeetingRoomBranches(baseUrl = DEFAULT_BASE_URL): Promise<Liv
         throw new Error("Could not find meeting-room location selector.");
     }
 
-    const options = getChildNodes(locationSelect).filter(isElement).filter(node => node.tagName === "option");
+    const options = getChildNodes(locationSelect)
+        .filter(isElement)
+        .filter(node => node.tagName === "option");
     const branches: LiveMeetingRoomBranch[] = options
         .map(option => {
             const parsed = parseMeetingRoomOptionLabel(getTextContent(option));
@@ -405,7 +463,9 @@ async function fetchMeetingRoomBranches(baseUrl = DEFAULT_BASE_URL): Promise<Liv
     return branches;
 }
 
-async function fetchBranchDirectory(baseUrl = DEFAULT_BASE_URL): Promise<LiveBranchDirectoryEntry[]> {
+async function fetchBranchDirectory(
+    baseUrl = DEFAULT_BASE_URL,
+): Promise<LiveBranchDirectoryEntry[]> {
     const now = Date.now();
     if (cachedBranchDirectory && now - cachedBranchDirectoryAt < CACHE_TTL_MS) {
         return cachedBranchDirectory;
@@ -423,6 +483,27 @@ async function fetchBranchDirectory(baseUrl = DEFAULT_BASE_URL): Promise<LiveBra
     cachedBranchDirectory = branches;
     cachedBranchDirectoryAt = now;
     return branches;
+}
+
+async function fetchBranchCoordinates(): Promise<LiveBranchCoordinate[]> {
+    const now = Date.now();
+    if (cachedBranchCoordinates && now - cachedBranchCoordinatesAt < CACHE_TTL_MS) {
+        return cachedBranchCoordinates;
+    }
+
+    const response = await fetch(
+        "https://www.google.com/maps/d/kml?mid=1m7PlBBSOnA2ymIGxBy9WInAlr3Z6_qdL&forcekml=1",
+    );
+    if (!response.ok) {
+        throw new Error(`Request failed (${response.status}) for Google Maps KML feed`);
+    }
+
+    const kml = await response.text();
+    const coordinates = parseBranchCoordinatesKml(kml);
+
+    cachedBranchCoordinates = coordinates;
+    cachedBranchCoordinatesAt = now;
+    return coordinates;
 }
 
 function toMinutes(time: string): number | undefined {
@@ -512,7 +593,8 @@ export const aplLive = {
                 const needle = options.location.toLowerCase();
                 publishedRooms = publishedRooms.filter(room => {
                     const locationName =
-                        LocationInfoById[room.locationId as LocationId]?.name ?? `Location ${room.locationId}`;
+                        LocationInfoById[room.locationId as LocationId]?.name ??
+                        `Location ${room.locationId}`;
                     return (
                         locationName.toLowerCase().includes(needle) ||
                         room.locationId.toLowerCase() === needle
@@ -534,7 +616,10 @@ export const aplLive = {
             }
 
             if (desiredMinutes !== undefined) {
-                const reservationsByLocation = new Map<string, z.infer<typeof ReservationSchema>[]>();
+                const reservationsByLocation = new Map<
+                    string,
+                    z.infer<typeof ReservationSchema>[]
+                >();
 
                 for (const room of publishedRooms) {
                     if (reservationsByLocation.has(room.locationId)) continue;
@@ -549,7 +634,9 @@ export const aplLive = {
                 publishedRooms = publishedRooms.filter(room => {
                     const reservations = reservationsByLocation.get(room.locationId) ?? [];
                     const roomReservations = reservations.filter(res => res.room === room.roomId);
-                    return !roomReservations.some(res => reservationBlocksTime(res, desiredMinutes));
+                    return !roomReservations.some(res =>
+                        reservationBlocksTime(res, desiredMinutes),
+                    );
                 });
             }
 
@@ -572,6 +659,8 @@ export const aplLive = {
         cachedMeetingRoomBranchesAt = 0;
         cachedBranchDirectory = undefined;
         cachedBranchDirectoryAt = 0;
+        cachedBranchCoordinates = undefined;
+        cachedBranchCoordinatesAt = 0;
     },
 
     async getMeetingRoomBranches(
@@ -598,6 +687,21 @@ export const aplLive = {
             const branches = await fetchBranchDirectory(baseUrl);
             return {
                 data: branches,
+                error: undefined,
+            };
+        } catch (error: any) {
+            return {
+                data: undefined,
+                error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
+    },
+
+    async getBranchCoordinates(): Promise<SafeResult<LiveBranchCoordinate[]>> {
+        try {
+            const coordinates = await fetchBranchCoordinates();
+            return {
+                data: coordinates,
                 error: undefined,
             };
         } catch (error: any) {

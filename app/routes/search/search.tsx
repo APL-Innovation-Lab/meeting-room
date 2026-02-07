@@ -13,7 +13,6 @@ import {
 import { Form } from "react-router";
 import { Breadcrumbs } from "~/components/Breadcrumbs";
 import { Map as BranchMap } from "~/components/Map";
-import lngLat from "~/data/lng-lat.json";
 import { aplLive } from "~/lib/apl-client/apl-live-client.server";
 import { site } from "~/lib/site";
 import { displayName, RoomType } from "~/route-map";
@@ -32,7 +31,12 @@ type BranchSearchResult = {
 function normalizeBranchName(value: string): string {
     return value
         .toLowerCase()
+        .replace(/^austin\s+/g, "")
+        .replace(/\s+faulk building$/g, "")
+        .replace(/\snorth village\s*/g, " north village ")
+        .replace(/\sjohn gillum branch/g, "north village branch")
         .replace(/&/g, "and")
+        .replace(/[|,].*$/g, "")
         .replace(/[().]/g, "")
         .replace(/\s+/g, " ")
         .trim();
@@ -52,10 +56,11 @@ function toAbsoluteImagePath(image: string): string {
 
 export async function loader({ params }: Route.LoaderArgs) {
     const roomType = params.roomType as RoomType;
-    const [roomsResult, meetingBranchesResult, branchDirectoryResult] = await Promise.all([
+    const [roomsResult, meetingBranchesResult, branchDirectoryResult, branchCoordinatesResult] = await Promise.all([
         aplLive.getRooms(),
         aplLive.getMeetingRoomBranches(),
         aplLive.getBranchDirectory(),
+        aplLive.getBranchCoordinates(),
     ]);
     const grouped = new Map<string, BranchSearchResult>();
     const branchInfo = new Map<string, { address: string; image: string }>();
@@ -106,9 +111,14 @@ export async function loader({ params }: Route.LoaderArgs) {
     }
 
     const searchResults = Array.from(grouped.values());
-    const filteredLngLat = lngLat.filter(candidate =>
-        searchResults.some(result => branchNamesMatch(result.branch, candidate.branch)),
-    );
+    const liveBranchCoordinates = !branchCoordinatesResult.error && branchCoordinatesResult.data
+        ? branchCoordinatesResult.data
+        : [];
+    const branchLngLats = searchResults
+        .map(result =>
+            liveBranchCoordinates.find(candidate => branchNamesMatch(result.branch, candidate.branch))?.lngLat,
+        )
+        .filter((value): value is [number, number] => Boolean(value));
 
     return {
         searchResults,
@@ -116,7 +126,7 @@ export async function loader({ params }: Route.LoaderArgs) {
         branches: searchResults.map(result => result.branch),
         roomType,
         accessToken: import.meta.env.VITE_APP_MAPBOX_TOKEN,
-        branchLngLats: filteredLngLat.map(branch => branch.lngLat as [number, number]),
+        branchLngLats,
     };
 }
 
