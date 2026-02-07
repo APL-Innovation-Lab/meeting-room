@@ -164,12 +164,14 @@ type LiveRoom = {
 export type LiveMeetingRoomBranch = {
     locationId: string;
     branch: string;
+    capacities: number[];
     roomsAvailable: number;
 };
 
 export type LiveSharedLearningRoomBranch = {
     locationId: string;
     branch: string;
+    capacities: number[];
     roomsAvailable: number;
 };
 
@@ -337,7 +339,9 @@ function getTextSegmentsByBr(node: ParseElement): string[] {
     return segments;
 }
 
-function parseMeetingRoomOptionLabel(label: string): LiveMeetingRoomBranch | undefined {
+function parseBranchOptionLabel(
+    label: string,
+): { branch: string; capacities: number[]; roomsAvailable: number } | undefined {
     const trimmed = cleanText(label);
     if (!trimmed || trimmed === "- Select -") return undefined;
 
@@ -350,8 +354,8 @@ function parseMeetingRoomOptionLabel(label: string): LiveMeetingRoomBranch | und
         .filter(value => Number.isFinite(value));
 
     return {
-        locationId: "",
         branch,
+        capacities,
         roomsAvailable: Math.max(1, capacities.length),
     };
 }
@@ -415,7 +419,9 @@ function parseBranchDirectory(html: string): LiveBranchDirectoryEntry[] {
                     isElement(child) && child.tagName === "a" && Boolean(getAttr(child, "href")),
             );
             const path =
-                linkElement && isElement(linkElement) ? cleanText(getAttr(linkElement, "href") ?? "") : "";
+                linkElement && isElement(linkElement)
+                    ? cleanText(getAttr(linkElement, "href") ?? "")
+                    : "";
 
             const phoneAddressElement = teaserNodes.find(
                 child =>
@@ -619,7 +625,7 @@ async function fetchMeetingRoomBranches(
 ): Promise<LiveMeetingRoomBranch[]> {
     const host = normalizeBaseUrl(baseUrl);
     const now = Date.now();
-    const cached = await getCached<LiveMeetingRoomBranch[]>("meeting_room_branches", host);
+    const cached = await getCached<LiveMeetingRoomBranch[]>("meeting_room_branches_v2", host);
     if (cached) return cached;
     const response = await fetch(`${host}/meeting-rooms/request?t=${now}`);
     if (!response.ok) {
@@ -633,7 +639,7 @@ async function fetchMeetingRoomBranches(
     }
     const branches: LiveMeetingRoomBranch[] = options
         .map(option => {
-            const parsed = parseMeetingRoomOptionLabel(option.label);
+            const parsed = parseBranchOptionLabel(option.label);
             if (!parsed) return undefined;
 
             return {
@@ -643,7 +649,7 @@ async function fetchMeetingRoomBranches(
         })
         .filter((value): value is LiveMeetingRoomBranch => Boolean(value && value.locationId));
 
-    await setCached("meeting_room_branches", host, branches);
+    await setCached("meeting_room_branches_v2", host, branches);
     return branches;
 }
 
@@ -652,10 +658,10 @@ async function fetchSharedLearningRoomBranches(
 ): Promise<LiveSharedLearningRoomBranch[]> {
     const host = normalizeBaseUrl(baseUrl);
     const now = Date.now();
-    const cached = await getCached<LiveSharedLearningRoomBranch[]>("slr_branches", host);
+    const cached = await getCached<LiveSharedLearningRoomBranch[]>("slr_branches_v2", host);
     if (cached) return cached;
-    const [roomStatesRaw, slrRequestHtml] = await Promise.all([
-        fetchJson<unknown>(`${host}/slr_room_states.json?t=${now}`),
+    const [liveRooms, slrRequestHtml] = await Promise.all([
+        fetchLiveRooms(host),
         fetch(`${host}/slr/request?t=${now}`).then(async response => {
             if (!response.ok) {
                 throw new Error(`Request failed (${response.status}) for ${host}/slr/request`);
@@ -664,33 +670,45 @@ async function fetchSharedLearningRoomBranches(
         }),
     ]);
 
-    const roomStates = z.array(RoomStateSchema).parse(roomStatesRaw);
     const locationOptions = parseLocationOptions(slrRequestHtml, "edit-location");
     const publishedCountByLocation = new Map<string, number>();
+    const capacitiesByLocation = new Map<string, Set<number>>();
 
-    for (const state of roomStates) {
-        const locationId = cleanText(state.location_id);
-        const isPublished =
-            String(state.published).toLowerCase() === "1" ||
-            String(state.published).toLowerCase() === "true";
-        if (!isPublished) continue;
-        publishedCountByLocation.set(locationId, (publishedCountByLocation.get(locationId) ?? 0) + 1);
+    for (const room of liveRooms) {
+        if (!room.published) continue;
+        const locationId = cleanText(room.locationId);
+        publishedCountByLocation.set(
+            locationId,
+            (publishedCountByLocation.get(locationId) ?? 0) + 1,
+        );
+
+        const capacities = capacitiesByLocation.get(locationId) ?? new Set<number>();
+        if (Number.isFinite(room.capacity) && room.capacity > 0) {
+            capacities.add(room.capacity);
+        }
+        capacitiesByLocation.set(locationId, capacities);
     }
 
     const branches: LiveSharedLearningRoomBranch[] = locationOptions
         .map(option => {
+            const parsed = parseBranchOptionLabel(option.label);
+            if (!parsed) return undefined;
             const roomsAvailable = publishedCountByLocation.get(option.locationId) ?? 0;
             if (roomsAvailable <= 0) return undefined;
+            const computedCapacities = Array.from(
+                capacitiesByLocation.get(option.locationId) ?? [],
+            ).sort((a, b) => a - b);
 
             return {
                 locationId: option.locationId,
-                branch: option.label.replace(/\s+\((Capacities?|Capacity):.*$/i, "").trim(),
+                branch: parsed.branch,
+                capacities: computedCapacities.length > 0 ? computedCapacities : parsed.capacities,
                 roomsAvailable,
             };
         })
         .filter((value): value is LiveSharedLearningRoomBranch => Boolean(value));
 
-    await setCached("slr_branches", host, branches);
+    await setCached("slr_branches_v2", host, branches);
     return branches;
 }
 
@@ -800,7 +818,7 @@ function toLibraryRoom(room: LiveRoom, targetDateIso: string): LibraryRoom {
     };
 }
 
-export const aplLive = {
+export const apl = {
     async getRooms(
         options: Partial<SearchOptions> = {},
         baseUrl = DEFAULT_BASE_URL,
