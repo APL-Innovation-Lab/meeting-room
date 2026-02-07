@@ -46,6 +46,18 @@ type LiveRoom = {
     amenities: Amenities;
 };
 
+export type LiveMeetingRoomBranch = {
+    locationId: string;
+    branch: string;
+    roomsAvailable: number;
+};
+
+export type LiveBranchDirectoryEntry = {
+    branch: string;
+    address: string;
+    image: string;
+};
+
 const RoomStateSchema = z.object({
     room_id: z.string(),
     location_id: z.string(),
@@ -64,6 +76,10 @@ const ReservationSchema = z.object({
 
 let cachedRooms: LiveRoom[] | undefined;
 let cachedRoomsAt = 0;
+let cachedMeetingRoomBranches: LiveMeetingRoomBranch[] | undefined;
+let cachedMeetingRoomBranchesAt = 0;
+let cachedBranchDirectory: LiveBranchDirectoryEntry[] | undefined;
+let cachedBranchDirectoryAt = 0;
 
 function normalizeBaseUrl(baseUrl: string): string {
     return baseUrl.replace(/\/+$/, "");
@@ -123,6 +139,100 @@ function walkNodes(root: ParseNode | ParseParent): ParseNode[] {
 
 function parseYesNo(value: string): boolean {
     return value.toLowerCase() === "yes";
+}
+
+function getTextSegmentsByBr(node: ParseElement): string[] {
+    const segments: string[] = [];
+    let current = "";
+
+    for (const child of getChildNodes(node)) {
+        if (isElement(child) && child.tagName === "br") {
+            const text = cleanText(current);
+            if (text) segments.push(text);
+            current = "";
+            continue;
+        }
+
+        current += getTextContent(child);
+    }
+
+    const tail = cleanText(current);
+    if (tail) segments.push(tail);
+    return segments;
+}
+
+function parseMeetingRoomOptionLabel(label: string): LiveMeetingRoomBranch | undefined {
+    const trimmed = cleanText(label);
+    if (!trimmed || trimmed === "- Select -") return undefined;
+
+    const branch = trimmed.replace(/\s+\((Capacities?|Capacity):.*$/i, "").trim();
+    const capacitiesMatch = trimmed.match(/\((Capacities?|Capacity):\s*([^)]+)\)/i);
+    const capacitiesRaw = capacitiesMatch?.[2] ?? "";
+    const capacities = capacitiesRaw
+        .split(",")
+        .map(value => Number.parseInt(value.trim(), 10))
+        .filter(value => Number.isFinite(value));
+
+    return {
+        locationId: "",
+        branch,
+        roomsAvailable: Math.max(1, capacities.length),
+    };
+}
+
+function parseBranchDirectory(html: string): LiveBranchDirectoryEntry[] {
+    const fragment = parseFragment(html);
+    const nodes = walkNodes(fragment);
+    const teasers = nodes.filter(
+        node => isElement(node) && getClassList(node).includes("apl_location_teaser"),
+    );
+
+    const branches = teasers
+        .map(node => {
+            if (!isElement(node)) return undefined;
+
+            const teaserNodes = walkNodes(node);
+            const titleElement = teaserNodes.find(
+                child => isElement(child) && child.tagName === "h2" && getClassList(child).includes("field-title"),
+            );
+            if (!titleElement || !isElement(titleElement)) return undefined;
+
+            const branch = cleanText(getTextContent(titleElement));
+            if (!branch) return undefined;
+
+            const imageElement = teaserNodes.find(
+                child => isElement(child) && child.tagName === "img" && Boolean(getAttr(child, "src")),
+            );
+            const image =
+                imageElement && isElement(imageElement) ? cleanText(getAttr(imageElement, "src") ?? "") : "";
+
+            const phoneAddressElement = teaserNodes.find(
+                child =>
+                    isElement(child) &&
+                    child.tagName === "div" &&
+                    getClassList(child).includes("phone-address"),
+            );
+            const segments =
+                phoneAddressElement && isElement(phoneAddressElement)
+                    ? getTextSegmentsByBr(phoneAddressElement)
+                    : [];
+            const address = segments.slice(1).join(", ");
+
+            return {
+                branch,
+                address,
+                image,
+            };
+        })
+        .filter((value): value is LiveBranchDirectoryEntry => Boolean(value));
+
+    const seen = new Set<string>();
+    return branches.filter(branch => {
+        const key = branch.branch.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 }
 
 function parseRoomMarkup(markup: string): Omit<LiveRoom, "locationId" | "published"> | undefined {
@@ -252,6 +362,67 @@ async function fetchLiveRooms(baseUrl = DEFAULT_BASE_URL): Promise<LiveRoom[]> {
     cachedRoomsAt = now;
 
     return rooms;
+}
+
+async function fetchMeetingRoomBranches(baseUrl = DEFAULT_BASE_URL): Promise<LiveMeetingRoomBranch[]> {
+    const now = Date.now();
+    if (cachedMeetingRoomBranches && now - cachedMeetingRoomBranchesAt < CACHE_TTL_MS) {
+        return cachedMeetingRoomBranches;
+    }
+
+    const host = normalizeBaseUrl(baseUrl);
+    const response = await fetch(`${host}/meeting-rooms/request?t=${now}`);
+    if (!response.ok) {
+        throw new Error(`Request failed (${response.status}) for ${host}/meeting-rooms/request`);
+    }
+
+    const html = await response.text();
+    const fragment = parseFragment(html);
+    const nodes = walkNodes(fragment);
+    const locationSelect = nodes.find(node => {
+        if (!isElement(node) || node.tagName !== "select") return false;
+        return getAttr(node, "id") === "edit-location";
+    });
+    if (!locationSelect || !isElement(locationSelect)) {
+        throw new Error("Could not find meeting-room location selector.");
+    }
+
+    const options = getChildNodes(locationSelect).filter(isElement).filter(node => node.tagName === "option");
+    const branches: LiveMeetingRoomBranch[] = options
+        .map(option => {
+            const parsed = parseMeetingRoomOptionLabel(getTextContent(option));
+            if (!parsed) return undefined;
+
+            return {
+                ...parsed,
+                locationId: getAttr(option, "value") ?? "",
+            };
+        })
+        .filter((value): value is LiveMeetingRoomBranch => Boolean(value && value.locationId));
+
+    cachedMeetingRoomBranches = branches;
+    cachedMeetingRoomBranchesAt = now;
+    return branches;
+}
+
+async function fetchBranchDirectory(baseUrl = DEFAULT_BASE_URL): Promise<LiveBranchDirectoryEntry[]> {
+    const now = Date.now();
+    if (cachedBranchDirectory && now - cachedBranchDirectoryAt < CACHE_TTL_MS) {
+        return cachedBranchDirectory;
+    }
+
+    const host = normalizeBaseUrl(baseUrl);
+    const response = await fetch(`${host}/locations?t=${now}`);
+    if (!response.ok) {
+        throw new Error(`Request failed (${response.status}) for ${host}/locations`);
+    }
+
+    const html = await response.text();
+    const branches = parseBranchDirectory(html);
+
+    cachedBranchDirectory = branches;
+    cachedBranchDirectoryAt = now;
+    return branches;
 }
 
 function toMinutes(time: string): number | undefined {
@@ -397,5 +568,43 @@ export const aplLive = {
     clearCache(): void {
         cachedRooms = undefined;
         cachedRoomsAt = 0;
+        cachedMeetingRoomBranches = undefined;
+        cachedMeetingRoomBranchesAt = 0;
+        cachedBranchDirectory = undefined;
+        cachedBranchDirectoryAt = 0;
+    },
+
+    async getMeetingRoomBranches(
+        baseUrl = DEFAULT_BASE_URL,
+    ): Promise<SafeResult<LiveMeetingRoomBranch[]>> {
+        try {
+            const branches = await fetchMeetingRoomBranches(baseUrl);
+            return {
+                data: branches,
+                error: undefined,
+            };
+        } catch (error: any) {
+            return {
+                data: undefined,
+                error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
+    },
+
+    async getBranchDirectory(
+        baseUrl = DEFAULT_BASE_URL,
+    ): Promise<SafeResult<LiveBranchDirectoryEntry[]>> {
+        try {
+            const branches = await fetchBranchDirectory(baseUrl);
+            return {
+                data: branches,
+                error: undefined,
+            };
+        } catch (error: any) {
+            return {
+                data: undefined,
+                error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
     },
 };

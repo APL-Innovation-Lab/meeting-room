@@ -10,7 +10,7 @@ import {
     Select,
     TextInputMask,
 } from "@trussworks/react-uswds";
-import { Form, Link, LinkProps } from "react-router";
+import { Form } from "react-router";
 import { Breadcrumbs } from "~/components/Breadcrumbs";
 import { Map as BranchMap } from "~/components/Map";
 import lngLat from "~/data/lng-lat.json";
@@ -19,7 +19,7 @@ import { site } from "~/lib/site";
 import { displayName, RoomType } from "~/route-map";
 import { Route } from "./+types/search";
 import { SearchResult } from "./SearchResult";
-import { ComponentProps, HTMLAttributes } from "react";
+import { ComponentProps } from "react";
 
 type BranchSearchResult = {
     branch: string;
@@ -29,11 +29,64 @@ type BranchSearchResult = {
     image: string;
 };
 
-export async function loader({ params }: Route.LoaderArgs) {
-    const roomsResult = await aplLive.getRooms();
-    const grouped = new Map<string, BranchSearchResult>();
+function normalizeBranchName(value: string): string {
+    return value
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[().]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
 
-    if (!roomsResult.error && roomsResult.data) {
+function branchNamesMatch(a: string, b: string): boolean {
+    const left = normalizeBranchName(a);
+    const right = normalizeBranchName(b);
+    return left === right || left.includes(right) || right.includes(left);
+}
+
+function toAbsoluteImagePath(image: string): string {
+    if (!image) return "https://library.austintexas.gov/library/slr-408.jpg";
+    if (image.startsWith("http://") || image.startsWith("https://")) return image;
+    return `https://library.austintexas.gov${image}`;
+}
+
+export async function loader({ params }: Route.LoaderArgs) {
+    const roomType = params.roomType as RoomType;
+    const [roomsResult, meetingBranchesResult, branchDirectoryResult] = await Promise.all([
+        aplLive.getRooms(),
+        aplLive.getMeetingRoomBranches(),
+        aplLive.getBranchDirectory(),
+    ]);
+    const grouped = new Map<string, BranchSearchResult>();
+    const branchInfo = new Map<string, { address: string; image: string }>();
+
+    if (!branchDirectoryResult.error && branchDirectoryResult.data) {
+        for (const branch of branchDirectoryResult.data) {
+            const key = normalizeBranchName(branch.branch);
+            if (branchInfo.has(key)) continue;
+            branchInfo.set(key, {
+                address: branch.address,
+                image: branch.image,
+            });
+        }
+    }
+
+    if (
+        roomType === RoomType.MeetingRoom &&
+        !meetingBranchesResult.error &&
+        meetingBranchesResult.data
+    ) {
+        for (const branch of meetingBranchesResult.data) {
+            const info = branchInfo.get(normalizeBranchName(branch.branch));
+            grouped.set(branch.branch, {
+                branch: branch.branch,
+                address: info?.address ?? "",
+                distance: "0.0",
+                roomsAvailable: branch.roomsAvailable,
+                image: toAbsoluteImagePath(info?.image ?? ""),
+            });
+        }
+    } else if (!roomsResult.error && roomsResult.data) {
         for (const room of roomsResult.data) {
             const existing = grouped.get(room.branch.name);
             if (existing) {
@@ -41,23 +94,29 @@ export async function loader({ params }: Route.LoaderArgs) {
                 continue;
             }
 
+            const info = branchInfo.get(normalizeBranchName(room.branch.name));
             grouped.set(room.branch.name, {
                 branch: room.branch.name,
-                address: room.branch.address,
+                address: info?.address ?? room.branch.address,
                 distance: "0.0",
                 roomsAvailable: 1,
-                image: `https://library.austintexas.gov${room.branch.image}`,
+                image: toAbsoluteImagePath(info?.image ?? room.branch.image),
             });
         }
     }
 
+    const searchResults = Array.from(grouped.values());
+    const filteredLngLat = lngLat.filter(candidate =>
+        searchResults.some(result => branchNamesMatch(result.branch, candidate.branch)),
+    );
+
     return {
-        searchResults: Array.from(grouped.values()),
+        searchResults,
         currentDate: new Intl.DateTimeFormat("en-CA").format(new Date()),
-        branches: lngLat.map(location => location.branch),
-        roomType: params.roomType as RoomType,
+        branches: searchResults.map(result => result.branch),
+        roomType,
         accessToken: import.meta.env.VITE_APP_MAPBOX_TOKEN,
-        branchLngLats: lngLat.map(branch => branch.lngLat as [number, number]),
+        branchLngLats: filteredLngLat.map(branch => branch.lngLat as [number, number]),
     };
 }
 
@@ -207,8 +266,8 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                             </div>
                         </Form>
 
-                        <div className="grid grid-cols-2 gap-[1rem] p-4">
-                            <ul className="flex flex-col divide-y-[1px] divide-base-default gap-[1rem]">
+                        <div className="grid grid-cols-2 gap-[1rem] p-4 h-[45rem] overflow-hidden">
+                            <ul className="flex flex-col divide-y-[1px] divide-base-default gap-[1rem] overflow-scroll">
                                 {searchResults.filter(Boolean).map((result, idx) => (
                                     <SearchResult
                                         key={result.branch}
