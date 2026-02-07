@@ -12,45 +12,47 @@ import {
 } from "@trussworks/react-uswds";
 import { Form, Link, LinkProps } from "react-router";
 import { Breadcrumbs } from "~/components/Breadcrumbs";
-import { Map } from "~/components/Map";
+import { Map as BranchMap } from "~/components/Map";
 import lngLat from "~/data/lng-lat.json";
+import { aplLive } from "~/lib/apl-client/apl-live-client.server";
 import { site } from "~/lib/site";
 import { displayName, RoomType } from "~/route-map";
 import { Route } from "./+types/search";
 import { SearchResult } from "./SearchResult";
+import { ComponentProps, HTMLAttributes } from "react";
+
+type BranchSearchResult = {
+    branch: string;
+    address: string;
+    distance: string;
+    roomsAvailable: number;
+    image: string;
+};
 
 export async function loader({ params }: Route.LoaderArgs) {
-    return {
-        searchResults: [
-            {
-                branch: "Carver Branch",
-                address: "1161 Angelina St.",
-                distance: "2.5",
+    const roomsResult = await aplLive.getRooms();
+    const grouped = new Map<string, BranchSearchResult>();
+
+    if (!roomsResult.error && roomsResult.data) {
+        for (const room of roomsResult.data) {
+            const existing = grouped.get(room.branch.name);
+            if (existing) {
+                existing.roomsAvailable += 1;
+                continue;
+            }
+
+            grouped.set(room.branch.name, {
+                branch: room.branch.name,
+                address: room.branch.address,
+                distance: "0.0",
                 roomsAvailable: 1,
-                image: "https://library.austintexas.gov/library/slr-522.jpg",
-            },
-            {
-                branch: "Cepeda Branch",
-                address: "651 N Pleasant Valley Rd.",
-                distance: "2.9",
-                roomsAvailable: 2,
-                image: "https://library.austintexas.gov/library/slr-509.jpg",
-            },
-            {
-                branch: "Central Library",
-                address: "710 W. César Chávez St.",
-                distance: "3.5",
-                roomsAvailable: 2,
-                image: "https://library.austintexas.gov/library/slr-471.jpg",
-            },
-            {
-                branch: "North Village Branch",
-                address: "2505 Steck Ave.",
-                distance: "4.6",
-                roomsAvailable: 3,
-                image: "https://library.austintexas.gov/library/slr-408.jpg",
-            },
-        ],
+                image: `https://library.austintexas.gov${room.branch.image}`,
+            });
+        }
+    }
+
+    return {
+        searchResults: Array.from(grouped.values()),
         currentDate: new Intl.DateTimeFormat("en-CA").format(new Date()),
         branches: lngLat.map(location => location.branch),
         roomType: params.roomType as RoomType,
@@ -59,11 +61,11 @@ export async function loader({ params }: Route.LoaderArgs) {
     };
 }
 
-function ExternalLink({ children, className, ...props }: LinkProps) {
+function ExternalLink({ children, className, ...props }: ComponentProps<"a">) {
     return (
-        <Link className={`usa-link usa-link--external ${className}`} {...props}>
+        <a className={`usa-link usa-link--external ${className}`} {...props}>
             {children}
-        </Link>
+        </a>
     );
 }
 
@@ -95,15 +97,23 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                                     <>
                                         For larger groups. Request 15 min time slots up to 15 hrs.
                                         Can reserve up to 90 days out.{" "}
-                                        <ExternalLink to="">View Booked Calendar</ExternalLink>
+                                        <ExternalLink href="https://library.austintexas.gov/meeting-rooms/calendar">
+                                            View Booked Calendar
+                                        </ExternalLink>
                                         <br />
                                         <br />
                                         <strong className="mr-2">Reserve In-Person Instead</strong>
-                                        <ExternalLink className="mr-1" to="">
+                                        <ExternalLink
+                                            className="mr-1"
+                                            href="https://library.austintexas.gov/library/pdf/meeting_room_form_2023.pdf"
+                                        >
                                             Printable Form (PDF)
                                         </ExternalLink>
                                         |
-                                        <ExternalLink className="ml-1" to="">
+                                        <ExternalLink
+                                            className="ml-1"
+                                            href="https://library.austintexas.gov/library/pdf/meeting_room_form_2023_SPA.pdf"
+                                        >
                                             Sala de reunión forma de solicitud
                                         </ExternalLink>
                                     </>
@@ -112,7 +122,9 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                                         For smaller groups. Rooms can be booked up to 2 weeks and
                                         not less than 2 hours in advance. Book from 15 min up to 2
                                         hrs maximum.{" "}
-                                        <ExternalLink to="">View Booked Calendar</ExternalLink>
+                                        <ExternalLink href="https://library.austintexas.gov/slr/calendar">
+                                            View Booked Calendar
+                                        </ExternalLink>
                                     </>
                                 )}
                             </p>
@@ -197,7 +209,7 @@ export default function Component({ loaderData }: Route.ComponentProps) {
 
                         <div className="grid grid-cols-2 gap-[1rem] p-4">
                             <ul className="flex flex-col divide-y-[1px] divide-base-default gap-[1rem]">
-                                {searchResults.map((result, idx) => (
+                                {searchResults.filter(Boolean).map((result, idx) => (
                                     <SearchResult
                                         key={result.branch}
                                         index={idx + 1}
@@ -209,7 +221,7 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                                     />
                                 ))}
                             </ul>
-                            <Map
+                            <BranchMap
                                 className="w-full h-full"
                                 branchLngLats={branchLngLats}
                                 token={mapboxToken}
