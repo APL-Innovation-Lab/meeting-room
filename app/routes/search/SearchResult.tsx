@@ -1,4 +1,3 @@
-import { Link } from "react-router";
 import { pluralize } from "~/lib/pluralize";
 
 export namespace SearchResult {
@@ -9,6 +8,7 @@ export namespace SearchResult {
         distance: string;
         roomsAvailable: number;
         image: string;
+        url: string;
     }
 }
 
@@ -18,11 +18,16 @@ export function SearchResult(props: SearchResult.Props) {
             <img className="object-cover w-[100px] h-[100px]" src={props.image} />
             <div className="flex flex-col gap-[0.5rem] w-full">
                 <div className="flex justify-between items-center w-full">
-                    <Link className="usa-link no-underline font-bold" to="">
+                    <a
+                        className="usa-link no-underline font-bold"
+                        href={props.url}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                    >
                         <h4>
                             {props.index}. {props.branch}
                         </h4>
-                    </Link>
+                    </a>
                     <h6 className="text-sans-3xs font-sans text-base-darker">
                         {props.distance} mi
                     </h6>

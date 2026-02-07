@@ -1,3 +1,4 @@
+import { openKv } from "@deno/kv";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import validator from "validator";
 import { z } from "zod";
@@ -116,6 +117,8 @@ export type Reservation = {
 
 const DEFAULT_BASE_URL = "https://library.austintexas.gov";
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_PREFIX = ["apl_live_cache"] as const;
+const MAPPING_PREFIX = ["apl_live_mapping", "location_path"] as const;
 
 const LocationInfoById = {
     "183": {
@@ -164,10 +167,17 @@ export type LiveMeetingRoomBranch = {
     roomsAvailable: number;
 };
 
+export type LiveSharedLearningRoomBranch = {
+    locationId: string;
+    branch: string;
+    roomsAvailable: number;
+};
+
 export type LiveBranchDirectoryEntry = {
     branch: string;
     address: string;
     image: string;
+    path: string;
 };
 
 export type LiveBranchCoordinate = {
@@ -191,14 +201,7 @@ const ReservationSchema = z.object({
     end: z.string(),
 });
 
-let cachedRooms: LiveRoom[] | undefined;
-let cachedRoomsAt = 0;
-let cachedMeetingRoomBranches: LiveMeetingRoomBranch[] | undefined;
-let cachedMeetingRoomBranchesAt = 0;
-let cachedBranchDirectory: LiveBranchDirectoryEntry[] | undefined;
-let cachedBranchDirectoryAt = 0;
-let cachedBranchCoordinates: LiveBranchCoordinate[] | undefined;
-let cachedBranchCoordinatesAt = 0;
+const kv = await openKv();
 
 function normalizeBaseUrl(baseUrl: string): string {
     return baseUrl.replace(/\/+$/, "");
@@ -206,6 +209,60 @@ function normalizeBaseUrl(baseUrl: string): string {
 
 function cleanText(value: string): string {
     return value.replace(/\s+/g, " ").trim();
+}
+
+type CachePayload<T> = {
+    fetchedAt: number;
+    data: T;
+};
+
+const STATIC_LOCATION_PATH_MAPPING: Record<string, string> = {
+    "183": "/austin-history-center",
+    "194": "/carver-branch",
+    "200": "/john-gillum-branch",
+    "205": "/ruiz-branch",
+    "209": "/terrazas-branch",
+    "3939": "/central-library",
+};
+
+async function getCached<T>(
+    bucket: string,
+    scope: string,
+    ttlMs = CACHE_TTL_MS,
+): Promise<T | undefined> {
+    const entry = await kv.get<CachePayload<T>>([...CACHE_PREFIX, bucket, scope]);
+    if (!entry.value) return undefined;
+    if (Date.now() - entry.value.fetchedAt > ttlMs) return undefined;
+    return entry.value.data;
+}
+
+async function setCached<T>(bucket: string, scope: string, data: T): Promise<void> {
+    await kv.set([...CACHE_PREFIX, bucket, scope], {
+        fetchedAt: Date.now(),
+        data,
+    } satisfies CachePayload<T>);
+}
+
+async function ensureLocationPathMapping(): Promise<void> {
+    await Promise.all(
+        Object.entries(STATIC_LOCATION_PATH_MAPPING).map(async ([locationId, path]) => {
+            const key = [...MAPPING_PREFIX, locationId];
+            const existing = await kv.get<string>(key);
+            if (!existing.value) {
+                await kv.set(key, path);
+            }
+        }),
+    );
+}
+
+async function getLocationPathMappingFromKv(): Promise<Record<string, string>> {
+    await ensureLocationPathMapping();
+    const mapping: Record<string, string> = {};
+    for await (const entry of kv.list<string>({ prefix: [...MAPPING_PREFIX] })) {
+        const locationId = String(entry.key[entry.key.length - 1]);
+        mapping[locationId] = entry.value;
+    }
+    return mapping;
 }
 
 type ParseNode = DefaultTreeAdapterMap["node"];
@@ -299,6 +356,28 @@ function parseMeetingRoomOptionLabel(label: string): LiveMeetingRoomBranch | und
     };
 }
 
+function parseLocationOptions(
+    html: string,
+    selectId: string,
+): Array<{ locationId: string; label: string }> {
+    const fragment = parseFragment(html);
+    const nodes = walkNodes(fragment);
+    const locationSelect = nodes.find(node => {
+        if (!isElement(node) || node.tagName !== "select") return false;
+        return getAttr(node, "id") === selectId;
+    });
+    if (!locationSelect || !isElement(locationSelect)) return [];
+
+    return getChildNodes(locationSelect)
+        .filter(isElement)
+        .filter(node => node.tagName === "option")
+        .map(option => ({
+            locationId: cleanText(getAttr(option, "value") ?? ""),
+            label: cleanText(getTextContent(option)),
+        }))
+        .filter(option => option.locationId && option.label && option.label !== "- Select -");
+}
+
 function parseBranchDirectory(html: string): LiveBranchDirectoryEntry[] {
     const fragment = parseFragment(html);
     const nodes = walkNodes(fragment);
@@ -330,6 +409,13 @@ function parseBranchDirectory(html: string): LiveBranchDirectoryEntry[] {
                 imageElement && isElement(imageElement)
                     ? cleanText(getAttr(imageElement, "src") ?? "")
                     : "";
+            const titleNodes = walkNodes(titleElement);
+            const linkElement = titleNodes.find(
+                child =>
+                    isElement(child) && child.tagName === "a" && Boolean(getAttr(child, "href")),
+            );
+            const path =
+                linkElement && isElement(linkElement) ? cleanText(getAttr(linkElement, "href") ?? "") : "";
 
             const phoneAddressElement = teaserNodes.find(
                 child =>
@@ -347,6 +433,7 @@ function parseBranchDirectory(html: string): LiveBranchDirectoryEntry[] {
                 branch,
                 address,
                 image,
+                path,
             };
         })
         .filter((value): value is LiveBranchDirectoryEntry => Boolean(value));
@@ -488,11 +575,9 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 async function fetchLiveRooms(baseUrl = DEFAULT_BASE_URL): Promise<LiveRoom[]> {
     const now = Date.now();
-    if (cachedRooms && now - cachedRoomsAt < CACHE_TTL_MS) {
-        return cachedRooms;
-    }
-
     const host = normalizeBaseUrl(baseUrl);
+    const cached = await getCached<LiveRoom[]>("rooms", host);
+    if (cached) return cached;
 
     const [roomStatesRaw, roomMarkupRaw] = await Promise.all([
         fetchJson<unknown>(`${host}/slr_room_states.json?t=${now}`),
@@ -524,8 +609,7 @@ async function fetchLiveRooms(baseUrl = DEFAULT_BASE_URL): Promise<LiveRoom[]> {
         })
         .filter((value): value is LiveRoom => Boolean(value));
 
-    cachedRooms = rooms;
-    cachedRoomsAt = now;
+    await setCached("rooms", host, rooms);
 
     return rooms;
 }
@@ -533,57 +617,90 @@ async function fetchLiveRooms(baseUrl = DEFAULT_BASE_URL): Promise<LiveRoom[]> {
 async function fetchMeetingRoomBranches(
     baseUrl = DEFAULT_BASE_URL,
 ): Promise<LiveMeetingRoomBranch[]> {
-    const now = Date.now();
-    if (cachedMeetingRoomBranches && now - cachedMeetingRoomBranchesAt < CACHE_TTL_MS) {
-        return cachedMeetingRoomBranches;
-    }
-
     const host = normalizeBaseUrl(baseUrl);
+    const now = Date.now();
+    const cached = await getCached<LiveMeetingRoomBranch[]>("meeting_room_branches", host);
+    if (cached) return cached;
     const response = await fetch(`${host}/meeting-rooms/request?t=${now}`);
     if (!response.ok) {
         throw new Error(`Request failed (${response.status}) for ${host}/meeting-rooms/request`);
     }
 
     const html = await response.text();
-    const fragment = parseFragment(html);
-    const nodes = walkNodes(fragment);
-    const locationSelect = nodes.find(node => {
-        if (!isElement(node) || node.tagName !== "select") return false;
-        return getAttr(node, "id") === "edit-location";
-    });
-    if (!locationSelect || !isElement(locationSelect)) {
+    const options = parseLocationOptions(html, "edit-location");
+    if (!options.length) {
         throw new Error("Could not find meeting-room location selector.");
     }
-
-    const options = getChildNodes(locationSelect)
-        .filter(isElement)
-        .filter(node => node.tagName === "option");
     const branches: LiveMeetingRoomBranch[] = options
         .map(option => {
-            const parsed = parseMeetingRoomOptionLabel(getTextContent(option));
+            const parsed = parseMeetingRoomOptionLabel(option.label);
             if (!parsed) return undefined;
 
             return {
                 ...parsed,
-                locationId: getAttr(option, "value") ?? "",
+                locationId: option.locationId,
             };
         })
         .filter((value): value is LiveMeetingRoomBranch => Boolean(value && value.locationId));
 
-    cachedMeetingRoomBranches = branches;
-    cachedMeetingRoomBranchesAt = now;
+    await setCached("meeting_room_branches", host, branches);
+    return branches;
+}
+
+async function fetchSharedLearningRoomBranches(
+    baseUrl = DEFAULT_BASE_URL,
+): Promise<LiveSharedLearningRoomBranch[]> {
+    const host = normalizeBaseUrl(baseUrl);
+    const now = Date.now();
+    const cached = await getCached<LiveSharedLearningRoomBranch[]>("slr_branches", host);
+    if (cached) return cached;
+    const [roomStatesRaw, slrRequestHtml] = await Promise.all([
+        fetchJson<unknown>(`${host}/slr_room_states.json?t=${now}`),
+        fetch(`${host}/slr/request?t=${now}`).then(async response => {
+            if (!response.ok) {
+                throw new Error(`Request failed (${response.status}) for ${host}/slr/request`);
+            }
+            return await response.text();
+        }),
+    ]);
+
+    const roomStates = z.array(RoomStateSchema).parse(roomStatesRaw);
+    const locationOptions = parseLocationOptions(slrRequestHtml, "edit-location");
+    const publishedCountByLocation = new Map<string, number>();
+
+    for (const state of roomStates) {
+        const locationId = cleanText(state.location_id);
+        const isPublished =
+            String(state.published).toLowerCase() === "1" ||
+            String(state.published).toLowerCase() === "true";
+        if (!isPublished) continue;
+        publishedCountByLocation.set(locationId, (publishedCountByLocation.get(locationId) ?? 0) + 1);
+    }
+
+    const branches: LiveSharedLearningRoomBranch[] = locationOptions
+        .map(option => {
+            const roomsAvailable = publishedCountByLocation.get(option.locationId) ?? 0;
+            if (roomsAvailable <= 0) return undefined;
+
+            return {
+                locationId: option.locationId,
+                branch: option.label.replace(/\s+\((Capacities?|Capacity):.*$/i, "").trim(),
+                roomsAvailable,
+            };
+        })
+        .filter((value): value is LiveSharedLearningRoomBranch => Boolean(value));
+
+    await setCached("slr_branches", host, branches);
     return branches;
 }
 
 async function fetchBranchDirectory(
     baseUrl = DEFAULT_BASE_URL,
 ): Promise<LiveBranchDirectoryEntry[]> {
-    const now = Date.now();
-    if (cachedBranchDirectory && now - cachedBranchDirectoryAt < CACHE_TTL_MS) {
-        return cachedBranchDirectory;
-    }
-
     const host = normalizeBaseUrl(baseUrl);
+    const now = Date.now();
+    const cached = await getCached<LiveBranchDirectoryEntry[]>("branch_directory", host);
+    if (cached) return cached;
     const response = await fetch(`${host}/locations?t=${now}`);
     if (!response.ok) {
         throw new Error(`Request failed (${response.status}) for ${host}/locations`);
@@ -592,16 +709,13 @@ async function fetchBranchDirectory(
     const html = await response.text();
     const branches = parseBranchDirectory(html);
 
-    cachedBranchDirectory = branches;
-    cachedBranchDirectoryAt = now;
+    await setCached("branch_directory", host, branches);
     return branches;
 }
 
 async function fetchBranchCoordinates(): Promise<LiveBranchCoordinate[]> {
-    const now = Date.now();
-    if (cachedBranchCoordinates && now - cachedBranchCoordinatesAt < CACHE_TTL_MS) {
-        return cachedBranchCoordinates;
-    }
+    const cached = await getCached<LiveBranchCoordinate[]>("branch_coordinates", "global");
+    if (cached) return cached;
 
     const response = await fetch(
         "https://www.google.com/maps/d/kml?mid=1m7PlBBSOnA2ymIGxBy9WInAlr3Z6_qdL&forcekml=1",
@@ -613,8 +727,7 @@ async function fetchBranchCoordinates(): Promise<LiveBranchCoordinate[]> {
     const kml = await response.text();
     const coordinates = parseBranchCoordinatesKml(kml);
 
-    cachedBranchCoordinates = coordinates;
-    cachedBranchCoordinatesAt = now;
+    await setCached("branch_coordinates", "global", coordinates);
     return coordinates;
 }
 
@@ -764,15 +877,10 @@ export const aplLive = {
         }
     },
 
-    clearCache(): void {
-        cachedRooms = undefined;
-        cachedRoomsAt = 0;
-        cachedMeetingRoomBranches = undefined;
-        cachedMeetingRoomBranchesAt = 0;
-        cachedBranchDirectory = undefined;
-        cachedBranchDirectoryAt = 0;
-        cachedBranchCoordinates = undefined;
-        cachedBranchCoordinatesAt = 0;
+    async clearCache(): Promise<void> {
+        for await (const entry of kv.list({ prefix: [...CACHE_PREFIX] })) {
+            await kv.delete(entry.key);
+        }
     },
 
     async getMeetingRoomBranches(
@@ -780,6 +888,23 @@ export const aplLive = {
     ): Promise<SafeResult<LiveMeetingRoomBranch[]>> {
         try {
             const branches = await fetchMeetingRoomBranches(baseUrl);
+            return {
+                data: branches,
+                error: undefined,
+            };
+        } catch (error: any) {
+            return {
+                data: undefined,
+                error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
+    },
+
+    async getSharedLearningRoomBranches(
+        baseUrl = DEFAULT_BASE_URL,
+    ): Promise<SafeResult<LiveSharedLearningRoomBranch[]>> {
+        try {
+            const branches = await fetchSharedLearningRoomBranches(baseUrl);
             return {
                 data: branches,
                 error: undefined,
@@ -814,6 +939,21 @@ export const aplLive = {
             const coordinates = await fetchBranchCoordinates();
             return {
                 data: coordinates,
+                error: undefined,
+            };
+        } catch (error: any) {
+            return {
+                data: undefined,
+                error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
+    },
+
+    async getLocationPathMapping(): Promise<SafeResult<Record<string, string>>> {
+        try {
+            const mapping = await getLocationPathMappingFromKv();
+            return {
+                data: mapping,
                 error: undefined,
             };
         } catch (error: any) {

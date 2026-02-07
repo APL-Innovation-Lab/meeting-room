@@ -21,17 +21,21 @@ import { SearchResult } from "./SearchResult";
 import { ComponentProps } from "react";
 
 type BranchSearchResult = {
+    locationId: string;
     branch: string;
     address: string;
     distance: string;
     roomsAvailable: number;
     image: string;
+    url: string;
 };
 
 function normalizeBranchName(value: string): string {
     return value
         .toLowerCase()
         .replace(/^austin\s+/g, "")
+        .replace(/^george washington\s+/g, "")
+        .replace(/\s*[\(,]\s*faulk building\)?\s*$/g, "")
         .replace(/\s+faulk building$/g, "")
         .replace(/\snorth village\s*/g, " north village ")
         .replace(/\sjohn gillum branch/g, "north village branch")
@@ -54,29 +58,42 @@ function toAbsoluteImagePath(image: string): string {
     return `https://library.austintexas.gov${image}`;
 }
 
+function toAbsoluteBranchUrl(path: string): string {
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    if (path.startsWith("/")) return `https://library.austintexas.gov${path}`;
+    return "https://library.austintexas.gov/locations";
+}
+
 export async function loader({ params }: Route.LoaderArgs) {
     const roomType = params.roomType as RoomType;
     const branchDirectoryPromise = aplLive.getBranchDirectory();
     const branchCoordinatesPromise = aplLive.getBranchCoordinates();
+    const locationPathMappingPromise = aplLive.getLocationPathMapping();
     const grouped = new Map<string, BranchSearchResult>();
-    const branchInfo = new Map<string, { address: string; image: string }>();
-
-    let roomsResult:
-        | Awaited<ReturnType<typeof aplLive.getRooms>>
-        | undefined;
-    let meetingBranchesResult:
-        | Awaited<ReturnType<typeof aplLive.getMeetingRoomBranches>>
+    const branchInfo = new Map<string, { address: string; image: string; path: string }>();
+    const locationPathById = new Map<string, string>();
+    let locationBranches:
+        | Array<{ locationId: string; branch: string; roomsAvailable: number }>
         | undefined;
 
-    const [branchDirectoryResult, branchCoordinatesResult] = await Promise.all([
+    const [branchDirectoryResult, branchCoordinatesResult, locationPathMappingResult] = await Promise.all([
         branchDirectoryPromise,
         branchCoordinatesPromise,
+        locationPathMappingPromise,
     ]);
 
     if (roomType === RoomType.MeetingRoom) {
-        meetingBranchesResult = await aplLive.getMeetingRoomBranches();
+        const meetingBranchesResult = await aplLive.getMeetingRoomBranches();
+        locationBranches =
+            !meetingBranchesResult.error && meetingBranchesResult.data
+                ? meetingBranchesResult.data
+                : [];
     } else {
-        roomsResult = await aplLive.getRooms();
+        const sharedLearningBranchesResult = await aplLive.getSharedLearningRoomBranches();
+        locationBranches =
+            !sharedLearningBranchesResult.error && sharedLearningBranchesResult.data
+                ? sharedLearningBranchesResult.data
+                : [];
     }
 
     if (!branchDirectoryResult.error && branchDirectoryResult.data) {
@@ -86,41 +103,27 @@ export async function loader({ params }: Route.LoaderArgs) {
             branchInfo.set(key, {
                 address: branch.address,
                 image: branch.image,
+                path: branch.path,
             });
         }
     }
+    if (!locationPathMappingResult.error && locationPathMappingResult.data) {
+        for (const [locationId, path] of Object.entries(locationPathMappingResult.data)) {
+            locationPathById.set(locationId, path);
+        }
+    }
 
-    if (
-        roomType === RoomType.MeetingRoom &&
-        meetingBranchesResult &&
-        !meetingBranchesResult.error &&
-        meetingBranchesResult.data
-    ) {
-        for (const branch of meetingBranchesResult.data) {
+    if (locationBranches) {
+        for (const branch of locationBranches) {
             const info = branchInfo.get(normalizeBranchName(branch.branch));
-            grouped.set(branch.branch, {
+            grouped.set(branch.locationId, {
+                locationId: branch.locationId,
                 branch: branch.branch,
                 address: info?.address ?? "",
                 distance: "0.0",
                 roomsAvailable: branch.roomsAvailable,
                 image: toAbsoluteImagePath(info?.image ?? ""),
-            });
-        }
-    } else if (roomsResult && !roomsResult.error && roomsResult.data) {
-        for (const room of roomsResult.data) {
-            const existing = grouped.get(room.branch.name);
-            if (existing) {
-                existing.roomsAvailable += 1;
-                continue;
-            }
-
-            const info = branchInfo.get(normalizeBranchName(room.branch.name));
-            grouped.set(room.branch.name, {
-                branch: room.branch.name,
-                address: info?.address ?? room.branch.address,
-                distance: "0.0",
-                roomsAvailable: 1,
-                image: toAbsoluteImagePath(info?.image ?? room.branch.image),
+                url: toAbsoluteBranchUrl(locationPathById.get(branch.locationId) ?? info?.path ?? ""),
             });
         }
     }
@@ -302,6 +305,7 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                                         distance={result.distance}
                                         address={result.address}
                                         roomsAvailable={result.roomsAvailable}
+                                        url={result.url}
                                     />
                                 ))}
                             </ul>
