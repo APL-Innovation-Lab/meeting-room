@@ -56,14 +56,28 @@ function toAbsoluteImagePath(image: string): string {
 
 export async function loader({ params }: Route.LoaderArgs) {
     const roomType = params.roomType as RoomType;
-    const [roomsResult, meetingBranchesResult, branchDirectoryResult, branchCoordinatesResult] = await Promise.all([
-        aplLive.getRooms(),
-        aplLive.getMeetingRoomBranches(),
-        aplLive.getBranchDirectory(),
-        aplLive.getBranchCoordinates(),
-    ]);
+    const branchDirectoryPromise = aplLive.getBranchDirectory();
+    const branchCoordinatesPromise = aplLive.getBranchCoordinates();
     const grouped = new Map<string, BranchSearchResult>();
     const branchInfo = new Map<string, { address: string; image: string }>();
+
+    let roomsResult:
+        | Awaited<ReturnType<typeof aplLive.getRooms>>
+        | undefined;
+    let meetingBranchesResult:
+        | Awaited<ReturnType<typeof aplLive.getMeetingRoomBranches>>
+        | undefined;
+
+    const [branchDirectoryResult, branchCoordinatesResult] = await Promise.all([
+        branchDirectoryPromise,
+        branchCoordinatesPromise,
+    ]);
+
+    if (roomType === RoomType.MeetingRoom) {
+        meetingBranchesResult = await aplLive.getMeetingRoomBranches();
+    } else {
+        roomsResult = await aplLive.getRooms();
+    }
 
     if (!branchDirectoryResult.error && branchDirectoryResult.data) {
         for (const branch of branchDirectoryResult.data) {
@@ -78,6 +92,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 
     if (
         roomType === RoomType.MeetingRoom &&
+        meetingBranchesResult &&
         !meetingBranchesResult.error &&
         meetingBranchesResult.data
     ) {
@@ -91,7 +106,7 @@ export async function loader({ params }: Route.LoaderArgs) {
                 image: toAbsoluteImagePath(info?.image ?? ""),
             });
         }
-    } else if (!roomsResult.error && roomsResult.data) {
+    } else if (roomsResult && !roomsResult.error && roomsResult.data) {
         for (const room of roomsResult.data) {
             const existing = grouped.get(room.branch.name);
             if (existing) {
