@@ -17,7 +17,7 @@ export function SearchResultsPanel({
 }: SearchResultsPanel.Props) {
     return (
         <div className="grid h-[45rem] grid-cols-2 gap-[1rem] overflow-hidden p-4">
-            <ul className="flex flex-col gap-[1rem] divide-y-[1px] divide-base-default overflow-scroll">
+            <ul className="flex flex-col gap-[1rem] divide-y-[1px] divide-base-light overflow-scroll">
                 {searchResults.filter(Boolean).map((result, idx) => (
                     <SearchResult
                         key={result.branch}

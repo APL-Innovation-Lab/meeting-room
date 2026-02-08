@@ -200,6 +200,8 @@ export function SearchFiltersForm({
                     </span>
                 </Button>
             </div>
+
+            <div className="border-b-1px border-base-light mt-3" />
         </Form>
     );
 }
