@@ -27,6 +27,7 @@ export function SearchResultsPanel({
                         distance={result.distance}
                         address={result.address}
                         roomsAvailable={result.roomsAvailable}
+                        maxAvailableDuration={result.maxAvailableDuration}
                         url={result.url}
                     />
                 ))}

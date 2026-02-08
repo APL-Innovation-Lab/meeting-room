@@ -47,6 +47,7 @@ export type LibraryRoom = {
         capacity: number;
         amenities: Amenities;
         availableTimes: string[];
+        availableDurations: number[];
         date: string;
     };
 };
@@ -58,6 +59,7 @@ export type SearchOptions = {
     location?: string;
     date?: Date;
     time?: string;
+    duration?: number;
     capacity?: number;
     amenities?: Partial<Amenities>;
 };
@@ -117,6 +119,8 @@ export type Reservation = {
 
 const DEFAULT_BASE_URL = "https://library.austintexas.gov";
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const RESERVATIONS_FETCH_CONCURRENCY = 8;
+const RESERVATION_CACHE_TTL_MS = 60 * 1000;
 const CACHE_PREFIX = ["apl_live_cache"] as const;
 const MAPPING_PREFIX = ["apl_live_mapping", "location_path"] as const;
 
@@ -161,6 +165,22 @@ type LiveRoom = {
     amenities: Amenities;
 };
 
+type MeetingRoomInventoryLocation = {
+    locationId: string;
+    branch: string;
+};
+
+type MeetingRoomInventoryRoom = {
+    roomId: string;
+    branch: string;
+    capacity: number;
+};
+
+type MeetingRoomInventory = {
+    locations: MeetingRoomInventoryLocation[];
+    roomsByLocation: Record<string, MeetingRoomInventoryRoom[]>;
+};
+
 export type LiveMeetingRoomBranch = {
     locationId: string;
     branch: string;
@@ -199,6 +219,12 @@ const RoomMarkupSchema = z.object({
 
 const ReservationSchema = z.object({
     room: z.string(),
+    start: z.string(),
+    end: z.string(),
+});
+
+const MeetingRoomReservationSchema = z.object({
+    room: z.union([z.string(), z.number()]).transform(value => String(value)),
     start: z.string(),
     end: z.string(),
 });
@@ -243,6 +269,30 @@ async function setCached<T>(bucket: string, scope: string, data: T): Promise<voi
         fetchedAt: Date.now(),
         data,
     } satisfies CachePayload<T>);
+}
+
+async function mapWithConcurrency<T, U>(
+    items: T[],
+    concurrency: number,
+    mapper: (item: T) => Promise<U>,
+): Promise<U[]> {
+    if (items.length === 0) return [];
+
+    const limit = Math.max(1, Math.floor(concurrency));
+    const results: U[] = new Array(items.length);
+    let cursor = 0;
+
+    async function worker(): Promise<void> {
+        while (cursor < items.length) {
+            const index = cursor++;
+            results[index] = await mapper(items[index]);
+        }
+    }
+
+    await Promise.all(
+        Array.from({ length: Math.min(limit, items.length) }, () => worker()),
+    );
+    return results;
 }
 
 async function ensureLocationPathMapping(): Promise<void> {
@@ -380,6 +430,41 @@ function parseLocationOptions(
             label: cleanText(getTextContent(option)),
         }))
         .filter(option => option.locationId && option.label && option.label !== "- Select -");
+}
+
+function normalizeMeetingRoomBranchName(value: string): string {
+    return cleanText(value)
+        .toLowerCase()
+        .replace(/\s+\((capacities?|capacity):.*$/i, "")
+        .replace(/\s*-\s*capacity:.*$/i, "")
+        .replace(/\(north village\)/gi, "")
+        .replace(/\broad\b/gi, "")
+        .replace(/\s+#\d+\s*(?:&\s*#\d+)?/g, "")
+        .replace(/\s+reading room\b/gi, "")
+        .replace(/\bahc\b/g, "austin history center")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+}
+
+function parseMeetingRoomOptionLabel(
+    label: string,
+): { branch: string; capacity: number } | undefined {
+    const trimmed = cleanText(label);
+    if (!trimmed || trimmed === "- Select -" || /^shared learning\b/i.test(trimmed)) {
+        return undefined;
+    }
+
+    const match = trimmed.match(/^(.*)\s*-\s*Capacity:\s*(\d+)\s*$/i);
+    if (!match) return undefined;
+
+    const branch = cleanText(match[1]);
+    const capacity = Number.parseInt(match[2], 10);
+    if (!branch || !Number.isFinite(capacity)) return undefined;
+
+    return {
+        branch,
+        capacity,
+    };
 }
 
 function parseBranchDirectory(html: string): LiveBranchDirectoryEntry[] {
@@ -653,6 +738,66 @@ async function fetchMeetingRoomBranches(
     return branches;
 }
 
+async function fetchMeetingRoomInventory(
+    baseUrl = DEFAULT_BASE_URL,
+): Promise<MeetingRoomInventory> {
+    const host = normalizeBaseUrl(baseUrl);
+    const cached = await getCached<MeetingRoomInventory>("meeting_room_inventory_v1", host);
+    if (cached) return cached;
+
+    const response = await fetch(`${host}/meeting-rooms/request?t=${Date.now()}`);
+    if (!response.ok) {
+        throw new Error(`Request failed (${response.status}) for ${host}/meeting-rooms/request`);
+    }
+
+    const html = await response.text();
+    const locations = parseLocationOptions(html, "edit-location")
+        .map(option => {
+            const parsed = parseBranchOptionLabel(option.label);
+            if (!parsed) return undefined;
+
+            return {
+                locationId: option.locationId,
+                branch: parsed.branch,
+            };
+        })
+        .filter((value): value is MeetingRoomInventoryLocation => Boolean(value));
+
+    const rooms = parseLocationOptions(html, "edit-meeting-room")
+        .map(option => {
+            const parsed = parseMeetingRoomOptionLabel(option.label);
+            if (!parsed) return undefined;
+
+            return {
+                roomId: option.locationId,
+                branch: parsed.branch,
+                capacity: parsed.capacity,
+            };
+        })
+        .filter((value): value is MeetingRoomInventoryRoom => Boolean(value));
+
+    const roomsByLocation: Record<string, MeetingRoomInventoryRoom[]> = {};
+    for (const location of locations) {
+        const normalizedLocation = normalizeMeetingRoomBranchName(location.branch);
+        const matchedRooms = rooms.filter(room => {
+            const normalizedRoom = normalizeMeetingRoomBranchName(room.branch);
+            return (
+                normalizedRoom.includes(normalizedLocation) ||
+                normalizedLocation.includes(normalizedRoom)
+            );
+        });
+
+        roomsByLocation[location.locationId] = matchedRooms;
+    }
+
+    const inventory: MeetingRoomInventory = {
+        locations,
+        roomsByLocation,
+    };
+    await setCached("meeting_room_inventory_v1", host, inventory);
+    return inventory;
+}
+
 async function fetchSharedLearningRoomBranches(
     baseUrl = DEFAULT_BASE_URL,
 ): Promise<LiveSharedLearningRoomBranch[]> {
@@ -762,19 +907,384 @@ function toMinutes(time: string): number | undefined {
     return hour24 * 60 + minute;
 }
 
+function toMinutesFromIsoDateTime(value: string): number | undefined {
+    const match = value.match(/(?:T|\s)(\d{2}):(\d{2})(?::\d{2})?/);
+    if (!match) return undefined;
+    const hour = Number.parseInt(match[1], 10);
+    const minute = Number.parseInt(match[2], 10);
+    if (!Number.isFinite(hour) || !Number.isFinite(minute)) return undefined;
+    return hour * 60 + minute;
+}
+
+function toTimeLabel(minutes: number): string {
+    const hour24 = Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    const period = hour24 >= 12 ? "PM" : "AM";
+    const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+    return `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
+}
+
+type OperatingHours = {
+    opening: number | null;
+    closing: number | null;
+};
+
+// Mirrors live SLR request page logic for location hours by weekday (0=Sun, 6=Sat).
+const OPERATING_HOURS_BY_LOCATION: Record<string, Record<number, OperatingHours>> = {
+    "183": {
+        0: { opening: null, closing: null },
+        1: { opening: null, closing: null },
+        2: { opening: null, closing: null },
+        3: { opening: null, closing: null },
+        4: { opening: 12, closing: 17 },
+        5: { opening: 12, closing: 17 },
+        6: { opening: 12, closing: 17 },
+    },
+    "194": {
+        0: { opening: null, closing: null },
+        1: { opening: 9, closing: 15 },
+        2: { opening: 9, closing: 20 },
+        3: { opening: 9, closing: 20 },
+        4: { opening: 9, closing: 15 },
+        5: { opening: 9, closing: 17 },
+        6: { opening: 10, closing: 17 },
+    },
+    "205": {
+        0: { opening: 12, closing: 17 },
+        1: { opening: 9, closing: 20 },
+        2: { opening: 9, closing: 20 },
+        3: { opening: 9, closing: 20 },
+        4: { opening: 9, closing: 20 },
+        5: { opening: 9, closing: 17 },
+        6: { opening: 10, closing: 17 },
+    },
+    "209": {
+        0: { opening: null, closing: null },
+        1: { opening: 9, closing: 20 },
+        2: { opening: 9, closing: 20 },
+        3: { opening: 9, closing: 20 },
+        4: { opening: 9, closing: 20 },
+        5: { opening: 9, closing: 17 },
+        6: { opening: null, closing: null },
+    },
+    "3939": {
+        0: { opening: 12, closing: 17 },
+        1: { opening: 9, closing: 20 },
+        2: { opening: 9, closing: 20 },
+        3: { opening: 9, closing: 20 },
+        4: { opening: 9, closing: 20 },
+        5: { opening: 9, closing: 17 },
+        6: { opening: 10, closing: 17 },
+    },
+};
+
+const MR_SUNDAY_OPEN_ROOM_IDS = new Set(["780", "787", "786", "793", "795", "794", "799"]);
+const MR_AHC_ROOM_IDS = new Set(["7", "780"]);
+const MR_TERRAZAS_ROOM_IDS = new Set(["839", "840", "800"]);
+const MR_WMK_ROOM_ID = "807";
+const MR_SPECIAL_CLOSED_AFTER = "2024-07-13";
+const MR_TERRAZAS_CLOSED_ON_SATURDAY_AFTER = "2023-10-09";
+const MR_COMBINED_ROOM_CONFLICTS: Record<string, string[]> = {
+    "781": ["848"],
+    "782": ["848"],
+    "848": ["781", "782"],
+    "783": ["850"],
+    "849": ["850"],
+    "850": ["783", "849"],
+    "793": ["794"],
+    "795": ["794"],
+    "794": ["793", "795"],
+    "796": ["797"],
+    "798": ["797"],
+    "797": ["796", "798"],
+    "839": ["800"],
+    "840": ["800"],
+    "800": ["839", "840"],
+    "801": ["802"],
+    "803": ["802"],
+    "802": ["801", "803"],
+    "804": ["805"],
+    "806": ["805"],
+    "805": ["804", "806"],
+    "808": ["809"],
+    "810": ["809"],
+    "809": ["808", "810"],
+};
+
+type SpecialDates = {
+    closedDates: Set<string>;
+    earlyClosings: Map<string, { hour: number; minute: number }>;
+};
+
+type RoomAvailability = {
+    availableStartMinutes: number[];
+    availableTimes: string[];
+    availableDurations: number[];
+};
+
+function getRoomAvailability(
+    room: LiveRoom,
+    roomReservations: z.infer<typeof ReservationSchema>[],
+    date: Date,
+): RoomAvailability {
+    const weekday = date.getDay();
+    const hours = OPERATING_HOURS_BY_LOCATION[room.locationId]?.[weekday];
+    if (!hours || hours.opening === null || hours.closing === null) {
+        return { availableStartMinutes: [], availableTimes: [], availableDurations: [] };
+    }
+
+    const openingMinutes = hours.opening * 60;
+    const closingMinutes = hours.closing * 60;
+    const intervals = roomReservations
+        .map(reservation => {
+            const start = toMinutesFromIsoDateTime(reservation.start);
+            const end = toMinutesFromIsoDateTime(reservation.end);
+            if (
+                start === undefined ||
+                end === undefined ||
+                !Number.isFinite(start) ||
+                !Number.isFinite(end) ||
+                end <= start
+            ) {
+                return undefined;
+            }
+            return {
+                start: Math.max(start, openingMinutes),
+                end: Math.min(end, closingMinutes),
+            };
+        })
+        .filter((value): value is { start: number; end: number } =>
+            Boolean(value && value.end > value.start),
+        )
+        .sort((left, right) => left.start - right.start);
+
+    const mergedIntervals: Array<{ start: number; end: number }> = [];
+    for (const interval of intervals) {
+        const previous = mergedIntervals[mergedIntervals.length - 1];
+        if (!previous || interval.start > previous.end) {
+            mergedIntervals.push(interval);
+            continue;
+        }
+
+        previous.end = Math.max(previous.end, interval.end);
+    }
+
+    const availableStartMinutes: number[] = [];
+    const step = 15;
+    for (let start = openingMinutes; start + step <= closingMinutes; start += step) {
+        const end = start + step;
+        const blocked = mergedIntervals.some(
+            interval => start < interval.end && end > interval.start,
+        );
+        if (!blocked) availableStartMinutes.push(start);
+    }
+
+    const availableDurations = new Set<number>();
+    let runStart: number | undefined;
+    let previousStart: number | undefined;
+
+    for (const start of availableStartMinutes) {
+        const continuesRun = previousStart !== undefined && start - previousStart === step;
+        if (!continuesRun) {
+            if (runStart !== undefined && previousStart !== undefined) {
+                const runLength = (previousStart - runStart) / step + 1;
+                for (let duration = step; duration <= runLength * step; duration += step) {
+                    availableDurations.add(duration);
+                }
+            }
+            runStart = start;
+        }
+        previousStart = start;
+    }
+
+    if (runStart !== undefined && previousStart !== undefined) {
+        const runLength = (previousStart - runStart) / step + 1;
+        for (let duration = step; duration <= runLength * step; duration += step) {
+            availableDurations.add(duration);
+        }
+    }
+
+    return {
+        availableStartMinutes,
+        availableTimes: availableStartMinutes.map(toTimeLabel),
+        availableDurations: Array.from(availableDurations).sort((a, b) => a - b),
+    };
+}
+
+function getMeetingRoomConflictSet(roomId: string): Set<string> {
+    return new Set([roomId, ...(MR_COMBINED_ROOM_CONFLICTS[roomId] ?? [])]);
+}
+
+function getMeetingRoomOperatingHours(
+    roomId: string,
+    date: Date,
+    specialDates: SpecialDates,
+): OperatingHours | undefined {
+    const dateIso = date.toISOString().slice(0, 10);
+    if (specialDates.closedDates.has(dateIso)) return undefined;
+
+    if (roomId === MR_WMK_ROOM_ID && dateIso >= MR_SPECIAL_CLOSED_AFTER) {
+        return undefined;
+    }
+
+    const day = date.getDay();
+    if (day === 0 && !MR_SUNDAY_OPEN_ROOM_IDS.has(roomId)) {
+        return undefined;
+    }
+
+    if (MR_AHC_ROOM_IDS.has(roomId) && (day === 1 || day === 2)) {
+        return undefined;
+    }
+
+    if (
+        MR_TERRAZAS_ROOM_IDS.has(roomId) &&
+        day === 6 &&
+        dateIso > MR_TERRAZAS_CLOSED_ON_SATURDAY_AFTER
+    ) {
+        return undefined;
+    }
+
+    let hours: OperatingHours;
+    if (day === 0 && MR_SUNDAY_OPEN_ROOM_IDS.has(roomId)) {
+        hours = {
+            opening: 12,
+            closing: 17,
+        };
+    } else {
+        if (day === 6) {
+            hours = {
+                opening: 10,
+                closing: 17,
+            };
+        } else if (day === 5) {
+            hours = {
+                opening: 9,
+                closing: 17,
+            };
+        } else {
+            hours = {
+                opening: 9,
+                closing: 20,
+            };
+        }
+
+        if (MR_AHC_ROOM_IDS.has(roomId)) {
+            hours = {
+                opening: 10,
+                closing: 18,
+            };
+        }
+    }
+
+    const earlyClose = specialDates.earlyClosings.get(dateIso);
+    if (earlyClose) {
+        hours = {
+            opening: hours.opening,
+            closing: earlyClose.hour + earlyClose.minute / 60,
+        };
+    }
+
+    return hours;
+}
+
+function getMeetingRoomAvailability(
+    roomId: string,
+    reservations: z.infer<typeof MeetingRoomReservationSchema>[],
+    date: Date,
+    specialDates: SpecialDates,
+): RoomAvailability {
+    const hours = getMeetingRoomOperatingHours(roomId, date, specialDates);
+    if (!hours || hours.opening === null || hours.closing === null) {
+        return { availableStartMinutes: [], availableTimes: [], availableDurations: [] };
+    }
+
+    const openingMinutes = Math.round(hours.opening * 60);
+    const closingMinutes = Math.round(hours.closing * 60);
+    const intervals = reservations
+        .map(reservation => {
+            const start = toMinutesFromIsoDateTime(reservation.start);
+            const end = toMinutesFromIsoDateTime(reservation.end);
+            if (
+                start === undefined ||
+                end === undefined ||
+                !Number.isFinite(start) ||
+                !Number.isFinite(end) ||
+                end <= start
+            ) {
+                return undefined;
+            }
+            return {
+                start: Math.max(start, openingMinutes),
+                end: Math.min(end, closingMinutes),
+            };
+        })
+        .filter((value): value is { start: number; end: number } =>
+            Boolean(value && value.end > value.start),
+        )
+        .sort((left, right) => left.start - right.start);
+
+    const mergedIntervals: Array<{ start: number; end: number }> = [];
+    for (const interval of intervals) {
+        const previous = mergedIntervals[mergedIntervals.length - 1];
+        if (!previous || interval.start > previous.end) {
+            mergedIntervals.push(interval);
+            continue;
+        }
+
+        previous.end = Math.max(previous.end, interval.end);
+    }
+
+    const availableStartMinutes: number[] = [];
+    const step = 15;
+    for (let start = openingMinutes; start + step <= closingMinutes; start += step) {
+        const end = start + step;
+        const blocked = mergedIntervals.some(
+            interval => start < interval.end && end > interval.start,
+        );
+        if (!blocked) availableStartMinutes.push(start);
+    }
+
+    const availableDurations = new Set<number>();
+    let runStart: number | undefined;
+    let previousStart: number | undefined;
+
+    for (const start of availableStartMinutes) {
+        const continuesRun = previousStart !== undefined && start - previousStart === step;
+        if (!continuesRun) {
+            if (runStart !== undefined && previousStart !== undefined) {
+                const runLength = (previousStart - runStart) / step + 1;
+                for (let duration = step; duration <= runLength * step; duration += step) {
+                    availableDurations.add(duration);
+                }
+            }
+            runStart = start;
+        }
+        previousStart = start;
+    }
+
+    if (runStart !== undefined && previousStart !== undefined) {
+        const runLength = (previousStart - runStart) / step + 1;
+        for (let duration = step; duration <= runLength * step; duration += step) {
+            availableDurations.add(duration);
+        }
+    }
+
+    return {
+        availableStartMinutes,
+        availableTimes: availableStartMinutes.map(toTimeLabel),
+        availableDurations: Array.from(availableDurations).sort((a, b) => a - b),
+    };
+}
+
 function reservationBlocksTime(
     reservation: z.infer<typeof ReservationSchema>,
     desiredMinutes: number,
 ): boolean {
-    const start = new Date(reservation.start);
-    const end = new Date(reservation.end);
-
-    if (Number.isNaN(start.valueOf()) || Number.isNaN(end.valueOf())) {
+    const startMinutes = toMinutesFromIsoDateTime(reservation.start);
+    const endMinutes = toMinutesFromIsoDateTime(reservation.end);
+    if (startMinutes === undefined || endMinutes === undefined) {
         return false;
     }
-
-    const startMinutes = start.getHours() * 60 + start.getMinutes();
-    const endMinutes = end.getHours() * 60 + end.getMinutes();
 
     return desiredMinutes >= startMinutes && desiredMinutes < endMinutes;
 }
@@ -785,11 +1295,120 @@ async function fetchReservationsForDateByLocation(
     locationId: string,
 ): Promise<z.infer<typeof ReservationSchema>[]> {
     const host = normalizeBaseUrl(baseUrl);
+    const cacheScope = `${host}:${dateIso}:${locationId}`;
+    const cached = await getCached<z.infer<typeof ReservationSchema>[]>(
+        "slr_reservations_v1",
+        cacheScope,
+        RESERVATION_CACHE_TTL_MS,
+    );
+    if (cached) return cached;
+
     const payload = await fetchJson<unknown>(
         `${host}/slr_dates2.json?date=${dateIso}&location=${locationId}&t=${Date.now()}`,
     );
 
-    return z.array(ReservationSchema).parse(payload);
+    const reservations = z.array(ReservationSchema).parse(payload);
+    await setCached("slr_reservations_v1", cacheScope, reservations);
+    return reservations;
+}
+
+async function fetchSpecialDates(baseUrl = DEFAULT_BASE_URL): Promise<SpecialDates> {
+    const host = normalizeBaseUrl(baseUrl);
+    const cached = await getCached<{
+        closedDates: string[];
+        earlyClosings: Record<string, { hour: number; minute: number }>;
+    }>("special_dates", host);
+    if (cached) {
+        return {
+            closedDates: new Set(cached.closedDates),
+            earlyClosings: new Map(Object.entries(cached.earlyClosings)),
+        };
+    }
+
+    const payload = await fetchJson<unknown>(
+        `${host}/admin/special-dates.json?_format=json&t=${Date.now()}`,
+    );
+
+    const closedDates = new Set<string>();
+    const earlyClosings = new Map<string, { hour: number; minute: number }>();
+    if (Array.isArray(payload)) {
+        for (const row of payload) {
+            if (!row || typeof row !== "object") continue;
+            const data = row as Record<string, unknown>;
+            const specialDateRaw =
+                typeof data.field_special_date === "string"
+                    ? data.field_special_date
+                    : typeof (data.field_special_date as { value?: unknown })?.value === "string"
+                      ? String((data.field_special_date as { value?: unknown }).value)
+                      : undefined;
+            const dateMatch = specialDateRaw?.match(/\b\d{4}-\d{2}-\d{2}\b/);
+            const dateIso = dateMatch?.[0];
+            if (!dateIso) continue;
+
+            const earlyRaw =
+                typeof data.field_early_closing === "string"
+                    ? data.field_early_closing.trim()
+                    : typeof (data.field_early_closing as { value?: unknown })?.value === "string"
+                      ? String((data.field_early_closing as { value?: unknown }).value).trim()
+                      : "";
+
+            if (!earlyRaw) {
+                closedDates.add(dateIso);
+                continue;
+            }
+
+            const minuteMatch = earlyRaw.match(/(\d{1,2}):(\d{2})/);
+            if (!minuteMatch) continue;
+            const hour = Number.parseInt(minuteMatch[1], 10);
+            const minute = Number.parseInt(minuteMatch[2], 10);
+            if (!Number.isFinite(hour) || !Number.isFinite(minute)) continue;
+
+            const previous = earlyClosings.get(dateIso);
+            if (!previous || hour * 60 + minute < previous.hour * 60 + previous.minute) {
+                earlyClosings.set(dateIso, { hour, minute });
+            }
+        }
+    }
+
+    await setCached("special_dates", host, {
+        closedDates: Array.from(closedDates),
+        earlyClosings: Object.fromEntries(earlyClosings.entries()),
+    });
+
+    return {
+        closedDates,
+        earlyClosings,
+    };
+}
+
+async function fetchMeetingRoomReservationsForLocation(
+    baseUrl: string,
+    dateIso: string,
+    locationId: string,
+): Promise<z.infer<typeof MeetingRoomReservationSchema>[]> {
+    const host = normalizeBaseUrl(baseUrl);
+    const cacheScope = `${host}:${dateIso}:${locationId}`;
+    const cached = await getCached<z.infer<typeof MeetingRoomReservationSchema>[]>(
+        "meeting_room_reservations_v1",
+        cacheScope,
+        RESERVATION_CACHE_TTL_MS,
+    );
+    if (cached) return cached;
+
+    const date = new Date(`${dateIso}T12:00:00Z`);
+    const nextDate = new Date(date);
+    nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+    const nextDateIso = nextDate.toISOString().slice(0, 10);
+
+    const payload = await fetchJson<unknown>(
+        `${host}/mr_dates2.json?sid=999999&loc=${encodeURIComponent(
+            locationId,
+        )}&date11=${dateIso}&date22=${nextDateIso}&t=${Date.now()}`,
+    );
+
+    const reservations = z.array(MeetingRoomReservationSchema).parse(payload);
+    await setCached("meeting_room_reservations_v1", cacheScope, reservations);
+    return reservations;
 }
 
 function toLibraryRoom(room: LiveRoom, targetDateIso: string): LibraryRoom {
@@ -813,6 +1432,7 @@ function toLibraryRoom(room: LiveRoom, targetDateIso: string): LibraryRoom {
             capacity: room.capacity,
             amenities: room.amenities,
             availableTimes: [],
+            availableDurations: [],
             date: targetDateIso,
         },
     };
@@ -827,6 +1447,9 @@ export const apl = {
             const date = options.date ?? new Date();
             const dateIso = date.toISOString().split("T")[0];
             const desiredMinutes = options.time ? toMinutes(options.time) : undefined;
+            const desiredDuration = Number.isFinite(options.duration)
+                ? options.duration
+                : undefined;
 
             const liveRooms = await fetchLiveRooms(baseUrl);
 
@@ -858,33 +1481,202 @@ export const apl = {
                 );
             }
 
-            if (desiredMinutes !== undefined) {
-                const reservationsByLocation = new Map<
-                    string,
-                    z.infer<typeof ReservationSchema>[]
-                >();
+            const locationIds = Array.from(new Set(publishedRooms.map(room => room.locationId)));
+            const reservationsByLocation = new Map<string, z.infer<typeof ReservationSchema>[]>(
+                await mapWithConcurrency(
+                    locationIds,
+                    RESERVATIONS_FETCH_CONCURRENCY,
+                    async locationId => [
+                        locationId,
+                        await fetchReservationsForDateByLocation(baseUrl, dateIso, locationId),
+                    ],
+                ),
+            );
 
-                for (const room of publishedRooms) {
-                    if (reservationsByLocation.has(room.locationId)) continue;
-                    const reservations = await fetchReservationsForDateByLocation(
-                        baseUrl,
-                        dateIso,
-                        room.locationId,
-                    );
-                    reservationsByLocation.set(room.locationId, reservations);
+            const roomsWithAvailability = publishedRooms.map(room => {
+                const reservations = reservationsByLocation.get(room.locationId) ?? [];
+                const roomReservations = reservations.filter(res => res.room === room.roomId);
+                const availability = getRoomAvailability(room, roomReservations, date);
+                const libraryRoom = toLibraryRoom(room, dateIso);
+                return {
+                    ...libraryRoom,
+                    info: {
+                        ...libraryRoom.info,
+                        availableTimes: availability.availableTimes,
+                        availableDurations: availability.availableDurations,
+                    },
+                    _availability: availability,
+                    _roomReservations: roomReservations,
+                };
+            });
+
+            const filteredRooms = roomsWithAvailability.filter(room => {
+                if (
+                    desiredMinutes !== undefined &&
+                    !room._availability.availableStartMinutes.includes(desiredMinutes)
+                ) {
+                    return false;
                 }
 
-                publishedRooms = publishedRooms.filter(room => {
-                    const reservations = reservationsByLocation.get(room.locationId) ?? [];
-                    const roomReservations = reservations.filter(res => res.room === room.roomId);
-                    return !roomReservations.some(res =>
-                        reservationBlocksTime(res, desiredMinutes),
-                    );
+                if (
+                    desiredDuration !== undefined &&
+                    desiredDuration > 0 &&
+                    !room.info.availableDurations.some(duration => duration >= desiredDuration)
+                ) {
+                    return false;
+                }
+
+                if (
+                    desiredMinutes !== undefined &&
+                    !room._roomReservations.every(
+                        reservation => !reservationBlocksTime(reservation, desiredMinutes),
+                    )
+                ) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            return {
+                data: filteredRooms.map(
+                    ({ _availability: _, _roomReservations: __, ...room }) => room,
+                ),
+                error: undefined,
+            };
+        } catch (error: any) {
+            return {
+                data: undefined,
+                error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
+    },
+
+    async getMeetingRoomAvailabilityByLocation(
+        options: Partial<SearchOptions> = {},
+        baseUrl = DEFAULT_BASE_URL,
+    ): Promise<
+        SafeResult<
+            Record<
+                string,
+                {
+                    availableTimes: string[];
+                    availableDurations: number[];
+                }
+            >
+        >
+    > {
+        try {
+            const date = options.date ?? new Date();
+            const dateIso = date.toISOString().slice(0, 10);
+            const desiredMinutes = options.time ? toMinutes(options.time) : undefined;
+            const desiredDuration = Number.isFinite(options.duration)
+                ? options.duration
+                : undefined;
+            const desiredCapacity = Number.isFinite(options.capacity)
+                ? options.capacity
+                : undefined;
+
+            const [inventory, specialDates] = await Promise.all([
+                fetchMeetingRoomInventory(baseUrl),
+                fetchSpecialDates(baseUrl),
+            ]);
+
+            const locationNeedle = options.location
+                ? normalizeMeetingRoomBranchName(options.location)
+                : undefined;
+            const allowedLocationIds = new Set(
+                inventory.locations
+                    .filter(location => {
+                        if (!locationNeedle) return true;
+                        const normalizedBranch = normalizeMeetingRoomBranchName(location.branch);
+                        return (
+                            location.locationId.toLowerCase() === locationNeedle ||
+                            normalizedBranch.includes(locationNeedle) ||
+                            locationNeedle.includes(normalizedBranch)
+                        );
+                    })
+                    .map(location => location.locationId),
+            );
+
+            const reservationsByLocation = new Map<
+                string,
+                z.infer<typeof MeetingRoomReservationSchema>[]
+            >(
+                await mapWithConcurrency(
+                    Array.from(allowedLocationIds),
+                    RESERVATIONS_FETCH_CONCURRENCY,
+                    async locationId => [
+                        locationId,
+                        await fetchMeetingRoomReservationsForLocation(baseUrl, dateIso, locationId),
+                    ],
+                ),
+            );
+
+            const result: Record<
+                string,
+                {
+                    availableTimes: string[];
+                    availableDurations: number[];
+                }
+            > = {};
+
+            for (const locationId of allowedLocationIds) {
+                const rooms = (inventory.roomsByLocation[locationId] ?? []).filter(room => {
+                    if (desiredCapacity === undefined) return true;
+                    return room.capacity >= desiredCapacity;
                 });
+
+                if (!rooms.length) continue;
+
+                const reservations = reservationsByLocation.get(locationId) ?? [];
+                const locationTimes = new Set<string>();
+                const locationDurations = new Set<number>();
+                let hasMatchingRoom = false;
+
+                for (const room of rooms) {
+                    const conflictSet = getMeetingRoomConflictSet(room.roomId);
+                    const conflictingReservations = reservations.filter(reservation =>
+                        conflictSet.has(String(reservation.room)),
+                    );
+
+                    const availability = getMeetingRoomAvailability(
+                        room.roomId,
+                        conflictingReservations,
+                        date,
+                        specialDates,
+                    );
+
+                    for (const time of availability.availableTimes) locationTimes.add(time);
+                    for (const duration of availability.availableDurations) {
+                        locationDurations.add(duration);
+                    }
+
+                    const matchesTime =
+                        desiredMinutes === undefined ||
+                        availability.availableStartMinutes.includes(desiredMinutes);
+                    const matchesDuration =
+                        desiredDuration === undefined ||
+                        desiredDuration <= 0 ||
+                        availability.availableDurations.some(
+                            duration => duration >= desiredDuration,
+                        );
+
+                    if (matchesTime && matchesDuration) {
+                        hasMatchingRoom = true;
+                    }
+                }
+
+                if (!hasMatchingRoom) continue;
+
+                result[locationId] = {
+                    availableTimes: Array.from(locationTimes).sort(),
+                    availableDurations: Array.from(locationDurations).sort((a, b) => a - b),
+                };
             }
 
             return {
-                data: publishedRooms.map(room => toLibraryRoom(room, dateIso)),
+                data: result,
                 error: undefined,
             };
         } catch (error: any) {

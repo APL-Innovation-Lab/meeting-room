@@ -13,6 +13,7 @@ export type BranchSearchResult = {
     address: string;
     distance: string;
     roomsAvailable: number;
+    maxAvailableDuration?: number;
     image: string;
     url: string;
 };

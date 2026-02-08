@@ -7,9 +7,18 @@ export namespace SearchResult {
         address: string;
         distance: string;
         roomsAvailable: number;
+        maxAvailableDuration?: number;
         image: string;
         url: string;
     }
+}
+
+function formatDurationLabel(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours <= 0) return `${mins} min`;
+    if (mins <= 0) return `${hours} ${hours === 1 ? "hr" : "hrs"}`;
+    return `${hours} ${hours === 1 ? "hr" : "hrs"} ${mins} min`;
 }
 
 export function SearchResult(props: SearchResult.Props) {
@@ -36,6 +45,12 @@ export function SearchResult(props: SearchResult.Props) {
                 <strong>
                     {props.roomsAvailable}{" "}
                     {pluralize(props.roomsAvailable, { one: "Room", other: "Rooms" })} Available
+                    {props.maxAvailableDuration ? (
+                        <span className="font-normal">
+                            {" "}
+                            (up to {formatDurationLabel(props.maxAvailableDuration)})
+                        </span>
+                    ) : null}
                 </strong>
             </div>
         </li>

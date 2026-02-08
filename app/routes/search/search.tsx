@@ -50,16 +50,18 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     const currentDate = dateFormatter.format(new Date());
     const searchFilters = createSearchFilters(new URL(request.url).searchParams, currentDate);
     let searchResults = filterSearchResults(allSearchResults, searchFilters);
+    const maxAvailableDurationByLocationId = new Map<string, number>();
 
-    const hasAmenityFilters =
-        searchFilters.display || searchFilters.hdmi || searchFilters.whiteboard;
-    if (hasAmenityFilters && roomType === RoomType.SharedLearningRoom) {
+    if (roomType === RoomType.SharedLearningRoom) {
         const parsedDate = new Date(searchFilters.date);
         const parsedPeople = Number.parseInt(searchFilters.people, 10);
+        const parsedDuration = Number.parseInt(searchFilters.duration, 10);
         const roomsResult = await apl.getRooms({
             location: searchFilters.location === "all" ? undefined : searchFilters.location,
             date: Number.isNaN(parsedDate.valueOf()) ? undefined : parsedDate,
             capacity: Number.isFinite(parsedPeople) && parsedPeople > 0 ? parsedPeople : undefined,
+            duration:
+                Number.isFinite(parsedDuration) && parsedDuration > 0 ? parsedDuration : undefined,
             amenities: {
                 airplay: searchFilters.display || undefined,
                 hdmi: searchFilters.hdmi || undefined,
@@ -71,8 +73,50 @@ export async function loader({ params, request }: Route.LoaderArgs) {
             searchResults = searchResults.filter(result =>
                 roomsResult.data.some(room => branchNamesMatch(result.branch, room.branch.name)),
             );
+
+            for (const result of searchResults) {
+                const maxDuration = Math.max(
+                    0,
+                    ...roomsResult.data
+                        .filter(room => branchNamesMatch(result.branch, room.branch.name))
+                        .map(room => Math.max(0, ...room.info.availableDurations)),
+                );
+                if (maxDuration > 0) {
+                    maxAvailableDurationByLocationId.set(result.locationId, maxDuration);
+                }
+            }
+        }
+    } else if (roomType === RoomType.MeetingRoom) {
+        const parsedDate = new Date(searchFilters.date);
+        const parsedPeople = Number.parseInt(searchFilters.people, 10);
+        const parsedDuration = Number.parseInt(searchFilters.duration, 10);
+        const availabilityResult = await apl.getMeetingRoomAvailabilityByLocation({
+            location: searchFilters.location === "all" ? undefined : searchFilters.location,
+            date: Number.isNaN(parsedDate.valueOf()) ? undefined : parsedDate,
+            capacity: Number.isFinite(parsedPeople) && parsedPeople > 0 ? parsedPeople : undefined,
+            duration:
+                Number.isFinite(parsedDuration) && parsedDuration > 0 ? parsedDuration : undefined,
+        });
+
+        if (!availabilityResult.error) {
+            const availableLocationIds = new Set(Object.keys(availabilityResult.data));
+            searchResults = searchResults.filter(result =>
+                availableLocationIds.has(result.locationId),
+            );
+
+            for (const [locationId, availability] of Object.entries(availabilityResult.data)) {
+                const maxDuration = Math.max(0, ...availability.availableDurations);
+                if (maxDuration > 0) {
+                    maxAvailableDurationByLocationId.set(locationId, maxDuration);
+                }
+            }
         }
     }
+
+    searchResults = searchResults.map(result => ({
+        ...result,
+        maxAvailableDuration: maxAvailableDurationByLocationId.get(result.locationId),
+    }));
 
     return {
         searchResults,

@@ -6,8 +6,11 @@ import {
     Select,
     TextInputMask,
 } from "@trussworks/react-uswds";
-import { Form } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { Form, useLocation, useNavigation } from "react-router";
 import { type LocationOption, type SearchFilters } from "./search.data.server";
+
+const MIN_LOADING_STATE_MS = 500;
 
 export namespace SearchFiltersForm {
     export interface Props {
@@ -22,6 +25,60 @@ export function SearchFiltersForm({
     locationOptions,
     searchFilters,
 }: SearchFiltersForm.Props) {
+    const navigation = useNavigation();
+    const location = useLocation();
+    const isSearchLoading =
+        navigation.state === "loading" &&
+        navigation.location?.pathname === location.pathname &&
+        (navigation.formMethod?.toLowerCase() === "get" ||
+            navigation.location?.search !== location.search);
+    const [showLoadingState, setShowLoadingState] = useState(false);
+    const loadingShownAtRef = useRef<number | null>(null);
+    const hideTimerRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        if (hideTimerRef.current !== null) {
+            window.clearTimeout(hideTimerRef.current);
+            hideTimerRef.current = null;
+        }
+
+        if (isSearchLoading) {
+            if (loadingShownAtRef.current === null) {
+                loadingShownAtRef.current = Date.now();
+            }
+            setShowLoadingState(true);
+            return;
+        }
+
+        if (!showLoadingState) {
+            loadingShownAtRef.current = null;
+            return;
+        }
+
+        const shownAt = loadingShownAtRef.current ?? Date.now();
+        const elapsedMs = Date.now() - shownAt;
+        const remainingMs = Math.max(0, MIN_LOADING_STATE_MS - elapsedMs);
+
+        if (remainingMs === 0) {
+            loadingShownAtRef.current = null;
+            setShowLoadingState(false);
+            return;
+        }
+
+        hideTimerRef.current = window.setTimeout(() => {
+            loadingShownAtRef.current = null;
+            setShowLoadingState(false);
+            hideTimerRef.current = null;
+        }, remainingMs);
+
+        return () => {
+            if (hideTimerRef.current !== null) {
+                window.clearTimeout(hideTimerRef.current);
+                hideTimerRef.current = null;
+            }
+        };
+    }, [isSearchLoading, showLoadingState]);
+
     return (
         <Form className="flex w-full max-w-none flex-col px-3" preventScrollReset>
             <div className="w-full">
@@ -115,8 +172,32 @@ export function SearchFiltersForm({
                         defaultChecked={searchFilters.whiteboard}
                     />
                 </div>
-                <Button className="w-auto" type="submit">
-                    Search
+                <Button className="w-auto px-4" type="submit" disabled={showLoadingState}>
+                    <span className="inline-grid grid-cols-[1em_auto_1em] items-center gap-[0.5rem]">
+                        <span className="inline-flex h-[1em] w-[1em] items-center justify-center">
+                            {showLoadingState ? (
+                                <svg
+                                    className="h-[1em] w-[1em] animate-spin"
+                                    viewBox="0 0 24 24"
+                                    focusable="false"
+                                    aria-hidden="true"
+                                >
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="9"
+                                        fill="none"
+                                        stroke="#007ea8"
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                        strokeDasharray="40 24"
+                                    />
+                                </svg>
+                            ) : null}
+                        </span>
+                        <span>Search</span>
+                        <span className="h-[1em] w-[1em]" aria-hidden="true" />
+                    </span>
                 </Button>
             </div>
         </Form>
