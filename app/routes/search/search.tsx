@@ -228,24 +228,20 @@ function DeferredBranchMap({
         };
     }, [deferredSearchData]);
 
-    return <BranchMap className="h-full w-full" branchLngLats={branchLngLats} token={mapboxToken} />;
+    return (
+        <BranchMap className="h-full w-full" branchLngLats={branchLngLats} token={mapboxToken} />
+    );
 }
 
 function SearchResultsListFallback() {
-    const [showSpinner, setShowSpinner] = useState(false);
-
-    useEffect(() => {
-        const timeoutId = window.setTimeout(() => setShowSpinner(true), SPINNER_DELAY_MS);
-        return () => window.clearTimeout(timeoutId);
-    }, []);
-
-    if (!showSpinner) {
-        return <div className="h-full" aria-hidden="true" />;
-    }
-
     return (
         <div className="flex h-full items-center justify-center">
-            <svg className="h-8 w-8 animate-spin" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <svg
+                className="h-8 w-8 animate-spin"
+                viewBox="0 0 24 24"
+                focusable="false"
+                aria-hidden="true"
+            >
                 <circle
                     cx="12"
                     cy="12"
