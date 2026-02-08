@@ -23,6 +23,16 @@ export type LocationOption = {
     label: string;
 };
 
+export type SearchFilters = {
+    location: string;
+    date: string;
+    duration: string;
+    people: string;
+    display: boolean;
+    hdmi: boolean;
+    whiteboard: boolean;
+};
+
 export function formatLocationOptionLabel(result: BranchSearchResult): string {
     const hasCapacities = result.capacities.length > 0;
     const capacityLabel = pluralize(result.capacities.length, {
@@ -102,6 +112,47 @@ export function createSearchResults(
     }
 
     return Array.from(grouped.values());
+}
+
+function parseCheckboxValue(searchParams: URLSearchParams, key: string): boolean {
+    const value = searchParams.get(key);
+    return value !== null && value !== "false" && value !== "0";
+}
+
+export function createSearchFilters(
+    searchParams: URLSearchParams,
+    fallbackDate: string,
+): SearchFilters {
+    return {
+        location: searchParams.get("location")?.trim() || "all",
+        date: searchParams.get("date")?.trim() || fallbackDate,
+        duration: searchParams.get("duration")?.trim() || "120",
+        people: searchParams.get("people")?.trim() || "",
+        display: parseCheckboxValue(searchParams, "display"),
+        hdmi: parseCheckboxValue(searchParams, "hdmi"),
+        whiteboard: parseCheckboxValue(searchParams, "whiteboard"),
+    };
+}
+
+export function filterSearchResults(
+    searchResults: BranchSearchResult[],
+    filters: SearchFilters,
+): BranchSearchResult[] {
+    let filtered = searchResults;
+    const normalizedLocation = filters.location.toLowerCase();
+
+    if (normalizedLocation && normalizedLocation !== "all") {
+        filtered = filtered.filter(result => result.branch.toLowerCase() === normalizedLocation);
+    }
+
+    const people = Number.parseInt(filters.people, 10);
+    if (Number.isFinite(people) && people > 0) {
+        filtered = filtered.filter(result =>
+            result.capacities.some(capacity => capacity >= people),
+        );
+    }
+
+    return filtered;
 }
 
 export function createLocationOptions(searchResults: BranchSearchResult[]): LocationOption[] {

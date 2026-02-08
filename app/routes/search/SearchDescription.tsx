@@ -1,16 +1,5 @@
-import clsx from "clsx";
-import { type ComponentProps } from "react";
+import { ExternalLink } from "~/components/ExternalLink";
 import { RoomType } from "~/route-map";
-
-function ExternalLink({ children, className, ...props }: ComponentProps<"a">) {
-    const classes = clsx("usa-link", "usa-link--external", className);
-
-    return (
-        <a className={classes} target="_blank" rel="noopener noreferrer" {...props}>
-            {children}
-        </a>
-    );
-}
 
 export namespace SearchDescription {
     export interface Props {

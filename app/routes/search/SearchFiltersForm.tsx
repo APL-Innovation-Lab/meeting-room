@@ -7,23 +7,33 @@ import {
     TextInputMask,
 } from "@trussworks/react-uswds";
 import { Form } from "react-router";
-import { type LocationOption } from "./search.data.server";
+import { type LocationOption, type SearchFilters } from "./search.data.server";
 
 export namespace SearchFiltersForm {
     export interface Props {
         currentDate: string;
         locationOptions: LocationOption[];
+        searchFilters: SearchFilters;
     }
 }
 
-export function SearchFiltersForm({ currentDate, locationOptions }: SearchFiltersForm.Props) {
+export function SearchFiltersForm({
+    currentDate,
+    locationOptions,
+    searchFilters,
+}: SearchFiltersForm.Props) {
     return (
-        <Form className="flex w-full max-w-none flex-col px-3">
+        <Form className="flex w-full max-w-none flex-col px-3" method="get">
             <div className="w-full">
                 <Label className="font-bold" id="location-label" htmlFor="location">
                     Location
                 </Label>
-                <Select className="max-w-none" id="location" name="location">
+                <Select
+                    className="max-w-none"
+                    id="location"
+                    name="location"
+                    defaultValue={searchFilters.location}
+                >
                     <option value="all">All Available Locations</option>
                     {locationOptions.map(option => (
                         <option key={option.locationId} value={option.value}>
@@ -41,7 +51,7 @@ export function SearchFiltersForm({ currentDate, locationOptions }: SearchFilter
                     <DatePicker
                         id="date"
                         name="date"
-                        defaultValue={currentDate}
+                        defaultValue={searchFilters.date || currentDate}
                         aria-labelledby="date-label"
                     />
                 </div>
@@ -50,7 +60,12 @@ export function SearchFiltersForm({ currentDate, locationOptions }: SearchFilter
                     <Label className="font-bold" id="duration-label" htmlFor="duration">
                         Duration
                     </Label>
-                    <Select className="w-[10rem]" id="duration" name="duration" defaultValue="120">
+                    <Select
+                        className="w-[10rem]"
+                        id="duration"
+                        name="duration"
+                        defaultValue={searchFilters.duration}
+                    >
                         <option value="15">15 min</option>
                         <option value="30">30 min</option>
                         <option value="45">45 min</option>
@@ -73,6 +88,7 @@ export function SearchFiltersForm({ currentDate, locationOptions }: SearchFilter
                         type="number"
                         mask="___"
                         pattern="\d{3}"
+                        defaultValue={searchFilters.people}
                         aria-labelledby="people-label"
                     />
                 </div>
@@ -80,9 +96,24 @@ export function SearchFiltersForm({ currentDate, locationOptions }: SearchFilter
 
             <div className="mt-3 flex items-center justify-between gap-[1.25rem]">
                 <div className="flex gap-[1.25rem]" id="amenities">
-                    <Checkbox id="display" name="display" label="Display/Screen" />
-                    <Checkbox id="hdmi" name="hdmi" label="HDMI" />
-                    <Checkbox id="whiteboard" name="whiteboard" label="Whiteboard" />
+                    <Checkbox
+                        id="display"
+                        name="display"
+                        label="Display/Screen"
+                        defaultChecked={searchFilters.display}
+                    />
+                    <Checkbox
+                        id="hdmi"
+                        name="hdmi"
+                        label="HDMI"
+                        defaultChecked={searchFilters.hdmi}
+                    />
+                    <Checkbox
+                        id="whiteboard"
+                        name="whiteboard"
+                        label="Whiteboard"
+                        defaultChecked={searchFilters.whiteboard}
+                    />
                 </div>
                 <Button className="w-auto" type="submit">
                     Search
