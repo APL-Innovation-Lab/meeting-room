@@ -23,7 +23,7 @@ export function SearchFiltersForm({
     searchFilters,
 }: SearchFiltersForm.Props) {
     return (
-        <Form className="flex w-full max-w-none flex-col px-3" method="get">
+        <Form className="flex w-full max-w-none flex-col px-3" preventScrollReset>
             <div className="w-full">
                 <Label className="font-bold" id="location-label" htmlFor="location">
                     Location

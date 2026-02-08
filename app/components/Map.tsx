@@ -31,8 +31,12 @@ export namespace Map {
 
 export function Map({ token: accessToken, branchLngLats: lngLats, className }: Map.Props) {
     const container = useRef<HTMLDivElement>(null);
+    const mapRef = useRef<mapbox.Map | null>(null);
+    const markersRef = useRef<mapbox.Marker[]>([]);
 
     useEffect(() => {
+        if (mapRef.current) return;
+
         const map = new MapboxMap({
             accessToken,
             container: container.current!,
@@ -45,17 +49,30 @@ export function Map({ token: accessToken, branchLngLats: lngLats, className }: M
         });
 
         map.on("dragend", () => console.log(map.getCenter()));
+        mapRef.current = map;
+        setMapColorScheme(map);
+
+        return () => {
+            map.remove();
+            mapRef.current = null;
+            markersRef.current = [];
+        };
+    }, [accessToken]);
+
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map) return;
+
+        for (const marker of markersRef.current) marker.remove();
+        markersRef.current = [];
 
         for (const lngLat of lngLats) {
             const marker = new Marker({ color: "#006288" });
             marker.setLngLat(lngLat);
             marker.addTo(map);
+            markersRef.current.push(marker);
         }
-
-        setMapColorScheme(map);
-
-        return () => map.remove();
-    }, [accessToken, lngLats]);
+    }, [lngLats]);
 
     return <div className={className} ref={container} />;
 }
