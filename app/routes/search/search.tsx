@@ -235,7 +235,7 @@ function DeferredBranchMap({
 
 function SearchResultsListFallback() {
     return (
-        <div className="flex h-full items-center justify-center">
+        <div className="flex h-full items-start mt-4 justify-center">
             <svg
                 className="h-8 w-8 animate-spin"
                 viewBox="0 0 24 24"
