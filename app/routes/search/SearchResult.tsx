@@ -22,6 +22,8 @@ function formatDurationLabel(minutes: number): string {
 }
 
 export function SearchResult(props: SearchResult.Props) {
+    const shouldShowDistance = false;
+
     return (
         <li className="flex gap-[1rem] w-full [&:not(:first-child)]:pt-2">
             <img className="object-cover w-[100px] h-[100px]" src={props.image} />
@@ -37,7 +39,13 @@ export function SearchResult(props: SearchResult.Props) {
                             {props.index}. {props.branch}
                         </h4>
                     </a>
-                    <h6 className="text-sans-3xs font-sans text-base-darker">
+                    <h6
+                        className={
+                            shouldShowDistance
+                                ? "text-sans-3xs font-sans text-base-darker"
+                                : "hidden text-sans-3xs font-sans text-base-darker"
+                        }
+                    >
                         {props.distance} mi
                     </h6>
                 </div>
