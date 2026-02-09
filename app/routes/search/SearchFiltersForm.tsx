@@ -172,31 +172,30 @@ export function SearchFiltersForm({
                         defaultChecked={searchFilters.whiteboard}
                     />
                 </div>
-                <Button className="w-auto px-4" type="submit" disabled={showLoadingState}>
-                    <span className="inline-grid grid-cols-[1em_auto_1em] items-center gap-[0.5rem]">
-                        <span className="inline-flex h-[1em] w-[1em] items-center justify-center">
-                            {showLoadingState ? (
-                                <svg
-                                    className="h-[1em] w-[1em] animate-spin"
-                                    viewBox="0 0 24 24"
-                                    focusable="false"
-                                    aria-hidden="true"
-                                >
-                                    <circle
-                                        cx="12"
-                                        cy="12"
-                                        r="9"
-                                        fill="none"
-                                        stroke="#007ea8"
-                                        strokeWidth="3"
-                                        strokeLinecap="round"
-                                        strokeDasharray="40 24"
-                                    />
-                                </svg>
-                            ) : null}
+                <Button className="w-auto" type="submit" disabled={showLoadingState}>
+                    <span className="flex items-center gap-[0.5rem]">
+                        <span className="h-[1em]">
+                            {showLoadingState ? "Searching..." : "Search"}
                         </span>
-                        <span>Search</span>
-                        <span className="h-[1em] w-[1em]" aria-hidden="true" />
+                        {showLoadingState ? (
+                            <svg
+                                className="h-[1em] w-[1em] animate-spin"
+                                viewBox="0 0 24 24"
+                                focusable="false"
+                                aria-hidden="true"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                    fill="none"
+                                    stroke="#007ea8"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeDasharray="40 24"
+                                />
+                            </svg>
+                        ) : null}
                     </span>
                 </Button>
             </div>
