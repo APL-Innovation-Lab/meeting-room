@@ -1,8 +1,5 @@
-import { Suspense, use, useEffect, useState } from "react";
-import { ErrorBoundary } from "react-error-boundary";
 import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
 import { Breadcrumbs } from "~/components/Breadcrumbs";
-import { Map as BranchMap } from "~/components/Map";
 import { type LiveBranchCoordinate } from "~/lib/apl-client/apl-live-client.server";
 import { apl } from "~/lib/apl-client/apl-live-client.server";
 import { site } from "~/lib/site";
@@ -10,7 +7,7 @@ import { displayName, RoomType } from "~/route-map";
 import { Route } from "./+types/search";
 import { SearchDescription } from "./SearchDescription";
 import { SearchFiltersForm } from "./SearchFiltersForm";
-import { SearchResult } from "./SearchResult";
+import { SearchResultsPanel } from "./SearchResultsPanel";
 import {
     branchNamesMatch,
     createBranchLngLats,
@@ -24,7 +21,6 @@ import {
 
 const dateFormatter = new Intl.DateTimeFormat("en-CA");
 const DEFER_GRACE_MS = 120;
-const SPINNER_DELAY_MS = 180;
 
 type DeferredSearchData = {
     searchResults: BranchSearchResult[];
@@ -119,6 +115,8 @@ async function resolveDeferredSearchData({
 
 export async function loader({ params, request }: Route.LoaderArgs) {
     const roomType = params.roomType as RoomType;
+    const requestUrl = new URL(request.url);
+    const rawSearchParams = requestUrl.searchParams;
 
     const [
         meetingOrSharedResult,
@@ -148,7 +146,17 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         locationPathMapping,
     );
     const currentDate = dateFormatter.format(new Date());
-    const searchFilters = createSearchFilters(new URL(request.url).searchParams, currentDate);
+    const searchFilters = createSearchFilters(rawSearchParams, currentDate);
+    const hasAnyQueryParams = Array.from(rawSearchParams.keys()).length > 0;
+    const hasAnyNonLocationFilter = Array.from(rawSearchParams.entries()).some(
+        ([key, value]) => key !== "location" && value.trim() !== "",
+    );
+    const searchResultsHeading =
+        hasAnyQueryParams &&
+        searchFilters.location === "all" &&
+        hasAnyNonLocationFilter
+            ? "Results for All Locations"
+            : "All Available Locations";
     const initialSearchResults = filterSearchResults(allSearchResults, searchFilters);
     const deferredSearchDataPromise = resolveDeferredSearchData({
         roomType,
@@ -173,95 +181,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         locationOptions: createLocationOptions(allSearchResults),
         roomType,
         accessToken: import.meta.env.VITE_APP_MAPBOX_TOKEN,
+        searchResultsHeading,
         deferredSearchData,
     };
-}
-
-function DeferredSearchResultsList({
-    deferredSearchData,
-}: {
-    deferredSearchData: Promise<DeferredSearchData>;
-}) {
-    const { searchResults } = use(deferredSearchData);
-    return (
-        <ul className="flex flex-col gap-[1rem] divide-y-[1px] divide-base-light overflow-scroll">
-            {searchResults.filter(Boolean).map((result, idx) => (
-                <SearchResult
-                    key={result.branch}
-                    index={idx + 1}
-                    image={result.image}
-                    branch={result.branch}
-                    distance={result.distance}
-                    address={result.address}
-                    roomsAvailable={result.roomsAvailable}
-                    maxAvailableDuration={result.maxAvailableDuration}
-                    url={result.url}
-                />
-            ))}
-        </ul>
-    );
-}
-
-function DeferredBranchMap({
-    deferredSearchData,
-    mapboxToken,
-}: {
-    deferredSearchData: Promise<DeferredSearchData>;
-    mapboxToken: string;
-}) {
-    const [branchLngLats, setBranchLngLats] = useState<Array<[number, number]>>([]);
-
-    useEffect(() => {
-        let isCancelled = false;
-        setBranchLngLats([]);
-
-        deferredSearchData
-            .then(data => {
-                if (!isCancelled) setBranchLngLats(data.branchLngLats);
-            })
-            .catch(() => {
-                if (!isCancelled) setBranchLngLats([]);
-            });
-
-        return () => {
-            isCancelled = true;
-        };
-    }, [deferredSearchData]);
-
-    return (
-        <BranchMap className="h-full w-full" branchLngLats={branchLngLats} token={mapboxToken} />
-    );
-}
-
-function SearchResultsListFallback() {
-    return (
-        <div className="flex h-full items-start mt-4 justify-center">
-            <svg
-                className="h-8 w-8 animate-spin"
-                viewBox="0 0 24 24"
-                focusable="false"
-                aria-hidden="true"
-            >
-                <circle
-                    cx="12"
-                    cy="12"
-                    r="9"
-                    fill="none"
-                    stroke="#007ea8"
-                    strokeWidth="3"
-                    strokeDasharray="40 24"
-                />
-            </svg>
-        </div>
-    );
-}
-
-function SearchResultsListError() {
-    return (
-        <div className="flex h-full items-center justify-center text-center text-secondary-dark">
-            Could not load room availability right now.
-        </div>
-    );
 }
 
 export default function Component({ loaderData }: Route.ComponentProps) {
@@ -271,6 +193,7 @@ export default function Component({ loaderData }: Route.ComponentProps) {
         locationOptions,
         roomType,
         accessToken: mapboxToken,
+        searchResultsHeading,
         deferredSearchData,
     } = loaderData;
     const title = displayName(roomType);
@@ -296,19 +219,11 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                             locationOptions={locationOptions}
                             searchFilters={searchFilters}
                         />
-                        <div className="grid h-[45rem] grid-cols-2 gap-[1rem] overflow-hidden p-4">
-                            <Suspense fallback={<SearchResultsListFallback />}>
-                                <ErrorBoundary fallback={<SearchResultsListError />}>
-                                    <DeferredSearchResultsList
-                                        deferredSearchData={deferredSearchData}
-                                    />
-                                </ErrorBoundary>
-                            </Suspense>
-                            <DeferredBranchMap
-                                deferredSearchData={deferredSearchData}
-                                mapboxToken={mapboxToken}
-                            />
-                        </div>
+                        <SearchResultsPanel
+                            heading={searchResultsHeading}
+                            deferredSearchData={deferredSearchData}
+                            mapboxToken={mapboxToken}
+                        />
                     </div>
                 </Card>
             </CardGroup>
