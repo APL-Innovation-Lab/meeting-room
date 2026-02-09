@@ -3,7 +3,7 @@ import { Breadcrumbs } from "~/components/Breadcrumbs";
 import { type LiveBranchCoordinate } from "~/lib/apl-client/apl-live-client.server";
 import { apl } from "~/lib/apl-client/apl-live-client.server";
 import { site } from "~/lib/site";
-import { displayName, RoomType } from "~/route-map";
+import { Room } from "~/route-map";
 import { Route } from "./+types/search";
 import { SearchDescription } from "./SearchDescription";
 import { SearchFiltersForm } from "./SearchFiltersForm";
@@ -28,12 +28,12 @@ type DeferredSearchData = {
 };
 
 async function resolveDeferredSearchData({
-    roomType,
+    roomKind,
     searchFilters,
     initialSearchResults,
     liveBranchCoordinates,
 }: {
-    roomType: RoomType;
+    roomKind: Room.Kind;
     searchFilters: SearchFilters;
     initialSearchResults: BranchSearchResult[];
     liveBranchCoordinates: LiveBranchCoordinate[];
@@ -41,7 +41,7 @@ async function resolveDeferredSearchData({
     let searchResults = initialSearchResults;
     const maxAvailableDurationByLocationId = new Map<string, number>();
 
-    if (roomType === RoomType.SharedLearningRoom) {
+    if (Room.isSharedLearning(roomKind)) {
         const parsedDate = new Date(searchFilters.date);
         const parsedPeople = Number.parseInt(searchFilters.people, 10);
         const parsedDuration = Number.parseInt(searchFilters.duration, 10);
@@ -75,7 +75,7 @@ async function resolveDeferredSearchData({
                 }
             }
         }
-    } else if (roomType === RoomType.MeetingRoom) {
+    } else if (Room.isMeeting(roomKind)) {
         const parsedDate = new Date(searchFilters.date);
         const parsedPeople = Number.parseInt(searchFilters.people, 10);
         const parsedDuration = Number.parseInt(searchFilters.duration, 10);
@@ -114,7 +114,7 @@ async function resolveDeferredSearchData({
 }
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-    const roomType = params.roomType as RoomType;
+    const roomKind = params.roomKind as Room.Kind;
     const requestUrl = new URL(request.url);
     const rawSearchParams = requestUrl.searchParams;
 
@@ -124,7 +124,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         branchCoordinatesResult,
         locationPathResult,
     ] = await Promise.all([
-        roomType === RoomType.MeetingRoom
+        Room.isMeeting(roomKind)
             ? apl.getMeetingRoomBranches()
             : apl.getSharedLearningRoomBranches(),
         apl.getBranchDirectory(),
@@ -152,14 +152,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         ([key, value]) => key !== "location" && value.trim() !== "",
     );
     const searchResultsHeading =
-        hasAnyQueryParams &&
-        searchFilters.location === "all" &&
-        hasAnyNonLocationFilter
+        hasAnyQueryParams && searchFilters.location === "all" && hasAnyNonLocationFilter
             ? "Results for All Locations"
             : "All Available Locations";
     const initialSearchResults = filterSearchResults(allSearchResults, searchFilters);
     const deferredSearchDataPromise = resolveDeferredSearchData({
-        roomType,
+        roomKind,
         searchFilters,
         initialSearchResults,
         liveBranchCoordinates,
@@ -179,7 +177,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         searchFilters,
         currentDate,
         locationOptions: createLocationOptions(allSearchResults),
-        roomType,
+        roomKind,
         accessToken: import.meta.env.VITE_APP_MAPBOX_TOKEN,
         searchResultsHeading,
         deferredSearchData,
@@ -191,26 +189,26 @@ export default function Component({ loaderData }: Route.ComponentProps) {
         searchFilters,
         currentDate,
         locationOptions,
-        roomType,
+        roomKind,
         accessToken: mapboxToken,
         searchResultsHeading,
         deferredSearchData,
     } = loaderData;
-    const title = displayName(roomType);
+    const room = new Room(roomKind);
 
     return (
         <>
-            <title>{`${title} • ${site.title}`}</title>
+            <title>{`${room.displayName} • ${site.title}`}</title>
             <CardGroup>
                 <Card>
                     <div className="px-5">
-                        <Breadcrumbs className="pb-0" links={site.breadcrumbs.search(roomType)} />
+                        <Breadcrumbs className="pb-0" links={site.breadcrumbs.search(room)} />
                         <CardHeader className="flex flex-col gap-[0.75rem]">
                             <h1 className="usa-card__heading font-sans text-sans-2xl font-bold">
-                                {title}
+                                {room.displayName}
                             </h1>
                             <p className="font-sans text-sans-xs text-base-darker">
-                                <SearchDescription roomType={roomType} />
+                                <SearchDescription roomKind={roomKind} />
                             </p>
                         </CardHeader>
 

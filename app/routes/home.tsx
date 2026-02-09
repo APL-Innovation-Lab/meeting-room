@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Breadcrumbs } from "~/components/Breadcrumbs";
 import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
 import { site } from "~/lib/site";
-import { RoomType, routes } from "~/route-map";
+import { Room, routes } from "~/route-map";
 
 export default function Component() {
     const navigate = useNavigate();
@@ -51,12 +51,12 @@ export default function Component() {
                                         return;
                                     }
 
-                                    const roomType =
+                                    const roomKind =
                                         value === "business"
-                                            ? RoomType.MeetingRoom
-                                            : RoomType.SharedLearningRoom;
+                                            ? Room.Meeting.kind
+                                            : Room.SharedLearning.kind;
 
-                                    navigate(routes.search.href({ roomType }));
+                                    navigate(routes.search.href({ roomKind }));
                                 }}
                             >
                                 <option disabled value="empty">

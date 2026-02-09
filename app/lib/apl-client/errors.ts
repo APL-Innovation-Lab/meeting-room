@@ -10,7 +10,7 @@ export class RoomNotFoundError extends Error {
 /**
  * Error thrown when there is a mismatch in room types.
  */
-export class RoomTypeMismatchError extends TypeError {
+export class RoomKindMismatchError extends TypeError {
     constructor(
         public expectedType: string,
         public actualType: string,

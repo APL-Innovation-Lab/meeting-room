@@ -1,12 +1,12 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
 import CalendarButton from "~/components/CalendarButton";
 import { site } from "~/lib/site";
-import { RoomType, routes } from "~/route-map";
+import { Room, routes } from "~/route-map";
 import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
 import type { Route } from "./+types/confirm";
 
 export default function Component({ params }: Route.ComponentProps) {
-    if (params.roomType === RoomType.MeetingRoom) {
+    if (params.roomKind === Room.Meeting.kind) {
         return <MeetingRoomConfirmation />;
     }
 
@@ -133,7 +133,7 @@ function SharedLearningRoomConfirmation() {
                                 <div className="flex justify-center">
                                     <Link
                                         href={routes.cancel.href({
-                                            roomType: RoomType.SharedLearningRoom,
+                                            roomKind: Room.SharedLearning.kind,
                                         })}
                                     >
                                         Cancel Reservation
@@ -243,7 +243,7 @@ function MeetingRoomConfirmation() {
                                 <div className="flex justify-center">
                                     <Link
                                         href={routes.cancel.href({
-                                            roomType: RoomType.MeetingRoom,
+                                            roomKind: Room.Meeting.kind,
                                         })}
                                     >
                                         Cancel Request

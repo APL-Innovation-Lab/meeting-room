@@ -1,5 +1,5 @@
 import type { Breadcrumbs } from "~/components/Breadcrumbs";
-import { displayName, RoomType, routes } from "~/route-map";
+import { Room, routes } from "~/route-map";
 
 export const site = {
     title: "APL Prototype",
@@ -15,12 +15,12 @@ export const site = {
             { href: "https://library.austintexas.gov", text: "Home" },
             { href: routes.home.href(), text: "Meeting Spaces" },
         ] satisfies Breadcrumbs.Item[],
-        search: (roomType: RoomType) =>
+        search: (room: Room) =>
             [
                 ...site.breadcrumbs.home,
                 {
-                    href: routes.search.href({ roomType }),
-                    text: displayName(roomType),
+                    href: routes.search.href({ roomKind: room.kind }),
+                    text: room.displayName,
                 },
             ] satisfies Breadcrumbs.Item[],
     },

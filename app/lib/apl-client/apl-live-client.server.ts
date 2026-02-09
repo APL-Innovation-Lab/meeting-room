@@ -2,6 +2,7 @@ import { openKv } from "@deno/kv";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import validator from "validator";
 import { z } from "zod";
+import { Room } from "~/route-map";
 
 /**
  * Represents a safe result of an operation that can either be successful with data or fail with an error.
@@ -91,9 +92,9 @@ export const MeetingRoomReservationOptionsSchema =
  * Union schema for validating reservation options for any room type.
  */
 export const ReservationOptionsSchema = z.union([
-    MeetingRoomReservationOptionsSchema.extend({ roomType: z.literal("meeting-room") }),
+    MeetingRoomReservationOptionsSchema.extend({ roomKind: z.literal("meeting-room") }),
     SharedLearningRoomReservationOptionsSchema.extend({
-        roomType: z.literal("shared-learning-room"),
+        roomKind: z.literal("shared-learning-room"),
     }),
 ]);
 
@@ -107,7 +108,7 @@ export type Reservation = {
     emailAddress: string;
     date: string;
     time: string;
-    roomType: "shared-learning-room" | "meeting-room";
+    roomKind: Room.Kind;
     roomName: string;
     branchName: string;
     // Optional fields for meeting rooms
@@ -289,9 +290,7 @@ async function mapWithConcurrency<T, U>(
         }
     }
 
-    await Promise.all(
-        Array.from({ length: Math.min(limit, items.length) }, () => worker()),
-    );
+    await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
     return results;
 }
 

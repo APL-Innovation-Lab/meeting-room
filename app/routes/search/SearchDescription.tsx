@@ -1,14 +1,14 @@
 import { ExternalLink } from "~/components/ExternalLink";
-import { RoomType } from "~/route-map";
+import { Room } from "~/route-map";
 
 export namespace SearchDescription {
     export interface Props {
-        roomType: RoomType;
+        roomKind: Room.Kind;
     }
 }
 
-export function SearchDescription({ roomType }: SearchDescription.Props) {
-    if (roomType === RoomType.MeetingRoom) {
+export function SearchDescription({ roomKind }: SearchDescription.Props) {
+    if (Room.isMeeting(roomKind)) {
         return (
             <>
                 For larger groups. Request 15 min time slots up to 15 hrs. Can reserve up to 90 days

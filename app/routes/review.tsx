@@ -1,11 +1,11 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
 import { site } from "~/lib/site";
-import { RoomType, routes } from "~/route-map";
+import { Room, routes } from "~/route-map";
 import type { Route } from "./+types/review";
 
 export default function Component({ params }: Route.ComponentProps) {
-    const roomType = params.roomType as RoomType;
-    const isMeetingRoom = roomType === RoomType.MeetingRoom;
+    const roomKind = params.roomKind;
+    const isMeetingRoom = Room.isMeeting(roomKind);
 
     return (
         <div className="flex justify-center">
@@ -25,7 +25,7 @@ export default function Component({ params }: Route.ComponentProps) {
                         </CardHeader>
 
                         <div className="flex justify-center my-6">
-                            <Link href={routes.confirm.href({ roomType })}>
+                            <Link href={routes.confirm.href({ roomKind })}>
                                 <Button
                                     className="font-sans text-sans-xs"
                                     style={{

@@ -1,10 +1,10 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
 import { site } from "~/lib/site";
-import { RoomType, routes } from "~/route-map";
+import { Room, routes } from "~/route-map";
 import type { Route } from "./+types/cancel";
 
 export default function Cancellation({ params }: Route.ComponentProps) {
-    if (params.roomType === RoomType.MeetingRoom) {
+    if (params.roomKind === Room.Meeting.kind) {
         return <MeetingRoomCancellation />;
     }
 
@@ -63,7 +63,7 @@ function MeetingRoomCancellation() {
                                 <div className="flex justify-center">
                                     <Link
                                         href={routes.confirm.href({
-                                            roomType: RoomType.MeetingRoom,
+                                            roomKind: Room.Meeting.kind,
                                         })}
                                     >
                                         <Button
@@ -146,7 +146,7 @@ function SharedLearningRoomCancellation() {
                                 <div className="flex justify-center">
                                     <Link
                                         href={routes.confirm.href({
-                                            roomType: RoomType.SharedLearningRoom,
+                                            roomKind: Room.SharedLearning.kind,
                                         })}
                                     >
                                         <Button
