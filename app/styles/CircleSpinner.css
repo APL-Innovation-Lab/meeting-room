@@ -1,0 +1,51 @@
+
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.spinner-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  margin-top: 8px;
+  transition: color 0.3s ease;
+}
+
+.spinner-overlay {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+}
+
+/* Circle Spinner */
+.spinner-circle {
+  display: inline-block;
+  position: relative;
+}
+
+.spinner-circle .circle-inner {
+  width: 100%;
+  height: 100%;
+  border: 7px solid transparent;
+  border-top-color: var(--spinner-color, #3b82f6);
+  border-radius: 70%;
+  animation: spinner-circle-rotate var(--spinner-speed, 0.8s) linear infinite;
+}
+
+@keyframes spinner-circle-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Accessibility */
+.spinner-container:focus-visible {
+  outline: 2px solid var(--spinner-color, #3b82f6);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
