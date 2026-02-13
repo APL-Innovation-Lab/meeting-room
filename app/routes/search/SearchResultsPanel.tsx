@@ -3,6 +3,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { Map as BranchMap } from "~/components/Map";
 import { SearchResult } from "./SearchResult";
 import { type BranchSearchResult } from "./search.data.server";
+import { Spinner } from "~/components/Spinner";
 
 export namespace SearchResultsPanel {
     export type DeferredSearchData = {
@@ -82,22 +83,7 @@ function DeferredBranchMap({
 function SearchResultsListFallback() {
     return (
         <div className="flex h-full items-start mt-4 justify-center">
-            <svg
-                className="h-8 w-8 animate-spin"
-                viewBox="0 0 24 24"
-                focusable="false"
-                aria-hidden="true"
-            >
-                <circle
-                    cx="12"
-                    cy="12"
-                    r="9"
-                    fill="none"
-                    stroke="#007ea8"
-                    strokeWidth="3"
-                    strokeDasharray="40 24"
-                />
-            </svg>
+            <Spinner className="h-8 w-8 " />
         </div>
     );
 }

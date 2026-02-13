@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { pluralize } from "~/lib/pluralize";
 
 export namespace SearchResult {
@@ -40,11 +41,10 @@ export function SearchResult(props: SearchResult.Props) {
                         </h4>
                     </a>
                     <h6
-                        className={
-                            shouldShowDistance
-                                ? "text-sans-3xs font-sans text-base-darker"
-                                : "hidden text-sans-3xs font-sans text-base-darker"
-                        }
+                        className={clsx(
+                            "text-sans-3xs font-sans text-base-darker",
+                            shouldShowDistance && "hidden",
+                        )}
                     >
                         {props.distance} mi
                     </h6>

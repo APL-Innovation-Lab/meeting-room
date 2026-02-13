@@ -9,6 +9,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Form, useLocation, useNavigation } from "react-router";
 import { type LocationOption, type SearchFilters } from "./search.data.server";
+import { Spinner } from "~/components/Spinner";
 
 const MIN_LOADING_STATE_MS = 500;
 
@@ -177,25 +178,7 @@ export function SearchFiltersForm({
                         <span className="h-[1em]">
                             {showLoadingState ? "Searching..." : "Search"}
                         </span>
-                        {showLoadingState ? (
-                            <svg
-                                className="h-[1em] w-[1em] animate-spin"
-                                viewBox="0 0 24 24"
-                                focusable="false"
-                                aria-hidden="true"
-                            >
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="9"
-                                    fill="none"
-                                    stroke="#007ea8"
-                                    strokeWidth="3"
-                                    strokeLinecap="round"
-                                    strokeDasharray="40 24"
-                                />
-                            </svg>
-                        ) : null}
+                        {showLoadingState ? <Spinner className="h-[1em] w-[1em]" /> : null}
                     </span>
                 </Button>
             </div>
