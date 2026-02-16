@@ -16,7 +16,7 @@ export default function CancellationPageSharedRoom() {
                         <div className="flex-col pt-3 px-3">
                             <div className="flex-col pb-[20px]">
                                 <h3 className="font-sans text-[22px] font-bold text-center">
-                                    Austin Central Library, Shared Learning #3
+                                    Central Library, Shared Learning - 408
                                 </h3>
                                 <p className="font-sans text-sans-xs text-center">
                                     710 W Cesar Chavez St, Austin, TX 78702
@@ -24,7 +24,7 @@ export default function CancellationPageSharedRoom() {
                             </div>
                             <p className="font-sans text-sans-xs text-center">Mon 3/4/24</p>
                             <p className="font-sans text-sans-xs text-center">
-                                9:00 AM to 9:15 AM
+                                11:00 AM to 12:00 AM
                             </p>
                             <p className="font-sans text-sans-xs text-center">Capacity: 4</p>
                             <div className="flex justify-center pt-7">
