@@ -1,10 +1,9 @@
 ---
 name: Task
 about: Work that needs to be done
-title: ''
+title: ""
 labels: Task
-assignees: ''
-
+assignees: ""
 ---
 
 ### Description

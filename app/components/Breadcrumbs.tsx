@@ -1,35 +1,40 @@
-import { Link } from "react-router";
 import { Breadcrumb, BreadcrumbBar, BreadcrumbLink } from "@trussworks/react-uswds";
-import React from "react";
+import { ComponentProps } from "react";
+import { Link as ReactRouterLink } from "react-router";
 
-interface BreadcrumbItem {
-    href: string;
-    text: string;
+function Link({ href, ...props }: Omit<ComponentProps<"a">, "href"> & { href: string }) {
+    return <ReactRouterLink {...props} to={href} />;
 }
 
-interface BreadcrumbsProps {
-    links: BreadcrumbItem[];
+export namespace Breadcrumbs {
+    export interface Item {
+        href: string;
+        text: string;
+    }
+
+    export interface Props {
+        links: Breadcrumbs.Item[];
+        className?: string;
+    }
 }
 
-function RemixLink({ href, ...props }: any) {
-    // eslint-disable-next-line
-    return <Link {...props} to={href} />;
-}
-
-const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ links }) => {
+export function Breadcrumbs({ links, className }: Breadcrumbs.Props) {
     return (
-        <>
-            <BreadcrumbBar className="ml-2">
-                {links.map(item => (
-                    <Breadcrumb className="relative left-0" key={item.href}>
-                        <BreadcrumbLink asCustom={RemixLink} href={item.href}>
-                            <span className="!no-underline">{item.text}</span>
-                        </BreadcrumbLink>
+        <BreadcrumbBar className={`ml-2 ${className}`}>
+            {links.map((item, idx) => {
+                const isCurrent = idx === links.length - 1;
+                return (
+                    <Breadcrumb className="relative left-0" key={item.href} current={isCurrent}>
+                        {isCurrent ? (
+                            item.text
+                        ) : (
+                            <BreadcrumbLink asCustom={Link} href={item.href}>
+                                {item.text}
+                            </BreadcrumbLink>
+                        )}
                     </Breadcrumb>
-                ))}
-            </BreadcrumbBar>
-        </>
+                );
+            })}
+        </BreadcrumbBar>
     );
-};
-
-export default Breadcrumbs;
+}

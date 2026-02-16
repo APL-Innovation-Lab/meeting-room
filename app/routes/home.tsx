@@ -1,28 +1,23 @@
 import { Card, CardGroup, CardHeader, Header, Label, Link, Select } from "@trussworks/react-uswds";
 import { useNavigate } from "react-router";
-import Breadcrumbs from "~/components/Breadcrumbs";
+import { Breadcrumbs } from "~/components/Breadcrumbs";
 import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
-import { mergeMeta } from "~/lib/merge-meta";
+import { site } from "~/lib/site";
+import { Room, routes } from "~/route-map";
 
-export const meta = mergeMeta(({ parentTitle }) => [{ title: `Meeting Spaces • ${parentTitle}` }]);
-
-export const breadcrumbLinks = [
-    { href: "https://library.austintexas.gov", text: "Home" },
-    { href: "/", text: "Meeting Spaces" },
-];
-
-export default function Index() {
+export default function Component() {
     const navigate = useNavigate();
 
     return (
         <div className="flex justify-center">
+            <title>{`Meeting Spaces • ${site.title}`}</title>
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
                     <Header>
                         <div className="object-contain">
                             <img
-                                alt="A room of people in attendance at a meeting"
                                 className="rounded-t-md"
+                                alt="A room of people in attendance at a meeting"
                                 loading="lazy"
                                 src="/meeting-spaces-header.jpg"
                             />
@@ -30,7 +25,7 @@ export default function Index() {
                     </Header>
                     <div className="ml-5 mr-5">
                         <div className="-mt-1 ml-1">
-                            <Breadcrumbs links={breadcrumbLinks} />
+                            <Breadcrumbs links={site.breadcrumbs.home} />
                         </div>
                         <CardHeader className="-mt-3">
                             <h1 className="font-sans text-[40px] usa-card__heading font-bold py-2">
@@ -47,13 +42,21 @@ export default function Index() {
                         <div className="flex-col px-3">
                             <Label htmlFor="reservation-select">Reserve Online</Label>
                             <Select
-                                defaultValue="empty"
                                 id="reservation-select"
                                 name="reservation-select"
-                                onInput={event => {
+                                defaultValue="empty"
+                                onChange={event => {
                                     const value = event.currentTarget.selectedOptions[0].value;
-                                    const param = new URLSearchParams({ "org-type": value });
-                                    navigate(`/find-a-room?${param}`);
+                                    if (value === "empty") {
+                                        return;
+                                    }
+
+                                    const roomKind =
+                                        value === "business"
+                                            ? Room.Meeting.kind
+                                            : Room.SharedLearning.kind;
+
+                                    navigate(routes.search.href({ roomKind }));
                                 }}
                             >
                                 <option disabled value="empty">

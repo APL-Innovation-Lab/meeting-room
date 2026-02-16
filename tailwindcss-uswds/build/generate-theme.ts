@@ -3,7 +3,7 @@ import getSassVars from "get-sass-vars";
 import fs from "node:fs";
 import path from "node:path";
 import { Bundler } from "scss-bundle";
-import { COMPILE_WARNINGS_DISABLED, COMPILE_WARNINGS_ENABLED } from "./constants";
+import { COMPILE_WARNINGS_DISABLED, COMPILE_WARNINGS_ENABLED } from "./constants.ts";
 
 const NO_CAMEL_CASE = ["accent-cool", "accent-warm"];
 const REMOVED_PREFIXES = ["ls-", "neg"];
@@ -247,7 +247,7 @@ async function generateTheme(options: GetTokensOptions) {
 }
 
 let { theme, fonts } = await generateTheme({
-    uswdsScss: path.resolve("./node_modules/uswds/src/stylesheets/uswds.scss"),
+    uswdsScss: path.resolve("./node_modules/@uswds/uswds/src/stylesheets/uswds.scss"),
 });
 
 const DIR_PATH = path.resolve(`./tailwindcss-uswds/tokens/`);

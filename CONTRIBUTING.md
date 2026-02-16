@@ -6,8 +6,8 @@ These are instructions for getting started on a Mac/unix machine. Windows instru
 
 Install these dependencies if you don't already have them:
 
--   [git](https://formulae.brew.sh/formula/git)
--   [nvm](https://formulae.brew.sh/formula/nvm)
+- [git](https://formulae.brew.sh/formula/git)
+- [nvm](https://formulae.brew.sh/formula/nvm)
 
 ## Download
 
@@ -46,7 +46,7 @@ npm install
 And run the dev server:
 
 ```sh
-npm run dev
+node --run dev
 ```
 
 ## Visual Studio Code
@@ -57,10 +57,9 @@ It's recommended to use [Visual Studio Code](https://formulae.brew.sh/cask/visua
 
 It's also recommended that you install these extensions for VS Code:
 
--    [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) for inline linting errors and auto-fix-on-save support
--    [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for format-on-save support
--    [npm Intellisense](https://marketplace.visualstudio.com/items?itemName=christian-kohler.npm-intellisense) for autocomplete in `package.json` and quick npm script actions in the sidebar
--    [Tailwind CSS Intellisense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss) for:
+- [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for format-on-save support
+- [npm Intellisense](https://marketplace.visualstudio.com/items?itemName=christian-kohler.npm-intellisense) for autocomplete in `package.json` and quick npm script actions in the sidebar
+- [Tailwind CSS Intellisense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss) for:
 
 **Inline color swatches**
 
@@ -74,6 +73,6 @@ It's also recommended that you install these extensions for VS Code:
 
 <img width="793" alt="Screenshot 2024-06-24 at 1 51 18 PM" src="https://github.com/APL-Innovation-Lab/meeting-room-prototype/assets/39869007/79dda557-6b52-489d-afb7-f5acf8123805">
 
--    [TODO Highlight](https://marketplace.visualstudio.com/items?itemName=wayou.vscode-todo-highlight) for highlighting `TODO`, `FIXME`, and `MARK` comments in code
--    [Vitest](https://marketplace.visualstudio.com/items?itemName=vitest.explorer) for integrating unit tests into VS Code
--    [GitHub Actions](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-github-actions) for managing CI/CD workflows in VS Code
+- [TODO Highlight](https://marketplace.visualstudio.com/items?itemName=wayou.vscode-todo-highlight) for highlighting `TODO`, `FIXME`, and `MARK` comments in code
+- [Vitest](https://marketplace.visualstudio.com/items?itemName=vitest.explorer) for integrating unit tests into VS Code
+- [GitHub Actions](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-github-actions) for managing CI/CD workflows in VS Code
