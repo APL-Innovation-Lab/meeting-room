@@ -6,6 +6,7 @@ export const routes = {
     review: route("/:roomKind/review", "./routes/review.tsx"),
     confirm: route("/:roomKind/confirm", "./routes/confirm.tsx"),
     cancel: route("/:roomKind/cancel", "./routes/cancel.tsx"),
+    cancelConfirmation: route("/:roomKind/cancel-confirmation", "./routes/cancel-confirmation.tsx"),
 };
 
 export namespace Room {
