@@ -5,8 +5,10 @@ export const routes = {
     search: route("/:roomKind", "./routes/search/search.tsx"),
     review: route("/:roomKind/review", "./routes/review.tsx"),
     confirm: route("/:roomKind/confirm", "./routes/confirm.tsx"),
-    cancel: route("/:roomKind/cancel", "./routes/cancel.tsx"),
-    cancelConfirmation: route("/:roomKind/cancel-confirmation", "./routes/cancel-confirmation.tsx"),
+    cancel: {
+        index: route("/:roomKind/cancel", "./routes/cancel/cancel.tsx"),
+        confirmation: route("/:roomKind/cancel/confirm", "./routes/cancel/confirm.tsx"),
+    },
 };
 
 export namespace Room {

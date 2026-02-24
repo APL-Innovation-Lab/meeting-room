@@ -1,24 +1,27 @@
 import { Button, Card, CardGroup, Link } from "@trussworks/react-uswds";
 import { Room, routes } from "~/route-map";
 
-import type { Route } from "./+types/cancel";
+import type { Route } from "./+types/confirm";
 
-export default function Cancellation({ params }: Route.ComponentProps) {
+export default function CancellationConfirmation({ params }: Route.ComponentProps) {
     if (params.roomKind === Room.Meeting.kind) {
-        return <MeetingRoomCancellation />;
+        return <MeetingRoomCancellationConfirmation />;
     }
 
-    return <SharedLearningRoomCancellation />;
+    return <SharedLearningRoomCancellationConfirmation />;
 }
 
-function MeetingRoomCancellation() {
+function MeetingRoomCancellationConfirmation() {
     return (
         <div className="flex justify-center">
             <CardGroup className="min-w-[50rem] max-w-[49rem]">
                 <Card>
                     <div className="justify-center ml-5 mr-5">
-                        <h3 className="font-sans text-sans-xs text-center pt-4">
-                            Are you sure you want to cancel for the room below?
+                        <h1 className="font-sans text-[40px] font-bold text-center m-0 pt-4">
+                            Canceled
+                        </h1>
+                        <h3 className="font-sans text-sans-xs text-center pt-3">
+                            The following has been canceled.
                         </h3>
                         <div className="flex-col pt-3 px-3">
                             <div className="flex-col pb-[20px]">
@@ -30,27 +33,15 @@ function MeetingRoomCancellation() {
                                 </p>
                             </div>
                             <p className="font-sans text-sans-xs text-center">Mon 3/4/24</p>
-                            <p className="font-sans text-sans-xs text-center">
-                                9:00 AM to 9:15 AM
-                            </p>
+                            <p className="font-sans text-sans-xs text-center">9:00 AM to 9:15 AM</p>
                             <p className="font-sans text-sans-xs text-center">Capacity: 100</p>
-                            <div className="flex justify-center pt-7">
-                                <Link href={routes.cancelConfirmation.href({ roomKind: Room.Meeting.kind })}>
-                                    <Button
-                                        className="w-[206px] font-sans text-sans-xs bg-[#016E98] text-white pointer-events-none mr-0"
-                                        type="button"
-                                    >
-                                        Yes, Cancel Request
-                                    </Button>
-                                </Link>
-                            </div>
-                            <div className="flex justify-center pt-[18px] pb-[208px]">
+                            <div className="flex justify-center pt-7 pb-[194px]">
                                 <Link href={routes.home.href()}>
                                     <Button
-                                        className="usa-button--outline w-[232px] font-sans text-sans-xs bg-transparent text-[#026E98] border-[#026E98] pointer-events-none mr-0"
+                                        className="w-[228px] font-sans text-sans-xs bg-[#016E98] text-white pointer-events-none mr-0"
                                         type="button"
                                     >
-                                        No, Back to Meeting Spaces
+                                        Back to Meeting Spaces
                                     </Button>
                                 </Link>
                             </div>
@@ -62,14 +53,17 @@ function MeetingRoomCancellation() {
     );
 }
 
-function SharedLearningRoomCancellation() {
+function SharedLearningRoomCancellationConfirmation() {
     return (
         <div className="flex justify-center">
             <CardGroup className="min-w-[50rem] max-w-[49rem]">
                 <Card>
                     <div className="justify-center ml-5 mr-5">
-                        <h3 className="font-sans text-sans-xs text-center pt-4">
-                            Are you sure you want to cancel your booking for the room below?
+                        <h1 className="font-sans text-[40px] font-bold text-center m-0 pt-4">
+                            Canceled
+                        </h1>
+                        <h3 className="font-sans text-sans-xs text-center pt-3">
+                            The following has been canceled.
                         </h3>
                         <div className="flex-col pt-3 px-3">
                             <div className="flex-col pb-[20px]">
@@ -82,26 +76,16 @@ function SharedLearningRoomCancellation() {
                             </div>
                             <p className="font-sans text-sans-xs text-center">Mon 3/4/24</p>
                             <p className="font-sans text-sans-xs text-center">
-                                11:00 AM to 12:00 AM
+                                11:00 AM to 12:00 PM
                             </p>
                             <p className="font-sans text-sans-xs text-center">Capacity: 4</p>
-                            <div className="flex justify-center pt-7">
-                                <Link href={routes.cancelConfirmation.href({ roomKind: Room.SharedLearning.kind })}>
-                                    <Button
-                                        className="w-[206px] font-sans text-sans-xs bg-[#016E98] text-white pointer-events-none"
-                                        type="button"
-                                    >
-                                        Yes, Cancel Reservation
-                                    </Button>
-                                </Link>
-                            </div>
-                            <div className="flex justify-center pt-[18px] pb-[208px]">
+                            <div className="flex justify-center pt-7 pb-[194px]">
                                 <Link href={routes.home.href()}>
                                     <Button
-                                        className="usa-button--outline w-[232px] font-sans text-sans-xs bg-transparent text-[#026E98] border-[#026E98] pointer-events-none"
+                                        className="w-[228px] font-sans text-sans-xs bg-[#016E98] text-white pointer-events-none mr-0"
                                         type="button"
                                     >
-                                        No, Back to Meeting Spaces
+                                        Back to Meeting Spaces
                                     </Button>
                                 </Link>
                             </div>
