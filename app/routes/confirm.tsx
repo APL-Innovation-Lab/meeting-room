@@ -132,7 +132,7 @@ function SharedLearningRoomConfirmation() {
 
                                 <div className="flex justify-center">
                                     <Link
-                                        href={routes.cancel.href({
+                                        href={routes.cancel.index.href({
                                             roomKind: Room.SharedLearning.kind,
                                         })}
                                     >
@@ -242,7 +242,7 @@ function MeetingRoomConfirmation() {
 
                                 <div className="flex justify-center">
                                     <Link
-                                        href={routes.cancel.href({
+                                        href={routes.cancel.index.href({
                                             roomKind: Room.Meeting.kind,
                                         })}
                                     >
