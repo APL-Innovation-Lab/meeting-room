@@ -33,7 +33,6 @@
         "zod": "^4.3.6"
     },
     "devDependencies": {
-        "@julr/vite-plugin-validate-env": "^2.2.2",
         "@react-router/dev": "^8.0.1",
         "@types/postcss-js": "^4.1.0",
         "@types/react": "^19.2.10",
@@ -57,14 +56,14 @@
         "vite-plugin-devtools-json": "^1.0.0"
     },
     "overrides": {
-        "typescript": "$typescript",
-        "vite-plugin-devtools-json": {
-            "vite": "$vite"
-        },
         "scss-bundle": {
             "globs": {
                 "glob": "^13.0.0"
             }
+        },
+        "typescript": "$typescript",
+        "vite-plugin-devtools-json": {
+            "vite": "$vite"
         }
     },
     "engines": {

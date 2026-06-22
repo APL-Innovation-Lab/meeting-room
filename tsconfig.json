@@ -11,7 +11,7 @@
     ],
     "compilerOptions": {
         "lib": ["DOM", "DOM.Iterable", "ES2022", "ESNext"],
-        "types": ["node", "./env.d.ts"],
+        "types": ["node", "vite/client"],
         "isolatedModules": true,
         "esModuleInterop": true,
         "jsx": "react-jsx",

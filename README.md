@@ -17,7 +17,6 @@ This is the source code for the Austin Public Library meeting room booking page 
 - [npm](https://docs.npmjs.com/cli/v11)
 - [Oxfmt](https://oxc.rs/docs/guide/usage/formatter) for formatting
 - [Oxlint](https://oxc.rs/docs/guide/usage/linter) for linting
-- [Build-time environment variable validation](https://github.com/Julien-R44/vite-plugin-validate-env)
 - [@deno/kv](https://github.com/denoland/denokv/tree/main/npm)
 - [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides)
 - [Visual Studio Code](https://code.visualstudio.com) (or one of its derivatives)
@@ -42,8 +41,6 @@ This is the source code for the Austin Public Library meeting room booking page 
 │   └── styles
 │       └── tailwind.css
 ├── .env
-├── env.ts
-├── env.d.ts
 ├── package.json
 ├── postcss.config.js
 ├── react-router.config.ts
