@@ -60,6 +60,11 @@
         "typescript": "$typescript",
         "vite-plugin-devtools-json": {
             "vite": "$vite"
+        },
+        "scss-bundle": {
+            "globs": {
+                "glob": "^13.0.0"
+            }
         }
     },
     "engines": {
