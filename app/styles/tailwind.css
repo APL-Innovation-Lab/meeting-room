@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "../../tailwindcss-uswds/tokens/components.css" layer(components);
+@config "../../tailwind.config.ts";
 
 .usa-checkbox__label {
     margin-top: unset;

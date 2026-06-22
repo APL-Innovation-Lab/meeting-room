@@ -34,33 +34,25 @@
     },
     "devDependencies": {
         "@react-router/dev": "^8.0.1",
-        "@types/postcss-js": "^4.1.0",
+        "@tailwindcss/vite": "^4.3.1",
+        "@types/node": "^24.13.2",
         "@types/react": "^19.2.10",
         "@types/react-dom": "^19.2.3",
         "@types/validator": "^13.15.10",
         "@uswds/uswds": "3.13.0",
-        "autoprefixer": "^10.4.24",
         "eslint-plugin-perfectionist": "^5.9.1",
-        "get-sass-vars": "^4.0.3",
         "oxfmt": "^0.55.0",
         "oxlint": "^1.70.0",
         "oxlint-tsgolint": "^0.23.0",
         "postcss": "^8.5.6",
-        "postcss-js": "^5.1.0",
         "sass": "^1.97.3",
-        "scss-bundle": "^3.1.2",
         "skills": "^1.5.12",
-        "tailwindcss": "^3.4.19",
+        "tailwindcss": "^4.3.1",
         "typescript": "7.0.1-rc",
         "vite": "^8.0.16",
         "vite-plugin-devtools-json": "^1.0.0"
     },
     "overrides": {
-        "scss-bundle": {
-            "globs": {
-                "glob": "^13.0.0"
-            }
-        },
         "typescript": "$typescript",
         "vite-plugin-devtools-json": {
             "vite": "$vite"

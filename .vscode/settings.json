@@ -4,6 +4,12 @@
 
     "oxc.enable": true,
 
+    // Tailwind is now configured CSS-first (Tailwind v4): app/styles/tailwind.css is
+    // the entry (`@import "tailwindcss"` + `@config`). Point IntelliSense at it so it
+    // loads the v4 design system — standard utilities, the USWDS theme tokens, and the
+    // usa-* component classes — instead of auto-detecting the legacy tailwind.config.ts.
+    "tailwindCSS.experimental.configFile": "app/styles/tailwind.css",
+
     "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
