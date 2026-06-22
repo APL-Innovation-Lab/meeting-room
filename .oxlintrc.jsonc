@@ -1,0 +1,39 @@
+{
+    "$schema": "node_modules/oxlint/configuration_schema.json",
+    "ignorePatterns": [".agents"],
+    "options": {
+        "typeAware": true,
+        "typeCheck": true,
+    },
+    "jsPlugins": ["eslint-plugin-perfectionist"],
+    "rules": {
+        "typescript/no-floating-promises": "allow",
+        "typescript/unbound-method": "allow",
+        "perfectionist/sort-jsx-props": [
+            "warn",
+            {
+                "type": "unsorted",
+                "groups": ["className", "identifier", "unknown", "aria"],
+                "customGroups": [
+                    { "groupName": "className", "elementNamePattern": "^className$" },
+                    { "groupName": "identifier", "elementNamePattern": "^(id|name|htmlFor)$" },
+                    { "groupName": "aria", "elementNamePattern": "^aria-" },
+                ],
+            },
+        ],
+        "import/extensions": [
+            "error",
+            "ignorePackages",
+            {
+                "cjs": "always",
+                "cts": "always",
+                "js": "always",
+                "jsx": "always",
+                "mjs": "always",
+                "mts": "always",
+                "ts": "always",
+                "tsx": "always",
+            },
+        ],
+    },
+}
