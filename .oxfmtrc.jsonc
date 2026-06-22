@@ -18,7 +18,7 @@
         "partitionByComment": true,
     },
     "sortTailwindcss": {
-        "config": "tailwind.config.ts",
+        "stylesheet": "app/styles/tailwind.css",
         "functions": ["clsx"],
     },
 }
