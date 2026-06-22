@@ -1,5 +1,6 @@
 {
     "js/ts.preferences.importModuleSpecifierEnding": "js",
+    "js/ts.updateImportsOnFileMove.enabled": "always",
 
     "oxc.enable": true,
 
@@ -22,12 +23,21 @@
     "[jsonc]": {
         "editor.defaultFormatter": "oxc.oxc-vscode"
     },
+    "[yaml]": {
+        "editor.defaultFormatter": "oxc.oxc-vscode"
+    },
+    "[github-actions-workflow]": {
+        "editor.defaultFormatter": "oxc.oxc-vscode"
+    },
     "[markdown]": {
         "editor.defaultFormatter": "oxc.oxc-vscode"
     },
-    "typescript.updateImportsOnFileMove.enabled": "always",
 
-    "unocss.disable": true,
+    "files.exclude": {
+        "**/.DS_Store": true,
+        ".react-router": true,
+        "build": true
+    },
 
     // "vitest.enable": true,
 
@@ -46,8 +56,5 @@
         "backgroundColor": "#434B54",
         "color": "#fff",
         "borderRadius": "2px"
-    },
-    "[dotenv]": {
-        "editor.defaultFormatter": "foxundermoon.shell-format"
     }
 }
