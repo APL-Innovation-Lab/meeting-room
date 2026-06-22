@@ -1,4 +1,4 @@
-import { delay } from "@std/async";
+import { setTimeout as delay } from "node:timers/promises";
 
 /**
  * Generates a random delay up to a given maximum threshold.
