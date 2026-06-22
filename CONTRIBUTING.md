@@ -7,7 +7,10 @@ These are instructions for getting started on a Mac/unix machine. Windows instru
 Install these dependencies if you don't already have them:
 
 - [git](https://formulae.brew.sh/formula/git)
-- [nvm](https://formulae.brew.sh/formula/nvm)
+- A toolchain manager
+    - [Mise](https://formulae.brew.sh/formula/mise)
+    - [Vite+](https://formulae.brew.sh/formula/vite-plus)
+    - [fnm](https://formulae.brew.sh/formula/fnm)
 
 ## Download
 
@@ -29,12 +32,11 @@ You'll need a Mapbox API token to run this project (`VITE_APP_MAPBOX_TOKEN` in y
 
 ## Configuration
 
-`install` (if necessary) and `use` with nvm:
+`install` with your toolchain manager (Mise shown here):
 
 ```sh
 cd meeting-room-prototype
-nvm install # if necessary
-nvm use
+mise install
 ```
 
 Install NPM dependencies:

@@ -6,8 +6,7 @@ This is the source code for the Austin Public Library meeting room booking page 
 
 - [TypeScript](https://www.typescriptlang.org/docs/handbook/intro.html)
 - [React](https://react.dev)
-- [React Router v7](https://reactrouter.com/home)
-    - [File system routing](https://reactrouter.com/how-to/file-route-conventions)
+- [React Router v8](https://reactrouter.com)
     - [Zod](https://zod.dev) [form validation](https://reactrouter.com/how-to/form-validation)
     - [Route Module Type Safety](https://reactrouter.com/explanation/type-safety)
     - [Progressive enhancement](https://reactrouter.com/explanation/progressive-enhancement)
@@ -15,7 +14,6 @@ This is the source code for the Austin Public Library meeting room booking page 
 - [Tailwind CSS v3](https://v3.tailwindcss.com)
 - [USWDS](https://designsystem.digital.gov)
     - [trussworks/react-uswds](https://trussworks.github.io/react-uswds/?path=/docs/welcome--docs)
-- [Node Version Manager](https://github.com/nvm-sh/nvm)
 - [npm](https://docs.npmjs.com/cli/v11)
 - [Oxfmt](https://oxc.rs/docs/guide/usage/formatter) for formatting
 - [Oxlint](https://oxc.rs/docs/guide/usage/linter) for linting
