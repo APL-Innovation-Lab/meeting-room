@@ -27,12 +27,12 @@ export function SearchResult(props: SearchResult.Props) {
     const shouldShowDistance = false;
 
     return (
-        <li className="flex gap-[1rem] w-full [&:not(:first-child)]:pt-2">
-            <img className="object-cover w-[100px] h-[100px]" src={props.image} />
-            <div className="flex flex-col gap-[0.5rem] w-full">
-                <div className="flex justify-between items-center w-full">
+        <li className="flex w-full gap-[1rem] [&:not(:first-child)]:pt-2">
+            <img className="h-[100px] w-[100px] object-cover" src={props.image} />
+            <div className="flex w-full flex-col gap-[0.5rem]">
+                <div className="flex w-full items-center justify-between">
                     <a
-                        className="usa-link no-underline font-bold"
+                        className="usa-link font-bold no-underline"
                         href={props.url}
                         rel="noopener noreferrer"
                         target="_blank"
@@ -43,7 +43,7 @@ export function SearchResult(props: SearchResult.Props) {
                     </a>
                     <h6
                         className={clsx(
-                            "text-sans-3xs font-sans text-base-darker",
+                            "text-base-darker font-sans text-sans-3xs",
                             shouldShowDistance && "hidden",
                         )}
                     >

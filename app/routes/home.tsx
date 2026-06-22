@@ -29,10 +29,10 @@ export default function Component() {
                             <Breadcrumbs links={site.breadcrumbs.home} />
                         </div>
                         <CardHeader className="-mt-3">
-                            <h1 className="font-sans text-[40px] usa-card__heading font-bold py-2">
+                            <h1 className="usa-card__heading py-2 font-sans text-[40px] font-bold">
                                 Meeting Spaces
                             </h1>
-                            <p className="font-sans text-base-darker text-sans-xs">
+                            <p className="text-base-darker font-sans text-sans-xs">
                                 Austin Public Library Meeting Spaces are
                                 <strong className="font-bold"> free of charge</strong> and ideal for
                                 discussion groups, panels, and lectures. Both paper and online
@@ -70,7 +70,7 @@ export default function Component() {
                             </Select>
                             <div className="my-4">
                                 <strong>Reserve In-Person Instead</strong>
-                                <ul className="list-disc ml-4">
+                                <ul className="ml-4 list-disc">
                                     <li>
                                         <Link href="#">Printable Form (PDF)</Link>
                                     </li>

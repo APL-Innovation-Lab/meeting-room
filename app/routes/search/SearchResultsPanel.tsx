@@ -24,7 +24,7 @@ export namespace SearchResultsPanel {
 
 function SearchResultsList({ searchResults }: { searchResults: BranchSearchResult[] }) {
     return (
-        <ul className="flex flex-col gap-[1rem] divide-y-[1px] divide-base-light overflow-scroll">
+        <ul className="overflow-scroll flex flex-col gap-[1rem] divide-y-[1px] divide-base-light">
             {searchResults.filter(Boolean).map((result, idx) => (
                 <SearchResult
                     key={result.branch}
@@ -84,15 +84,15 @@ function DeferredBranchMap({
 
 function SearchResultsListFallback() {
     return (
-        <div className="flex h-full items-start mt-4 justify-center">
-            <Spinner className="h-8 w-8 " />
+        <div className="mt-4 flex h-full items-start justify-center">
+            <Spinner className="h-8 w-8" />
         </div>
     );
 }
 
 function SearchResultsListError() {
     return (
-        <div className="flex h-full items-center justify-center text-center text-secondary-dark">
+        <div className="text-secondary-dark text-center flex h-full items-center justify-center">
             Could not load room availability right now.
         </div>
     );
@@ -105,9 +105,9 @@ export function SearchResultsPanel({ mapboxToken, ...props }: SearchResultsPanel
     const heading = props.heading ?? "All Available Locations";
 
     return (
-        <div className="flex flex-col gap-[0.5rem] overflow-hidden px-4 pb-4">
-            <h4 className="font-bold pt-2">{heading}</h4>
-            <div className="grid grid-cols-2 gap-[1rem] h-[45rem] pt-2">
+        <div className="overflow-hidden flex flex-col gap-[0.5rem] px-4 pb-4">
+            <h4 className="pt-2 font-bold">{heading}</h4>
+            <div className="grid h-[45rem] grid-cols-2 gap-[1rem] pt-2">
                 {deferredSearchData ? (
                     <>
                         <Suspense fallback={<SearchResultsListFallback />}>

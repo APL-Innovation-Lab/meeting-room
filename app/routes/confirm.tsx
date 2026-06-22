@@ -38,9 +38,9 @@ function SharedLearningRoomConfirmation() {
             <title>{`Confirmation • ${site.title}`}</title>
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
-                    <div className="justify-center ml-5 mr-5">
+                    <div className="ml-5 mr-5 justify-center">
                         <CardHeader className="-mt-3">
-                            <h1 className="font-sans text-[40px] usa-card__heading font-bold py-2 text-center">
+                            <h1 className="usa-card__heading text-center py-2 font-sans text-[40px] font-bold">
                                 Submitted!
                             </h1>
 
@@ -53,7 +53,7 @@ function SharedLearningRoomConfirmation() {
                                     textDecoration: "none",
                                 }}
                             >
-                                <h1 className="font-sans text-base-darker text-sans-xs text-center">
+                                <h1 className="text-base-darker text-center font-sans text-sans-xs">
                                     <strong
                                         className="text-bold text-center"
                                         style={{ color: "#000000FF" }}
@@ -62,7 +62,7 @@ function SharedLearningRoomConfirmation() {
                                         Please Note
                                     </strong>
                                 </h1>
-                                <ul className="list-disc list-inside ml-4">
+                                <ul className="ml-4 list-inside list-disc">
                                     <li>
                                         Beverages with lids are allowed. Please no food in the rooms
                                     </li>
@@ -74,25 +74,25 @@ function SharedLearningRoomConfirmation() {
                             </div>
                         </CardHeader>
                         <br />
-                        <p className="font-sans text-sans-xs text-center">
+                        <p className="text-center font-sans text-sans-xs">
                             The following room has been reserved. A confirmation email has been
                             sent.
                         </p>
 
                         <div className="flex-col px-3">
                             <div className="my-5">
-                                <p className="font-sans text-sans-xs text-center">
+                                <p className="text-center font-sans text-sans-xs">
                                     <strong>Austin Central Library, #3</strong>
                                 </p>
-                                <p className="font-sans text-sans-xs text-center">
+                                <p className="text-center font-sans text-sans-xs">
                                     710 W Cesar Chavez St, Austin, TX 78702
                                 </p>
                                 <br />
-                                <p className="font-sans text-sans-xs text-center">Mon 3/4/24</p>
-                                <p className="font-sans text-sans-xs text-center">
+                                <p className="text-center font-sans text-sans-xs">Mon 3/4/24</p>
+                                <p className="text-center font-sans text-sans-xs">
                                     11:00 AM to 11:15 AM
                                 </p>
-                                <p className="font-sans text-sans-xs text-center">Capacity: 100</p>
+                                <p className="text-center font-sans text-sans-xs">Capacity: 100</p>
                                 <br />
 
                                 <div className="flex justify-center">
@@ -114,7 +114,7 @@ function SharedLearningRoomConfirmation() {
                                     </Link>
                                 </div>
                                 <br />
-                                <div className="flex justify-center mb-3">
+                                <div className="mb-3 flex justify-center">
                                     <strong>Add to Calendar:</strong>
                                 </div>
                                 <div className="flex justify-center space-x-1">
@@ -156,12 +156,12 @@ function MeetingRoomConfirmation() {
         <div className="flex justify-center">
             <CardGroup className="min-w-[30rem] max-w-[49rem]">
                 <Card>
-                    <div className="justify-center ml-5 mr-5">
+                    <div className="ml-5 mr-5 justify-center">
                         <CardHeader className="-mt-3">
-                            <h1 className="font-sans text-[40px] usa-card__heading font-bold py-2 text-center">
+                            <h1 className="usa-card__heading text-center py-2 font-sans text-[40px] font-bold">
                                 Submitted!
                             </h1>
-                            <p className="font-sans text-base-darker text-sans-xs text-center">
+                            <p className="text-base-darker text-center font-sans text-sans-xs">
                                 <strong className="font-bold">
                                     {" "}
                                     Status: Awaiting Confirmation
@@ -179,7 +179,7 @@ function MeetingRoomConfirmation() {
                                     color: "#343434",
                                 }}
                             >
-                                <h1 className="font-sans text-base-darker text-sans-xs text-center">
+                                <h1 className="text-base-darker text-center font-sans text-sans-xs">
                                     <strong
                                         className="text-bold text-center"
                                         style={{ color: "#000000FF" }}
@@ -189,7 +189,7 @@ function MeetingRoomConfirmation() {
                                     </strong>
                                 </h1>
                                 <h6
-                                    className="font-sans text-base-darker text-sans-xs text-center"
+                                    className="text-base-darker text-center font-sans text-sans-xs"
                                     style={{ color: "#343434" }}
                                 >
                                     If you are booking less than three days in advance of your
@@ -199,7 +199,7 @@ function MeetingRoomConfirmation() {
                             </div>
                             <br />
                             <div>
-                                <p className="font-sans text-sans-xs text-center">
+                                <p className="text-center font-sans text-sans-xs">
                                     Thank you for requesting a Meeting Room. We will process your
                                     request within two business days. Please check your email for
                                     updates on the status of your request.
@@ -207,26 +207,26 @@ function MeetingRoomConfirmation() {
                             </div>
                         </CardHeader>
 
-                        <div className="flex-col px-3 ">
+                        <div className="flex-col px-3">
                             <div className="my-4">
-                                <p className="font-sans text-sans-xs text-center">
+                                <p className="text-center font-sans text-sans-xs">
                                     <strong>Carver Branch #1</strong>
                                 </p>
-                                <p className="font-sans text-sans-xs text-center">
+                                <p className="text-center font-sans text-sans-xs">
                                     1161 Angelina St, Austin, TX
                                 </p>
                                 <br />
-                                <p className="font-sans text-sans-xs text-center">Mon 3/4/24</p>
-                                <p className="font-sans  text-sans-xs text-center">
+                                <p className="text-center font-sans text-sans-xs">Mon 3/4/24</p>
+                                <p className="text-center font-sans text-sans-xs">
                                     09:00 AM to 09:15 AM
                                 </p>
-                                <p className="font-sans text-sans-xs text-center">Capacity: 100</p>
+                                <p className="text-center font-sans text-sans-xs">Capacity: 100</p>
                                 <br />
 
                                 <div className="flex justify-center">
                                     <Link href={href("/")}>
                                         <Button
-                                            className="font-sans text-sans-xs "
+                                            className="font-sans text-sans-xs"
                                             style={{
                                                 background: "#1E6F98",
                                                 paddingTop: 15,

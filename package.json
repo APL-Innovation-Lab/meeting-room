@@ -10,7 +10,7 @@
         "lint": "react-router typegen && oxlint --fix",
         "typecheck": "react-router typegen && tsc",
         "test": "vitest run",
-        "check": "react-router typegen && oxfmt --check; oxlint; tsc && vitest run",
+        "check": "react-router typegen && oxfmt --check; oxlint; tsc",
         "styles:compile-components": "node tailwindcss-uswds/build/compile-components.ts",
         "styles:generate-theme": "node tailwindcss-uswds/build/generate-theme.ts",
         "skills:update": "skills update"

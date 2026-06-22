@@ -208,7 +208,7 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                             <h1 className="usa-card__heading font-sans text-sans-2xl font-bold">
                                 {room.displayName}
                             </h1>
-                            <p className="font-sans text-sans-xs text-base-darker">
+                            <p className="text-base-darker font-sans text-sans-xs">
                                 <SearchDescription roomKind={roomKind} />
                             </p>
                         </CardHeader>
