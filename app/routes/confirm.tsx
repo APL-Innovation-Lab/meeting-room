@@ -1,7 +1,8 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
 import CalendarButton from "~/components/CalendarButton";
 import { site } from "~/lib/site";
-import { Room, routes } from "~/route-map";
+import { href } from "react-router";
+import { Room } from "~/lib/room";
 import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
 import type { Route } from "./+types/confirm";
 
@@ -93,7 +94,7 @@ function SharedLearningRoomConfirmation() {
                                 <br />
 
                                 <div className="flex justify-center">
-                                    <Link href={routes.home.href()}>
+                                    <Link href={href("/")}>
                                         <Button
                                             className="font-sans text-sans-xs"
                                             style={{
@@ -132,7 +133,7 @@ function SharedLearningRoomConfirmation() {
 
                                 <div className="flex justify-center">
                                     <Link
-                                        href={routes.cancel.index.href({
+                                        href={href("/:roomKind/cancel", {
                                             roomKind: Room.SharedLearning.kind,
                                         })}
                                     >
@@ -221,7 +222,7 @@ function MeetingRoomConfirmation() {
                                 <br />
 
                                 <div className="flex justify-center">
-                                    <Link href={routes.home.href()}>
+                                    <Link href={href("/")}>
                                         <Button
                                             className="font-sans text-sans-xs "
                                             style={{
@@ -242,7 +243,7 @@ function MeetingRoomConfirmation() {
 
                                 <div className="flex justify-center">
                                     <Link
-                                        href={routes.cancel.index.href({
+                                        href={href("/:roomKind/cancel", {
                                             roomKind: Room.Meeting.kind,
                                         })}
                                     >

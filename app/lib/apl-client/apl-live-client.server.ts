@@ -2,7 +2,7 @@ import { openKv } from "@deno/kv";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import validator from "validator";
 import { z } from "zod";
-import { Room } from "~/route-map";
+import { Room } from "~/lib/room";
 
 /**
  * Represents a safe result of an operation that can either be successful with data or fail with an error.

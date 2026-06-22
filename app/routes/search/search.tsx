@@ -3,7 +3,7 @@ import { Breadcrumbs } from "~/components/Breadcrumbs";
 import { type LiveBranchCoordinate } from "~/lib/apl-client/apl-live-client.server";
 import { apl } from "~/lib/apl-client/apl-live-client.server";
 import { site } from "~/lib/site";
-import { Room } from "~/route-map";
+import { Room } from "~/lib/room";
 import { Route } from "./+types/search";
 import { SearchDescription } from "./SearchDescription";
 import { SearchFiltersForm } from "./SearchFiltersForm";
@@ -113,10 +113,9 @@ async function resolveDeferredSearchData({
     };
 }
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function loader({ params, url }: Route.LoaderArgs) {
     const roomKind = params.roomKind as Room.Kind;
-    const requestUrl = new URL(request.url);
-    const rawSearchParams = requestUrl.searchParams;
+    const rawSearchParams = url.searchParams;
 
     const [
         meetingOrSharedResult,

@@ -16,27 +16,26 @@
     },
     "dependencies": {
         "@deno/kv": "^0.13.0",
-        "@react-router/fs-routes": "^7.13.0",
-        "@react-router/node": "^7.13.0",
-        "@react-router/serve": "^7.13.0",
+        "@react-router/fs-routes": "^8.0.1",
+        "@react-router/node": "^8.0.1",
+        "@react-router/serve": "^8.0.1",
         "@std/async": "npm:@jsr/std__async@^1.1.1",
         "@trussworks/react-uswds": "^11.0.0",
-        "@withsprinkles/react-router-route-map": "^0.2.3",
         "clsx": "^2.1.1",
         "isbot": "^4.4.0",
         "mapbox-gl": "^3.18.1",
         "parse5": "^8.0.0",
-        "react": "^19.2.4",
-        "react-dom": "^19.2.4",
+        "react": "^19.2.7",
+        "react-dom": "^19.2.7",
         "react-error-boundary": "^6.1.0",
-        "react-router": "^7.13.0",
+        "react-router": "^8.0.1",
         "validator": "^13.15.26",
-        "vitest": "^4.0.18",
+        "vitest": "^4.1.9",
         "zod": "^4.3.6"
     },
     "devDependencies": {
-        "@julr/vite-plugin-validate-env": "^2.2.0",
-        "@react-router/dev": "^7.13.0",
+        "@julr/vite-plugin-validate-env": "^2.2.2",
+        "@react-router/dev": "^8.0.1",
         "@types/mapbox-gl": "^3.4.1",
         "@types/postcss-js": "^4.1.0",
         "@types/react": "^19.2.10",
@@ -55,9 +54,13 @@
         "scss-bundle": "^3.1.2",
         "tailwindcss": "^3.4.19",
         "typescript": "^5.9.3",
-        "vite": "^7.3.1",
-        "vite-plugin-devtools-json": "^1.0.0",
-        "vite-tsconfig-paths": "^5.1.4"
+        "vite": "^8.0.16",
+        "vite-plugin-devtools-json": "^1.0.0"
+    },
+    "overrides": {
+        "vite-plugin-devtools-json": {
+            "vite": "$vite"
+        }
     },
     "prettier": {
         "printWidth": 100,

@@ -1,5 +1,6 @@
 import { Button, Card, CardGroup, Link } from "@trussworks/react-uswds";
-import { Room, routes } from "~/route-map";
+import { href } from "react-router";
+import { Room } from "~/lib/room";
 
 import type { Route } from "./+types/confirm";
 
@@ -36,7 +37,7 @@ function MeetingRoomCancellationConfirmation() {
                             <p className="font-sans text-sans-xs text-center">9:00 AM to 9:15 AM</p>
                             <p className="font-sans text-sans-xs text-center">Capacity: 100</p>
                             <div className="flex justify-center pt-7 pb-[194px]">
-                                <Link href={routes.home.href()}>
+                                <Link href={href("/")}>
                                     <Button
                                         className="w-[228px] font-sans text-sans-xs bg-[#016E98] text-white pointer-events-none mr-0"
                                         type="button"
@@ -80,7 +81,7 @@ function SharedLearningRoomCancellationConfirmation() {
                             </p>
                             <p className="font-sans text-sans-xs text-center">Capacity: 4</p>
                             <div className="flex justify-center pt-7 pb-[194px]">
-                                <Link href={routes.home.href()}>
+                                <Link href={href("/")}>
                                     <Button
                                         className="w-[228px] font-sans text-sans-xs bg-[#016E98] text-white pointer-events-none mr-0"
                                         type="button"

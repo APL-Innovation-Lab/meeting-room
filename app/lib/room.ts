@@ -1,16 +1,3 @@
-import { index, route } from "@withsprinkles/react-router-route-map";
-
-export const routes = {
-    home: index("./routes/home.tsx"),
-    search: route("/:roomKind", "./routes/search/search.tsx"),
-    review: route("/:roomKind/review", "./routes/review.tsx"),
-    confirm: route("/:roomKind/confirm", "./routes/confirm.tsx"),
-    cancel: {
-        index: route("/:roomKind/cancel", "./routes/cancel/cancel.tsx"),
-        confirmation: route("/:roomKind/cancel/confirm", "./routes/cancel/confirm.tsx"),
-    },
-};
-
 export namespace Room {
     export type Kind = "shared-learning-room" | "meeting-room";
 }

@@ -1,5 +1,6 @@
 import { Button, Card, CardGroup, Link } from "@trussworks/react-uswds";
-import { Room, routes } from "~/route-map";
+import { href } from "react-router";
+import { Room } from "~/lib/room";
 
 import type { Route } from "./+types/cancel";
 
@@ -34,7 +35,7 @@ function MeetingRoomCancellation() {
                             <p className="font-sans text-sans-xs text-center">Capacity: 100</p>
                             <div className="flex justify-center pt-7">
                                 <Link
-                                    href={routes.cancel.confirmation.href({
+                                    href={href("/:roomKind/cancel/confirm", {
                                         roomKind: Room.Meeting.kind,
                                     })}
                                 >
@@ -47,7 +48,7 @@ function MeetingRoomCancellation() {
                                 </Link>
                             </div>
                             <div className="flex justify-center pt-[18px] pb-[208px]">
-                                <Link href={routes.home.href()}>
+                                <Link href={href("/")}>
                                     <Button
                                         className="usa-button--outline w-[232px] font-sans text-sans-xs bg-transparent text-[#026E98] border-[#026E98] pointer-events-none mr-0"
                                         type="button"
@@ -89,7 +90,7 @@ function SharedLearningRoomCancellation() {
                             <p className="font-sans text-sans-xs text-center">Capacity: 4</p>
                             <div className="flex justify-center pt-7">
                                 <Link
-                                    href={routes.cancel.confirmation.href({
+                                    href={href("/:roomKind/cancel/confirm", {
                                         roomKind: Room.SharedLearning.kind,
                                     })}
                                 >
@@ -102,7 +103,7 @@ function SharedLearningRoomCancellation() {
                                 </Link>
                             </div>
                             <div className="flex justify-center pt-[18px] pb-[208px]">
-                                <Link href={routes.home.href()}>
+                                <Link href={href("/")}>
                                     <Button
                                         className="usa-button--outline w-[232px] font-sans text-sans-xs bg-transparent text-[#026E98] border-[#026E98] pointer-events-none"
                                         type="button"

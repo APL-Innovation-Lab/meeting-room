@@ -1,9 +1,9 @@
 import { Card, CardGroup, CardHeader, Header, Label, Link, Select } from "@trussworks/react-uswds";
-import { useNavigate } from "react-router";
+import { href, useNavigate } from "react-router";
 import { Breadcrumbs } from "~/components/Breadcrumbs";
 import MeetingRoomFAQ from "~/components/MeetingRoomFAQ";
 import { site } from "~/lib/site";
-import { Room, routes } from "~/route-map";
+import { Room } from "~/lib/room";
 
 export default function Component() {
     const navigate = useNavigate();
@@ -56,7 +56,7 @@ export default function Component() {
                                             ? Room.Meeting.kind
                                             : Room.SharedLearning.kind;
 
-                                    navigate(routes.search.href({ roomKind }));
+                                    navigate(href("/:roomKind", { roomKind }));
                                 }}
                             >
                                 <option disabled value="empty">

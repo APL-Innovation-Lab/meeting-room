@@ -1,6 +1,7 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
 import { site } from "~/lib/site";
-import { Room, routes } from "~/route-map";
+import { href } from "react-router";
+import { Room } from "~/lib/room";
 import type { Route } from "./+types/review";
 
 export default function Component({ params }: Route.ComponentProps) {
@@ -25,7 +26,7 @@ export default function Component({ params }: Route.ComponentProps) {
                         </CardHeader>
 
                         <div className="flex justify-center my-6">
-                            <Link href={routes.confirm.href({ roomKind })}>
+                            <Link href={href("/:roomKind/confirm", { roomKind })}>
                                 <Button
                                     className="font-sans text-sans-xs"
                                     style={{

@@ -4,8 +4,8 @@ import { site } from "~/lib/site";
 import tailwind from "~/styles/tailwind.css?url";
 import { Route } from "./+types/root";
 
-export async function loader({ request }: Route.LoaderArgs) {
-    return request.url;
+export async function loader({ url }: Route.LoaderArgs) {
+    return url.href;
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
