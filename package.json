@@ -16,7 +16,7 @@
         "skills:update": "skills update"
     },
     "dependencies": {
-        "@deno/kv": "^0.13.0",
+        "@deno/kv": "^0.14.0",
         "@react-router/fs-routes": "^8.0.1",
         "@react-router/node": "^8.0.1",
         "@react-router/serve": "^8.0.1",
