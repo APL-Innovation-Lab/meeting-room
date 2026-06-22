@@ -281,7 +281,7 @@ async function mapWithConcurrency<T, U>(
     if (items.length === 0) return [];
 
     const limit = Math.max(1, Math.floor(concurrency));
-    const results: U[] = new Array(items.length);
+    const results = Array.from<U>({ length: items.length });
     let cursor = 0;
 
     async function worker(): Promise<void> {

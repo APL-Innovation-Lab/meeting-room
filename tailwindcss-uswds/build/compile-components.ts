@@ -27,13 +27,7 @@ function remapURLs(css: string) {
         .replaceAll(ORIG_FONT_URL_PATTERN, REPLACE_FONT_PATTERN);
 }
 
-async function compileUSWDSComponentStyles(
-    {
-        fontsDirectory = "../fonts",
-    }: {
-        fontsDirectory?: string;
-    } = { fontsDirectory: "../fonts" },
-) {
+async function compileUSWDSComponentStyles() {
     let compiledStyles = await sass.compileStringAsync(
         BUNDLE_FILE.replace(COMPILE_WARNINGS_ENABLED, COMPILE_WARNINGS_DISABLED),
         { loadPaths: [PACKAGES_DIR] },

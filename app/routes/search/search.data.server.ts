@@ -51,7 +51,7 @@ export function normalizeBranchName(value: string): string {
         .toLowerCase()
         .replace(/^austin\s+/g, "")
         .replace(/^george washington\s+/g, "")
-        .replace(/\s*[\(,]\s*faulk building\)?\s*$/g, "")
+        .replace(/\s*[(,]\s*faulk building\)?\s*$/g, "")
         .replace(/\s+faulk building$/g, "")
         .replace(/\snorth village\s*/g, " north village ")
         .replace(/\sjohn gillum branch/g, "north village branch")
