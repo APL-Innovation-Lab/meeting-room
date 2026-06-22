@@ -1,4 +1,5 @@
 import clsx from "clsx";
+
 import { pluralize } from "~/lib/pluralize";
 
 export namespace SearchResult {

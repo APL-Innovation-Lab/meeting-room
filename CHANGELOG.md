@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-21
+
+- Replaced Prettier with the Oxc toolchain: formatting now runs on Oxfmt (`.oxfmtrc.jsonc`) and linting returns via Oxlint (`.oxlintrc.jsonc`) with `eslint-plugin-perfectionist` and type-aware checks through `oxlint-tsgolint`. Removed Prettier and its plugins, added `format`/`lint` scripts, and pointed the VS Code formatter and recommended extensions at the Oxc extension.
+- Replicated the previous `prettier-plugin-organize-attributes` JSX attribute order (`className`, then `id`/`name`/`htmlFor`, then everything else, then `aria-*`) using `perfectionist/sort-jsx-props` with `type: "unsorted"` so authored order within each group is preserved.
+- Upgraded TypeScript to the 7.0 native preview (`typescript@7.0.1-rc`), pinned across the dependency tree with a `typescript` override to avoid peer-range resolution stalls.
+
 ## 2026-02-02
 
 - Converted routing from file-system conventions to an explicit route map using `@withsprinkles/react-router-route-map`, introducing `app/route-map.ts` and switching `app/routes.ts` to `createRoutes`, plus normalizing route names and paths around `/:roomType` and adding new `review` and `cancel` routes (`8498ba0`).

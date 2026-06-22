@@ -1,9 +1,11 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
-import CalendarButton from "~/components/CalendarButton";
-import { site } from "~/lib/site";
 import { href } from "react-router";
+
+import CalendarButton from "~/components/CalendarButton";
 import { Room } from "~/lib/room";
+import { site } from "~/lib/site";
 import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
+
 import type { Route } from "./+types/confirm";
 
 export default function Component({ params }: Route.ComponentProps) {

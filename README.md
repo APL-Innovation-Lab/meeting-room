@@ -17,8 +17,8 @@ This is the source code for the Austin Public Library meeting room booking page 
     - [trussworks/react-uswds](https://trussworks.github.io/react-uswds/?path=/docs/welcome--docs)
 - [Node Version Manager](https://github.com/nvm-sh/nvm)
 - [npm](https://docs.npmjs.com/cli/v11)
-- [Prettier](https://prettier.io/docs)
-    - [Prettier plugin for Tailwind CSS](https://tailwindcss.com/blog/automatic-class-sorting-with-prettier)
+- [Oxfmt](https://oxc.rs/docs/guide/usage/formatter) for formatting
+- [Oxlint](https://oxc.rs/docs/guide/usage/linter) for linting
 - [Build-time environment variable validation](https://github.com/Julien-R44/vite-plugin-validate-env)
 - [@deno/kv](https://github.com/denoland/denokv/tree/main/npm)
 - [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides)

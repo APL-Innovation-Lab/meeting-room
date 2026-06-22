@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+
 import uswds from "./tailwindcss-uswds/plugin";
 
 export default {

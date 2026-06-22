@@ -1,13 +1,12 @@
 import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
+
 import { Breadcrumbs } from "~/components/Breadcrumbs";
 import { type LiveBranchCoordinate } from "~/lib/apl-client/apl-live-client.server";
 import { apl } from "~/lib/apl-client/apl-live-client.server";
-import { site } from "~/lib/site";
 import { Room } from "~/lib/room";
+import { site } from "~/lib/site";
+
 import { Route } from "./+types/search";
-import { SearchDescription } from "./SearchDescription";
-import { SearchFiltersForm } from "./SearchFiltersForm";
-import { SearchResultsPanel } from "./SearchResultsPanel";
 import {
     branchNamesMatch,
     createBranchLngLats,
@@ -18,6 +17,9 @@ import {
     type BranchSearchResult,
     type SearchFilters,
 } from "./search.data.server";
+import { SearchDescription } from "./SearchDescription";
+import { SearchFiltersForm } from "./SearchFiltersForm";
+import { SearchResultsPanel } from "./SearchResultsPanel";
 
 const dateFormatter = new Intl.DateTimeFormat("en-CA");
 const DEFER_GRACE_MS = 120;

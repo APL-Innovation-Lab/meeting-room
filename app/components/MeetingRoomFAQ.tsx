@@ -1,4 +1,5 @@
 import { Accordion, type AccordionProps } from "@trussworks/react-uswds";
+
 import { FAQ_DATA } from "~/lib/constants";
 
 type AccordionItemProps = AccordionProps["items"][number];

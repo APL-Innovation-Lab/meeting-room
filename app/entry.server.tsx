@@ -1,11 +1,11 @@
-import { PassThrough } from "node:stream";
+import type { RenderToPipeableStreamOptions } from "react-dom/server";
+import type { EntryContext } from "react-router";
 
 import { createReadableStreamFromReadable } from "@react-router/node";
-import type { EntryContext } from "react-router";
-import { ServerRouter } from "react-router";
 import { isbot } from "isbot";
-import type { RenderToPipeableStreamOptions } from "react-dom/server";
+import { PassThrough } from "node:stream";
 import { renderToPipeableStream } from "react-dom/server";
+import { ServerRouter } from "react-router";
 
 // Keep this above worst-case cold deferred loads to avoid premature SSR aborts.
 export const streamTimeout = 15_000;

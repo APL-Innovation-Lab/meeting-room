@@ -1,9 +1,11 @@
 import { Suspense, use, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+
 import { Map as BranchMap } from "~/components/Map";
-import { SearchResult } from "./SearchResult";
-import { type BranchSearchResult } from "./search.data.server";
 import { Spinner } from "~/components/Spinner";
+
+import { type BranchSearchResult } from "./search.data.server";
+import { SearchResult } from "./SearchResult";
 
 export namespace SearchResultsPanel {
     export type DeferredSearchData = {

@@ -1,5 +1,6 @@
-import clsx from "clsx";
 import type { ComponentProps } from "react";
+
+import clsx from "clsx";
 
 export function ExternalLink({ children, className, target, rel, ...props }: ComponentProps<"a">) {
     const targets =

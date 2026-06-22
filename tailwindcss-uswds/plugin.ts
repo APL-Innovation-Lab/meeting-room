@@ -1,5 +1,7 @@
-import { withOptions } from "tailwindcss/plugin";
 import type { CSSRuleObject } from "tailwindcss/types/config";
+
+import { withOptions } from "tailwindcss/plugin";
+
 import components from "./tokens/components.json";
 import fonts from "./tokens/fonts.json";
 import theme from "./tokens/theme.json";

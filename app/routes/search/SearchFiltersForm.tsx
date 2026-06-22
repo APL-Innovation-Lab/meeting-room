@@ -8,8 +8,10 @@ import {
 } from "@trussworks/react-uswds";
 import { useEffect, useRef, useState } from "react";
 import { Form, useLocation, useNavigation } from "react-router";
-import { type LocationOption, type SearchFilters } from "./search.data.server";
+
 import { Spinner } from "~/components/Spinner";
+
+import { type LocationOption, type SearchFilters } from "./search.data.server";
 
 const MIN_LOADING_STATE_MS = 500;
 

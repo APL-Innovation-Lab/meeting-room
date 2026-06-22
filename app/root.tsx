@@ -1,7 +1,9 @@
 import uswdsReact from "@trussworks/react-uswds/lib/index.css?url";
 import { Outlet, Scripts, ScrollRestoration, useRouteLoaderData } from "react-router";
+
 import { site } from "~/lib/site";
 import tailwind from "~/styles/tailwind.css?url";
+
 import { Route } from "./+types/root";
 
 export async function loader({ url }: Route.LoaderArgs) {
