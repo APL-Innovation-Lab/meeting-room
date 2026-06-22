@@ -23,7 +23,7 @@
         "@std/async": "npm:@jsr/std__async@^1.1.1",
         "@trussworks/react-uswds": "^11.0.0",
         "clsx": "^2.1.1",
-        "isbot": "^4.4.0",
+        "isbot": "^5.1.43",
         "mapbox-gl": "^3.18.1",
         "parse5": "^8.0.0",
         "react": "^19.2.7",
