@@ -7,7 +7,7 @@ These are instructions for getting started on a Mac/unix machine. Windows instru
 Install these dependencies if you don't already have them:
 
 - [git](https://formulae.brew.sh/formula/git)
-- A toolchain manager
+- A Node version manager, to install the Node version this project targets (Node 24+):
     - [Mise](https://formulae.brew.sh/formula/mise)
     - [Vite+](https://formulae.brew.sh/formula/vite-plus)
     - [fnm](https://formulae.brew.sh/formula/fnm)
@@ -107,4 +107,3 @@ It's also recommended that you install these extensions for VS Code:
 
 - [TODO Highlight](https://marketplace.visualstudio.com/items?itemName=wayou.vscode-todo-highlight) for highlighting `TODO`, `FIXME`, and `MARK` comments in code
 - [Vitest](https://marketplace.visualstudio.com/items?itemName=vitest.explorer) for integrating unit tests into VS Code
-- [GitHub Actions](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-github-actions) for managing CI/CD workflows in VS Code

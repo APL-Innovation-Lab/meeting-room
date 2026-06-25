@@ -2,24 +2,27 @@
 
 This is the source code for the Austin Public Library meeting room booking page code prototype.
 
+It's a full-stack [React Router](https://reactrouter.com) app that lets people search library meeting rooms, view their locations on a map, review and confirm a booking, cancel an existing reservation, and export a booking to their calendar as an `.ics` file.
+
 ## Frameworks & Technology
 
 - [TypeScript](https://www.typescriptlang.org/docs/handbook/intro.html)
 - [React](https://react.dev)
-- [React Router v8](https://reactrouter.com)
-    - [Zod](https://zod.dev) [form validation](https://reactrouter.com/how-to/form-validation)
+- [Vite](https://vite.dev) for the dev server and production build
+- [React Router v8](https://reactrouter.com) (framework mode)
     - [Route Module Type Safety](https://reactrouter.com/explanation/type-safety)
     - [Progressive enhancement](https://reactrouter.com/explanation/progressive-enhancement)
-    - [Sessions & cookies](https://reactrouter.com/explanation/sessions-and-cookies)
-- [Tailwind CSS v3](https://v3.tailwindcss.com)
+- [Zod](https://zod.dev) for schema validation
+- [Tailwind CSS v4](https://tailwindcss.com)
 - [USWDS](https://designsystem.digital.gov)
     - [trussworks/react-uswds](https://trussworks.github.io/react-uswds/?path=/docs/welcome--docs)
+- [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides)
+- [@deno/kv](https://github.com/denoland/denokv/tree/main/npm)
+- [Varlock](https://varlock.dev) for environment variable schema, validation, and type generation
 - [npm](https://docs.npmjs.com/cli/v11)
 - [Oxfmt](https://oxc.rs/docs/guide/usage/formatter) for formatting
 - [Oxlint](https://oxc.rs/docs/guide/usage/linter) for linting
-- [Varlock](https://varlock.dev) for environment variable schema, validation, and type generation
-- [@deno/kv](https://github.com/denoland/denokv/tree/main/npm)
-- [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides)
+- [Vitest](https://vitest.dev) for testing
 - [Visual Studio Code](https://code.visualstudio.com) (or one of its derivatives)
 
 # Project Layout
@@ -27,30 +30,25 @@ This is the source code for the Austin Public Library meeting room booking page 
 ```
 .
 ├── app
-│   ├── components
-│   │   └── ...
-│   ├── data
-│   │   └── ...
-│   ├── lib
-│   │   └── ...
+│   ├── components          # Shared React components (Map, Breadcrumbs, Spinner, ...)
+│   ├── lib                 # Domain logic & data access (apl-client, room, site, constants, ...)
+│   ├── routes              # Route modules (home, search, review, confirm, cancel, calendar.ics)
+│   ├── utils               # Generic helpers (calendar, ...)
+│   ├── styles
+│   │   └── tailwind.css
+│   ├── entry.server.tsx
 │   ├── root.tsx
-│   ├── routes
-│   │   └── ...
-│   ├── routes.ts
-│   ├── shared
-│   │   └── ...
-│   └── styles
-│       └── tailwind.css
-├── .env
-├── .env.schema
+│   └── routes.ts
+├── public                  # Static assets (favicon, fonts)
+├── tailwindcss-uswds       # Tailwind plugin + build scripts that bridge USWDS design tokens
+├── .env.example            # Template — copy to .env and fill in
+├── .env.schema             # Environment contract validated by Varlock
 ├── package.json
-├── postcss.config.js
-├── react-router.config.ts
 ├── tailwind.config.ts
-├── tailwindcss-uswds
-│   └── ...
 ├── tsconfig.json
-└── vite.config.ts
+├── vite.config.ts
+├── vitest.config.ts
+└── vitest.setup.ts
 ```
 
 ## Contributing
@@ -71,12 +69,12 @@ If you’re looking for ways to get started, here's a list of ways to help us im
 
 We aim to have sufficient test coverage for critical parts of the prototype and aren't aiming for 100% unit test coverage.
 
-To add new tests, write your tests with Vitest and add a file with `.test.ts` extension in the same directory as the tested code.
+To add new tests, write your tests with Vitest in a `.test.ts` (or `.test.tsx`) file in the same directory as the tested code.
 
 ```sh
-# To run all tests
-npm run test
+# Run the full test suite once
+node --run test
 
-# To run tests in dev watch mode
-npm run test:dev
+# Run tests in watch mode
+npx vitest
 ```

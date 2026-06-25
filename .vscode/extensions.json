@@ -5,7 +5,6 @@
         "oxc.oxc-vscode",
         "TypeScriptTeam.native-preview",
         "vitest.explorer",
-        "wayou.vscode-todo-highlight",
-        "github.vscode-github-actions"
+        "wayou.vscode-todo-highlight"
     ]
 }
