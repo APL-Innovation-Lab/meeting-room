@@ -11,6 +11,12 @@ env.d.ts
 
 /node_modules/
 
+# SQLite database files (schema lives in ./drizzle migrations, which ARE committed).
+/data/
+*.db
+*.db-shm
+*.db-wal
+
 # React Router
 /.react-router/
 /.cache
