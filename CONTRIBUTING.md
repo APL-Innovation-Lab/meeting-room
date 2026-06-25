@@ -28,7 +28,36 @@ git clone git@github.com:APL-Innovation-Lab/meeting-room-prototype
 
 ## Setup
 
-You'll need a Mapbox API token to run this project (`VITE_APP_MAPBOX_TOKEN` in your `.env` file). You can [generate one of these on your own, using your own Mapbox account](https://docs.mapbox.com/api/accounts/tokens) or you can ask Mark Malstrom for a secure link to the Austin Public Library Mapbox API token in the [Open Austin Slack](https://open-austin.slack.com/messages).
+The environment variables this project needs are documented in [`.env.schema`](./.env.schema) — that file is the source of truth for what you must provide. To set up, copy the template to a local `.env` and fill it in:
+
+```sh
+cp .env.example .env
+```
+
+### Mapbox access token
+
+You'll need a Mapbox access token for `VITE_APP_MAPBOX_TOKEN`. **Generate your own free one — you don't need to ask anyone for the shared library token.** A free Mapbox account is plenty for local development.
+
+`VITE_APP_MAPBOX_TOKEN` is a _public_ token: `mapbox-gl` runs in the browser, so the token ships in the client bundle and is visible to anyone who loads the app. That's by design and can't be hidden. What actually protects it is restricting it in the Mapbox dashboard — so create a dedicated, restricted token rather than reusing your account's default one:
+
+1. [Sign up for a free Mapbox account](https://account.mapbox.com/auth/signup/) (or sign in).
+2. Go to your [access tokens page](https://account.mapbox.com/access-tokens/) and click **Create a token**.
+3. Give it a name (e.g. `apl-meeting-room-local`). Leave the **public** scopes at their defaults; you don't need any secret scopes.
+4. Under **URL restrictions**, add `http://localhost:5173` (the dev server) so the token only works from your machine. Add your deployment URL too if you're deploying.
+5. Click **Create token**, copy the `pk.…` value, and paste it into your `.env`:
+
+    ```sh
+    # .env
+    VITE_APP_MAPBOX_TOKEN="pk.your_token_here"
+    ```
+
+If you'd rather use the shared Austin Public Library token instead, ask Mark Malstrom for it in the [Open Austin Slack](https://open-austin.slack.com/messages) — but generating your own is faster and avoids passing the shared token around.
+
+Varlock validates your `.env` against the schema automatically when you run the dev server or build. To check it on its own:
+
+```sh
+npm run env:check
+```
 
 ## Configuration
 
