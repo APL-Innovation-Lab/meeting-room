@@ -21,7 +21,10 @@ import { SearchDescription } from "./SearchDescription";
 import { SearchFiltersForm } from "./SearchFiltersForm";
 import { SearchResultsPanel } from "./SearchResultsPanel";
 
-const dateFormatter = new Intl.DateTimeFormat("en-CA");
+// Default the search date to Austin's calendar day, not the server's. Without an explicit timeZone
+// this formats in the host zone, so an evening Austin visitor on a UTC host would default to
+// *tomorrow* (AV-6). en-CA yields the canonical "YYYY-MM-DD" shape the rest of the flow expects.
+const dateFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" });
 const DEFER_GRACE_MS = 120;
 
 type DeferredSearchData = {
@@ -220,6 +223,7 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                         />
                         <SearchResultsPanel
                             heading={searchResultsHeading}
+                            roomKind={roomKind}
                             deferredSearchData={deferredSearchData}
                             mapboxToken={mapboxToken}
                         />

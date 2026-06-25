@@ -18,6 +18,21 @@ export interface CalendarEventParams {
 }
 
 /**
+ * Escapes a value for use in an RFC-5545 TEXT property (SUMMARY/DESCRIPTION/LOCATION).
+ *
+ * Without this, any newline, `;`, `,` or `\` in user-controlled fields could inject extra ICS
+ * properties or even forge a second VEVENT — e.g. a title of `Foo\nEND:VEVENT\nBEGIN:VEVENT...`.
+ * Backslash must be escaped first so the escapes we add aren't themselves re-escaped (SEC-1).
+ */
+function escapeICSText(value: string): string {
+    return value
+        .replace(/\\/g, "\\\\")
+        .replace(/\r\n|\r|\n/g, "\\n")
+        .replace(/;/g, "\\;")
+        .replace(/,/g, "\\,");
+}
+
+/**
  * Generates an .ics file for Outlook and Apple calendar formats.
  * @returns A string with CRLF (`\r\n`) line breaks for compatibility with all .ics calendar services.
  */
@@ -28,14 +43,20 @@ export function generateICS(params: CalendarEventParams): string {
     // is a standardized date format for all calendar export files
     const formatDate = (date: Date) => date.toISOString().replace(/[-:]|\.\d\d\d/g, "");
 
+    // Stable, content-derived UID so re-downloads dedupe rather than create duplicate events.
+    const uid = `${formatDate(start)}-${formatDate(end)}@library.austintexas.gov`;
+
     // all .ics files must adhere to this format, based on RFC 5545
     return [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
+        "PRODID:-//Austin Public Library//Meeting Room Prototype//EN",
         "BEGIN:VEVENT",
-        `SUMMARY:${title}`,
-        `DESCRIPTION:${description}`,
-        `LOCATION:${location}`,
+        `UID:${uid}`,
+        `DTSTAMP:${formatDate(start)}`,
+        `SUMMARY:${escapeICSText(title)}`,
+        `DESCRIPTION:${escapeICSText(description)}`,
+        `LOCATION:${escapeICSText(location)}`,
         `DTSTART:${formatDate(start)}`,
         `DTEND:${formatDate(end)}`,
         "END:VEVENT",

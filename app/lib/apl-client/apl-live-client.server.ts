@@ -156,7 +156,7 @@ const LocationInfoById = {
 
 type LocationId = keyof typeof LocationInfoById;
 
-type LiveRoom = {
+export type LiveRoom = {
     roomId: string;
     locationId: string;
     published: boolean;
@@ -444,6 +444,18 @@ function normalizeMeetingRoomBranchName(value: string): string {
         .replace(/\bahc\b/g, "austin history center")
         .replace(/[^a-z0-9]+/g, " ")
         .trim();
+}
+
+/**
+ * Substring-matches two already-normalized branch names, but treats an empty needle as "no match".
+ * `normalizeMeetingRoomBranchName` can strip a label down to "" (e.g. "(North Village)" or a bare
+ * "- Capacity: 10"), and since every string `.includes("")`, an empty value used to match *every*
+ * branch — assigning unparseable rooms to all locations (AV-5). Requiring both sides to be
+ * non-empty drops the ambiguous room instead of fanning it out everywhere.
+ */
+export function branchNeedleMatches(left: string, right: string): boolean {
+    if (!left || !right) return false;
+    return left === right || left.includes(right) || right.includes(left);
 }
 
 function parseMeetingRoomOptionLabel(
@@ -779,13 +791,9 @@ async function fetchMeetingRoomInventory(
     const roomsByLocation: Record<string, MeetingRoomInventoryRoom[]> = {};
     for (const location of locations) {
         const normalizedLocation = normalizeMeetingRoomBranchName(location.branch);
-        const matchedRooms = rooms.filter(room => {
-            const normalizedRoom = normalizeMeetingRoomBranchName(room.branch);
-            return (
-                normalizedRoom.includes(normalizedLocation) ||
-                normalizedLocation.includes(normalizedRoom)
-            );
-        });
+        const matchedRooms = rooms.filter(room =>
+            branchNeedleMatches(normalizeMeetingRoomBranchName(room.branch), normalizedLocation),
+        );
 
         roomsByLocation[location.locationId] = matchedRooms;
     }
@@ -916,6 +924,41 @@ function toMinutesFromIsoDateTime(value: string): number | undefined {
     return hour * 60 + minute;
 }
 
+/**
+ * Parses a wall-clock time to minutes-since-midnight, accepting BOTH the 12-hour ("5:00 PM") and
+ * 24-hour ("17:00") forms. The upstream `field_early_closing` feed uses the 12-hour form, so a
+ * naive `HH:MM`-only parse silently dropped the meridiem and read "5:00 PM" as 5:00 (AM) — a closing
+ * time *before* opening, which zeroed out the whole day's availability (AV-4). Unlike `toMinutes`,
+ * the meridiem is optional here so a 24-hour value still parses.
+ */
+export function parseClockMinutes(value: string): number | undefined {
+    const match = value.trim().match(/^(\d{1,2}):(\d{2})\s*([AP]M)?$/i);
+    if (!match) return undefined;
+
+    let hour = Number.parseInt(match[1], 10);
+    const minute = Number.parseInt(match[2], 10);
+    if (!Number.isFinite(hour) || !Number.isFinite(minute) || minute > 59) return undefined;
+
+    const period = match[3]?.toUpperCase();
+    if (period) {
+        if (hour < 1 || hour > 12) return undefined;
+        hour = (hour % 12) + (period === "PM" ? 12 : 0);
+    } else if (hour > 23) {
+        return undefined;
+    }
+
+    return hour * 60 + minute;
+}
+
+/**
+ * Extracts the "YYYY-MM-DD" calendar-date portion of a reservation timestamp. Needed because
+ * `toMinutesFromIsoDateTime` keeps only the time-of-day; without the date, a reservation from a
+ * different day would block the same clock-time slot on the searched day (AV-3).
+ */
+export function dateIsoFromIsoDateTime(value: string): string | undefined {
+    return value.match(/\d{4}-\d{2}-\d{2}/)?.[0];
+}
+
 function toTimeLabel(minutes: number): string {
     const hour24 = Math.floor(minutes / 60);
     const minute = minutes % 60;
@@ -1016,18 +1059,21 @@ type SpecialDates = {
     earlyClosings: Map<string, { hour: number; minute: number }>;
 };
 
-type RoomAvailability = {
+export type RoomAvailability = {
     availableStartMinutes: number[];
     availableTimes: string[];
     availableDurations: number[];
 };
 
-function getRoomAvailability(
+export function getRoomAvailability(
     room: LiveRoom,
     roomReservations: z.infer<typeof ReservationSchema>[],
     date: Date,
 ): RoomAvailability {
-    const weekday = date.getDay();
+    // The searched date is a UTC-midnight Date parsed from a "YYYY-MM-DD" calendar date,
+    // and dateIso/reservation fetches are all UTC-based. Use getUTCDay() so the weekday
+    // matches that calendar date instead of the server's local weekday (off-by-one west of UTC).
+    const weekday = date.getUTCDay();
     const hours = OPERATING_HOURS_BY_LOCATION[room.locationId]?.[weekday];
     if (!hours || hours.opening === null || hours.closing === null) {
         return { availableStartMinutes: [], availableTimes: [], availableDurations: [] };
@@ -1123,11 +1169,16 @@ function getMeetingRoomOperatingHours(
     const dateIso = date.toISOString().slice(0, 10);
     if (specialDates.closedDates.has(dateIso)) return undefined;
 
+    // Both "closed after" boundaries below use `>=` (closed *on and after* the boundary date) for a
+    // consistent rule. The dates are historical, so every bookable (present/future) search lands on
+    // the closed side regardless of the operator — the choice is latent, but kept uniform so the two
+    // checks can't drift (AV-6).
     if (roomId === MR_WMK_ROOM_ID && dateIso >= MR_SPECIAL_CLOSED_AFTER) {
         return undefined;
     }
 
-    const day = date.getDay();
+    // Match the UTC dateIso above (getDay() would read the server-local weekday, off-by-one west of UTC).
+    const day = date.getUTCDay();
     if (day === 0 && !MR_SUNDAY_OPEN_ROOM_IDS.has(roomId)) {
         return undefined;
     }
@@ -1139,7 +1190,7 @@ function getMeetingRoomOperatingHours(
     if (
         MR_TERRAZAS_ROOM_IDS.has(roomId) &&
         day === 6 &&
-        dateIso > MR_TERRAZAS_CLOSED_ON_SATURDAY_AFTER
+        dateIso >= MR_TERRAZAS_CLOSED_ON_SATURDAY_AFTER
     ) {
         return undefined;
     }
@@ -1177,17 +1228,23 @@ function getMeetingRoomOperatingHours(
     }
 
     const earlyClose = specialDates.earlyClosings.get(dateIso);
-    if (earlyClose) {
-        hours = {
-            opening: hours.opening,
-            closing: earlyClose.hour + earlyClose.minute / 60,
-        };
+    if (earlyClose && hours.opening !== null && hours.closing !== null) {
+        const earlyClosing = earlyClose.hour + earlyClose.minute / 60;
+        // An early closing only ever moves the close *earlier* — never past the normal close, and
+        // never to/before opening. A nonsensical value (e.g. a mis-parsed meridiem) is ignored
+        // rather than allowed to collapse the day to zero slots (AV-4 guard).
+        if (earlyClosing > hours.opening) {
+            hours = {
+                opening: hours.opening,
+                closing: Math.min(hours.closing, earlyClosing),
+            };
+        }
     }
 
     return hours;
 }
 
-function getMeetingRoomAvailability(
+export function getMeetingRoomAvailability(
     roomId: string,
     reservations: z.infer<typeof MeetingRoomReservationSchema>[],
     date: Date,
@@ -1276,17 +1333,38 @@ function getMeetingRoomAvailability(
     };
 }
 
-function reservationBlocksTime(
-    reservation: z.infer<typeof ReservationSchema>,
-    desiredMinutes: number,
+/**
+ * Decides whether a room's computed availability satisfies a search request.
+ *
+ * `availableStartMinutes` already excludes any 15-min slot blocked by a reservation, so this is the
+ * single source of truth for "is the room free". The key correctness point (AV-2): when both a start
+ * time AND a duration are requested, the room qualifies only if EVERY 15-min slot across the
+ * contiguous window `[start, start + duration)` is free — not merely "the start slot is free" plus
+ * "some run somewhere that day is long enough", which previously let an overlapping window through.
+ */
+export function matchesRequestedSlot(
+    availability: RoomAvailability,
+    desiredMinutes: number | undefined,
+    desiredDuration: number | undefined,
 ): boolean {
-    const startMinutes = toMinutesFromIsoDateTime(reservation.start);
-    const endMinutes = toMinutesFromIsoDateTime(reservation.end);
-    if (startMinutes === undefined || endMinutes === undefined) {
-        return false;
+    const step = 15;
+    const hasDuration = desiredDuration !== undefined && desiredDuration > 0;
+
+    if (desiredMinutes !== undefined) {
+        const freeStarts = new Set(availability.availableStartMinutes);
+        const span = hasDuration ? desiredDuration : step;
+        for (let slot = desiredMinutes; slot < desiredMinutes + span; slot += step) {
+            if (!freeStarts.has(slot)) return false;
+        }
+        return true;
     }
 
-    return desiredMinutes >= startMinutes && desiredMinutes < endMinutes;
+    if (hasDuration) {
+        // No specific start requested: any contiguous free run long enough is acceptable.
+        return availability.availableDurations.some(duration => duration >= desiredDuration);
+    }
+
+    return true;
 }
 
 async function fetchReservationsForDateByLocation(
@@ -1357,11 +1435,13 @@ async function fetchSpecialDates(baseUrl = DEFAULT_BASE_URL): Promise<SpecialDat
                 continue;
             }
 
-            const minuteMatch = earlyRaw.match(/(\d{1,2}):(\d{2})/);
-            if (!minuteMatch) continue;
-            const hour = Number.parseInt(minuteMatch[1], 10);
-            const minute = Number.parseInt(minuteMatch[2], 10);
-            if (!Number.isFinite(hour) || !Number.isFinite(minute)) continue;
+            // Pull the time token out of whatever surrounds it ("Closes at 5:00 PM") and parse it
+            // through the meridiem-aware parser so "5:00 PM" becomes 17:00, not 5:00 (AV-4).
+            const timeToken = earlyRaw.match(/\d{1,2}:\d{2}\s*(?:[AP]M)?/i)?.[0];
+            const earlyMinutes = timeToken ? parseClockMinutes(timeToken) : undefined;
+            if (earlyMinutes === undefined) continue;
+            const hour = Math.floor(earlyMinutes / 60);
+            const minute = earlyMinutes % 60;
 
             const previous = earlyClosings.get(dateIso);
             if (!previous || hour * 60 + minute < previous.hour * 60 + previous.minute) {
@@ -1510,33 +1590,9 @@ export const apl = {
                 };
             });
 
-            const filteredRooms = roomsWithAvailability.filter(room => {
-                if (
-                    desiredMinutes !== undefined &&
-                    !room._availability.availableStartMinutes.includes(desiredMinutes)
-                ) {
-                    return false;
-                }
-
-                if (
-                    desiredDuration !== undefined &&
-                    desiredDuration > 0 &&
-                    !room.info.availableDurations.some(duration => duration >= desiredDuration)
-                ) {
-                    return false;
-                }
-
-                if (
-                    desiredMinutes !== undefined &&
-                    !room._roomReservations.every(
-                        reservation => !reservationBlocksTime(reservation, desiredMinutes),
-                    )
-                ) {
-                    return false;
-                }
-
-                return true;
-            });
+            const filteredRooms = roomsWithAvailability.filter(room =>
+                matchesRequestedSlot(room._availability, desiredMinutes, desiredDuration),
+            );
 
             return {
                 data: filteredRooms.map(
@@ -1592,8 +1648,7 @@ export const apl = {
                         const normalizedBranch = normalizeMeetingRoomBranchName(location.branch);
                         return (
                             location.locationId.toLowerCase() === locationNeedle ||
-                            normalizedBranch.includes(locationNeedle) ||
-                            locationNeedle.includes(normalizedBranch)
+                            branchNeedleMatches(normalizedBranch, locationNeedle)
                         );
                     })
                     .map(location => location.locationId),
@@ -1636,8 +1691,13 @@ export const apl = {
 
                 for (const room of rooms) {
                     const conflictSet = getMeetingRoomConflictSet(room.roomId);
-                    const conflictingReservations = reservations.filter(reservation =>
-                        conflictSet.has(String(reservation.room)),
+                    // The reservations feed is queried over a two-day window (date11..date22), so it
+                    // includes next-day rows. Keep only the searched day; otherwise a next-day
+                    // reservation at the same clock time would block this day's slots (AV-3).
+                    const conflictingReservations = reservations.filter(
+                        reservation =>
+                            conflictSet.has(String(reservation.room)) &&
+                            dateIsoFromIsoDateTime(reservation.start) === dateIso,
                     );
 
                     const availability = getMeetingRoomAvailability(
@@ -1652,17 +1712,7 @@ export const apl = {
                         locationDurations.add(duration);
                     }
 
-                    const matchesTime =
-                        desiredMinutes === undefined ||
-                        availability.availableStartMinutes.includes(desiredMinutes);
-                    const matchesDuration =
-                        desiredDuration === undefined ||
-                        desiredDuration <= 0 ||
-                        availability.availableDurations.some(
-                            duration => duration >= desiredDuration,
-                        );
-
-                    if (matchesTime && matchesDuration) {
+                    if (matchesRequestedSlot(availability, desiredMinutes, desiredDuration)) {
                         hasMatchingRoom = true;
                     }
                 }
