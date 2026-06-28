@@ -1,12 +1,18 @@
 import { reactRouter } from "@react-router/dev/vite";
+import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
-import { varlockVitePlugin } from "@varlock/vite-integration";
+import { varlockVitePlugin as varlock } from "@varlock/vite-integration";
+import { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import devtoolsJson from "vite-plugin-devtools-json";
 
 export default defineConfig({
-    // varlock runs first so it loads + validates .env (against .env.schema) and
-    // injects resolved values before the framework plugins evaluate their config.
-    plugins: [varlockVitePlugin(), tailwindcss(), reactRouter(), devtoolsJson()],
+    plugins: [
+        varlock(),
+        tailwindcss(),
+        reactRouter(),
+        babel({ presets: [reactCompilerPreset()] }),
+        devtoolsJson(),
+    ],
     resolve: { tsconfigPaths: true },
 });
