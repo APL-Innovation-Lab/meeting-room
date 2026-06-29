@@ -1,4 +1,3 @@
-import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 // Standalone Vitest config (intentionally without the React Router Vite plugin) for unit-testing
@@ -10,8 +9,6 @@ export default defineConfig({
         setupFiles: ["./vitest.setup.ts"],
     },
     resolve: {
-        alias: {
-            "~": fileURLToPath(new URL("./app", import.meta.url)),
-        },
+        tsconfigPaths: true,
     },
 });
