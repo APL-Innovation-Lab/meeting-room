@@ -1,9 +1,12 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
-import CalendarButton from "~/components/CalendarButton";
-import { site } from "~/lib/site";
 import { Room, routes } from "~/route-map";
 import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
+
+import CalendarButton from "~/components/CalendarButton";
 import type { Route } from "./+types/confirm";
+import TestEmailButton from "~/components/TestEmailButton";
+import { sendTestEmail } from "~/lib/email-client";
+import { site } from "~/lib/site";
 
 export default function Component({ params }: Route.ComponentProps) {
     if (params.roomKind === Room.Meeting.kind) {
@@ -139,6 +142,11 @@ function SharedLearningRoomConfirmation() {
                                         Cancel Reservation
                                     </Link>
                                 </div>
+                                <TestEmailButton
+                                    template="sharedConfirmed"
+                                    buttonTitle="Preview confirmation email"
+                                    subject="APL Reservation: Confirmed Shared Learning - 408, Central Library"
+                                />
                             </div>
                         </div>
                     </div>
@@ -239,7 +247,6 @@ function MeetingRoomConfirmation() {
                                     </Link>
                                 </div>
                                 <br />
-
                                 <div className="flex justify-center">
                                     <Link
                                         href={routes.cancel.index.href({
@@ -249,6 +256,16 @@ function MeetingRoomConfirmation() {
                                         Cancel Request
                                     </Link>
                                 </div>
+                                <TestEmailButton
+                                    template="meetingAwaiting"
+                                    buttonTitle="Preview awaiting confirmation email"
+                                    subject="APL Reservation: Awaiting Meeting Room #1, Carver Branch"
+                                />
+                                <TestEmailButton
+                                    template="meetingConfirmed"
+                                    buttonTitle="Preview confirmation email"
+                                    subject="APL Reservation: Confirmed Meeting Room #1, Carver Branch"
+                                />
                             </div>
                         </div>
                     </div>

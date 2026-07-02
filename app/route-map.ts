@@ -9,6 +9,9 @@ export const routes = {
         index: route("/:roomKind/cancel", "./routes/cancel/cancel.tsx"),
         confirmation: route("/:roomKind/cancel/confirm", "./routes/cancel/confirm.tsx"),
     },
+    api: {
+        sendEmail: route("/api/sendEmail", "./routes/api/sendEmail.tsx"),
+    },
 };
 
 export namespace Room {

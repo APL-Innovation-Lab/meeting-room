@@ -2,6 +2,7 @@ import { Button, Card, CardGroup, Link } from "@trussworks/react-uswds";
 import { Room, routes } from "~/route-map";
 
 import type { Route } from "./+types/confirm";
+import TestEmailButton from "~/components/TestEmailButton";
 
 export default function CancellationConfirmation({ params }: Route.ComponentProps) {
     if (params.roomKind === Room.Meeting.kind) {
@@ -44,6 +45,11 @@ function MeetingRoomCancellationConfirmation() {
                                         Back to Meeting Spaces
                                     </Button>
                                 </Link>
+                                <TestEmailButton
+                                    template="meetingCanceled"
+                                    buttonTitle="Preview cancellation email"
+                                    subject="APL Reservation: Canceled Meeting Room #1, Carver Branch"
+                                />
                             </div>
                         </div>
                     </div>
@@ -88,6 +94,11 @@ function SharedLearningRoomCancellationConfirmation() {
                                         Back to Meeting Spaces
                                     </Button>
                                 </Link>
+                                <TestEmailButton
+                                    template="sharedCanceled"
+                                    buttonTitle="Preview cancellation email"
+                                    subject="APL Reservation: Canceled Shared Learning - 408, Central Library"
+                                />
                             </div>
                         </div>
                     </div>
