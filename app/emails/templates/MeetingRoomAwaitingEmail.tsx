@@ -16,6 +16,7 @@ import { EMAIL_ASSET_BASE_URL } from "../base-url";
 import { SourceSansProFonts } from "../source-sans-pro-fonts";
 import { emailTailwindConfig } from "../theme";
 
+// TODO: Remove hardcoded values.
 export default function MeetingRoomAwaitingEmail() {
     const baseUrl =
         (typeof window !== "undefined" ? window.location.origin : "") || "http://localhost:5173";

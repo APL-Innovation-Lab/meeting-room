@@ -19,8 +19,8 @@ import EmailCalendarButton from "../components/EmailCalendarButton";
 import { SourceSansProFonts } from "../source-sans-pro-fonts";
 import { emailTailwindConfig } from "../theme";
 
+// TODO: Remove hardcoded values.
 export default function MeetingRoomConfirmationEmail() {
-    // Use dynamic values eventually
     const baseUrl =
         (typeof window !== "undefined" ? window.location.origin : "") || "http://localhost:5173";
     const title = "Meeting Room #1";
