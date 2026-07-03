@@ -1,4 +1,16 @@
-import { Body, Column, Container, Head, Hr, Html, Img, Link, Row, Section, Tailwind, Text } from "react-email";
+import {
+    Body,
+    Column,
+    Container,
+    Head,
+    Hr,
+    Html,
+    Img,
+    Row,
+    Section,
+    Tailwind,
+    Text,
+} from "react-email";
 import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
 
 import { EMAIL_ASSET_BASE_URL } from "../base-url";
@@ -8,7 +20,8 @@ import { emailTailwindConfig } from "../theme";
 
 export default function MeetingRoomConfirmationEmail() {
     // Use dynamic values eventually
-    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const baseUrl =
+        (typeof window !== "undefined" ? window.location.origin : "") || "http://localhost:5173";
     const title = "Meeting Room #1";
     const description = "Meeting room reservation confirmation for Carver Branch";
     const location = "1161 Angelina St, Austin, TX 78702";
@@ -24,89 +37,140 @@ export default function MeetingRoomConfirmationEmail() {
                 <Head>
                     <SourceSansProFonts />
                 </Head>
-                <Body className="bg-[#F6F6F6] m-0 p-0">
-                    <Container className="bg-white w-[636px] my-[80px] mx-auto">
+                <Body className="m-0 bg-[#F6F6F6] p-0">
+                    <Container className="mx-auto my-[80px] w-[636px] bg-white">
                         <Section className="pt-[32px] text-center">
-                            <Img className="block mx-auto pb-[20px]" src={`${EMAIL_ASSET_BASE_URL}/static/apl_blue.png`} alt="APL Logo" width="110" height="110" />
-                            <Text className="font-sans text-[40px] font-bold m-0 leading-none">
+                            <Img
+                                className="mx-auto block pb-[20px]"
+                                src={`${EMAIL_ASSET_BASE_URL}/static/apl_blue.png`}
+                                alt="APL Logo"
+                                width="110"
+                                height="110"
+                            />
+                            <Text className="m-0 font-sans text-[40px] leading-none font-bold">
                                 Confirmed!
                             </Text>
                         </Section>
-                        <Section className="pt-[24px] w-[572px] text-center">
-                            <Text className="font-sans text-[16px] m-0 leading-[1.5]">
-                                You have made a Meeting Room reservation at <span className="font-bold">Carver Branch</span>, located at 1161 Angelina St, Austin, TX 78702
+                        <Section className="w-[572px] pt-[24px] text-center">
+                            <Text className="m-0 font-sans text-[16px] leading-[1.5]">
+                                You have made a Meeting Room reservation at{" "}
+                                <span className="font-bold">Carver Branch</span>, located at 1161
+                                Angelina St, Austin, TX 78702
                             </Text>
                         </Section>
-                        <Section className="w-[352px] my-[24px]">
-                            <Hr className="border-[#adadad] m-0" />
+                        <Section className="my-[24px] w-[352px]">
+                            <Hr className="m-0 border-[#adadad]" />
                         </Section>
                         <Section className="w-[352px] px-[24px]">
                             <Row className="pb-[24px]">
-                                <Column >
-                                    <Container className="m-0 rounded-t-[8px] border-[#A9AEB1] border-[1px] w-[48px] h-[15px] bg-[#F0F0F0]">
-                                        <Text className="font-sans text-center text-[12px] text-[#3D4551] font-semibold m-0">MAR</Text>
+                                <Column>
+                                    <Container className="m-0 h-[15px] w-[48px] rounded-t-[8px] border-[1px] border-[#A9AEB1] bg-[#F0F0F0]">
+                                        <Text className="font-semibold m-0 text-center font-sans text-[12px] text-[#3D4551]">
+                                            MAR
+                                        </Text>
                                     </Container>
-                                    <Container className="m-0 rounded-b-[8px] border-[#A9AEB1] border-[1px] w-[48px] border-t-0">
-                                        <Text className="font-sans text-center text-[16px] text-[#3D4551] font-semibold m-0">24</Text>
+                                    <Container className="m-0 w-[48px] rounded-b-[8px] border-[1px] border-t-0 border-[#A9AEB1]">
+                                        <Text className="font-semibold m-0 text-center font-sans text-[16px] text-[#3D4551]">
+                                            24
+                                        </Text>
                                     </Container>
                                 </Column>
-                                <Column >
-                                    <Text className="font-sans text-[16px] font-bold m-0">Mon, March 24, 2024</Text>
-                                    <Text className="font-sans text-[16px] m-0">11:00 AM - 12:00 PM</Text>
+                                <Column>
+                                    <Text className="m-0 font-sans text-[16px] font-bold">
+                                        Mon, March 24, 2024
+                                    </Text>
+                                    <Text className="m-0 font-sans text-[16px]">
+                                        11:00 AM - 12:00 PM
+                                    </Text>
                                 </Column>
                             </Row>
-                            <Row >
+                            <Row>
                                 <Column className="pr-[28px] align-top">
-                                    <Container className="m-0 rounded-[8px] border-[#A9AEB1] border-[1px] w-[48px] h-[44px]">
-                                        <Img className="mx-auto" src={`${EMAIL_ASSET_BASE_URL}/static/icon_location.png`} alt="Location pin" width="28" height="28" />
+                                    <Container className="m-0 h-[44px] w-[48px] rounded-[8px] border-[1px] border-[#A9AEB1]">
+                                        <Img
+                                            className="mx-auto"
+                                            src={`${EMAIL_ASSET_BASE_URL}/static/icon_location.png`}
+                                            alt="Location pin"
+                                            width="28"
+                                            height="28"
+                                        />
                                     </Container>
                                 </Column>
-                                <Column >
-                                    <Text className="font-sans text-[16px] font-bold m-0">Room #1</Text>
-                                    <Text className="font-sans text-[16px] m-0 w-[228px]">Carver Branch, 1161 Angelina St, Austin, TX 78702</Text>
+                                <Column>
+                                    <Text className="m-0 font-sans text-[16px] font-bold">
+                                        Room #1
+                                    </Text>
+                                    <Text className="m-0 w-[228px] font-sans text-[16px]">
+                                        Carver Branch, 1161 Angelina St, Austin, TX 78702
+                                    </Text>
                                 </Column>
                             </Row>
                         </Section>
-                        <Section className="w-[352px] my-[24px]">
-                            <Hr className="border-[#adadad] m-0" />
+                        <Section className="my-[24px] w-[352px]">
+                            <Hr className="m-0 border-[#adadad]" />
                         </Section>
                         <Section className="mb-[48px] text-center">
-                            <Text className="font-sans text-[16px] m-0">
+                            <Text className="m-0 font-sans text-[16px]">
                                 <span className="font-bold">Group:</span> Biology 101
                             </Text>
-                            <Text className="font-sans text-[16px] m-0">
+                            <Text className="m-0 font-sans text-[16px]">
                                 <span className="font-bold">Topic:</span> Study Group
                             </Text>
-                            <Text className="font-sans text-[16px] m-0">
+                            <Text className="m-0 font-sans text-[16px]">
                                 <span className="font-bold">Capacity:</span> 100
                             </Text>
                         </Section>
-                        <Section className="w-[572px] mb-[48px] text-center">
-                            {/*TODO: Determine Cancel link href.*/}
-                            <Text className="font-sans text-[16px] m-0 pb-[24px]">
-                                Don't need the room anymore? <a href="" className="text-[#026E98]">Cancel</a> before your reservation time so someone else can book your room.
+                        <Section className="mb-[48px] w-[572px] text-center">
+                            <Text className="m-0 pb-[24px] font-sans text-[16px]">
+                                Don't need the room anymore? 
+                                <a
+                                    className="text-[#026E98]"
+                                    href={`${baseUrl}/meeting-room/cancel`}
+                                >
+                                    Cancel
+                                </a>
+                                 before your reservation time so someone else can book your room.
                             </Text>
-                            <Text className="font-sans text-[16px] m-0">
-                                Questions? Call 512-974-7400 (option 1) or <a href="http://library.austintexas.libanswers.com" className="text-[#026E98]">Ask a Librarian</a>.
+                            <Text className="m-0 font-sans text-[16px]">
+                                Questions? Call 512-974-7400 (option 1) or 
+                                <a
+                                    className="text-[#026E98]"
+                                    href="http://library.austintexas.libanswers.com"
+                                >
+                                    Ask a Librarian
+                                </a>
+                                .
                             </Text>
                         </Section>
-                        <Text className="font-sans text-[16px] m-0 font-bold text-center">
+                        <Text className="m-0 text-center font-sans text-[16px] font-bold">
                             Add to Calendar:
                         </Text>
-                        <Section className="pt-[24px] pb-[32px] mx-auto w-[400px]">
+                        <Section className="mx-auto w-[400px] pt-[24px] pb-[32px]">
                             <Row>
-                                <Link href={googleLink} target="_blank" rel="noreferrer">
-                                    <EmailCalendarButton marginRight="10px">Google</EmailCalendarButton>
-                                </Link>
-                                <Link href={icsLink} download="reservation.ics">
-                                    <EmailCalendarButton marginRight="10px">Outlook</EmailCalendarButton>
-                                </Link>
-                                <Link href={icsLink} download="reservation.ics">
-                                    <EmailCalendarButton marginRight="10px">iCal</EmailCalendarButton>
-                                </Link>
-                                <Link href={yahooLink} target="_blank" rel="noreferrer">
-                                    <EmailCalendarButton marginRight="0">Yahoo!</EmailCalendarButton>
-                                </Link>
+                                <EmailCalendarButton href={googleLink} marginRight="10px">
+                                    Google
+                                </EmailCalendarButton>
+                                <EmailCalendarButton
+                                    href={icsLink}
+                                    download="reservation.ics"
+                                    marginRight="10px"
+                                >
+                                    Outlook
+                                </EmailCalendarButton>
+                                <EmailCalendarButton
+                                    href={icsLink}
+                                    download="reservation.ics"
+                                    marginRight="10px"
+                                >
+                                    iCal
+                                </EmailCalendarButton>
+                                <EmailCalendarButton
+                                    href={yahooLink}
+                                    download="reservation.ics"
+                                    marginRight="0"
+                                >
+                                    Yahoo!
+                                </EmailCalendarButton>
                             </Row>
                         </Section>
                     </Container>

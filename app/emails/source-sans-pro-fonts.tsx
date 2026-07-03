@@ -1,6 +1,6 @@
-import { Font } from 'react-email';
+import { Font } from "react-email";
 
-const BASE = 'https://fonts.gstatic.com/s/sourcesanspro/v21';
+const BASE = "https://fonts.gstatic.com/s/sourcesanspro/v21";
 
 const NORMAL: Record<number, string> = {
     200: `${BASE}/6xKydSBYKcSV-LCoeQqfX1RYOo3i94_wlxdu.woff2`,
@@ -25,22 +25,22 @@ const WEIGHTS = [200, 300, 400, 600, 700, 900] as const;
 export function SourceSansProFonts() {
     return (
         <>
-            {WEIGHTS.map((weight) => (
+            {WEIGHTS.map(weight => (
                 <Font
                     key={`normal-${weight}`}
                     fontFamily="Source Sans Pro"
-                    fallbackFontFamily={['Arial', 'sans-serif']}
-                    webFont={{ url: NORMAL[weight], format: 'woff2' }}
+                    fallbackFontFamily={["Arial", "sans-serif"]}
+                    webFont={{ url: NORMAL[weight], format: "woff2" }}
                     fontWeight={weight}
                     fontStyle="normal"
                 />
             ))}
-            {WEIGHTS.map((weight) => (
+            {WEIGHTS.map(weight => (
                 <Font
                     key={`italic-${weight}`}
                     fontFamily="Source Sans Pro"
-                    fallbackFontFamily={['Arial', 'sans-serif']}
-                    webFont={{ url: ITALIC[weight], format: 'woff2' }}
+                    fallbackFontFamily={["Arial", "sans-serif"]}
+                    webFont={{ url: ITALIC[weight], format: "woff2" }}
                     fontWeight={weight}
                     fontStyle="italic"
                 />
