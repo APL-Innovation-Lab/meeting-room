@@ -16,7 +16,7 @@ export default function CancellationConfirmation({ params }: Route.ComponentProp
 function MeetingRoomCancellationConfirmation() {
     return (
         <div className="flex justify-center">
-            <CardGroup className="min-w-[50rem] max-w-[49rem]">
+            <CardGroup className="min-w-120 max-w-196">
                 <Card>
                     <div className="ml-5 mr-5 justify-center">
                         <h1 className="text-center m-0 pt-4 font-sans text-[40px] font-bold">
@@ -63,7 +63,7 @@ function MeetingRoomCancellationConfirmation() {
 function SharedLearningRoomCancellationConfirmation() {
     return (
         <div className="flex justify-center">
-            <CardGroup className="min-w-[50rem] max-w-[49rem]">
+            <CardGroup className="min-w-120 max-w-196">
                 <Card>
                     <div className="ml-5 mr-5 justify-center">
                         <h1 className="text-center m-0 pt-4 font-sans text-[40px] font-bold">

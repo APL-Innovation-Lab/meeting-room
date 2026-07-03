@@ -36,7 +36,7 @@ function SharedLearningRoomConfirmation() {
     return (
         <div className="flex justify-center">
             <title>{`Confirmation • ${site.title}`}</title>
-            <CardGroup className="min-w-[30rem] max-w-[49rem]">
+            <CardGroup className="min-w-120 max-w-196">
                 <Card>
                     <div className="ml-5 mr-5 justify-center">
                         <CardHeader className="-mt-3">
@@ -159,7 +159,7 @@ function SharedLearningRoomConfirmation() {
 function MeetingRoomConfirmation() {
     return (
         <div className="flex justify-center">
-            <CardGroup className="min-w-[30rem] max-w-[49rem]">
+            <CardGroup className="min-w-120 max-w-196">
                 <Card>
                     <div className="ml-5 mr-5 justify-center">
                         <CardHeader className="-mt-3">

@@ -1,9 +1,8 @@
 import { Button, Card, CardGroup, Link } from "@trussworks/react-uswds";
-import { href } from "react-router";
 
 import { Room } from "~/lib/room";
-
 import type { Route } from "./+types/cancel";
+import { href } from "react-router";
 
 export default function Cancellation({ params }: Route.ComponentProps) {
     if (params.roomKind === Room.Meeting.kind) {
@@ -16,7 +15,7 @@ export default function Cancellation({ params }: Route.ComponentProps) {
 function MeetingRoomCancellation() {
     return (
         <div className="flex justify-center">
-            <CardGroup className="min-w-[50rem] max-w-[49rem]">
+            <CardGroup className="min-w-120 max-w-196">
                 <Card>
                     <div className="ml-5 mr-5 justify-center">
                         <h3 className="text-center pt-4 font-sans text-sans-xs">
@@ -69,7 +68,7 @@ function MeetingRoomCancellation() {
 function SharedLearningRoomCancellation() {
     return (
         <div className="flex justify-center">
-            <CardGroup className="min-w-[50rem] max-w-[49rem]">
+            <CardGroup className="min-w-120 max-w-196">
                 <Card>
                     <div className="ml-5 mr-5 justify-center">
                         <h3 className="text-center pt-4 font-sans text-sans-xs">
