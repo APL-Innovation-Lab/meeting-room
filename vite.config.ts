@@ -1,9 +1,18 @@
-// import { ValidateEnv as env } from "@julr/vite-plugin-validate-env";
 import { reactRouter } from "@react-router/dev/vite";
+import babel from "@rolldown/plugin-babel";
+import tailwindcss from "@tailwindcss/vite";
+import { varlockVitePlugin as varlock } from "@varlock/vite-integration";
+import { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import devtoolsJson from "vite-plugin-devtools-json";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-    plugins: [reactRouter(), tsconfigPaths(), devtoolsJson()],
+    plugins: [
+        varlock(),
+        tailwindcss(),
+        reactRouter(),
+        babel({ presets: [reactCompilerPreset()] }),
+        devtoolsJson(),
+    ],
+    resolve: { tsconfigPaths: true },
 });

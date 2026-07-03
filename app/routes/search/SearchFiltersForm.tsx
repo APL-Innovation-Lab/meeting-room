@@ -8,8 +8,10 @@ import {
 } from "@trussworks/react-uswds";
 import { useEffect, useRef, useState } from "react";
 import { Form, useLocation, useNavigation } from "react-router";
-import { type LocationOption, type SearchFilters } from "./search.data.server";
+
 import { Spinner } from "~/components/Spinner";
+
+import { type LocationOption, type SearchFilters } from "./search.data.server";
 
 const MIN_LOADING_STATE_MS = 500;
 
@@ -183,7 +185,7 @@ export function SearchFiltersForm({
                 </Button>
             </div>
 
-            <div className="border-b-1px border-base-light mt-3" />
+            <div className="border-base-light mt-3 border-b-1px" />
         </Form>
     );
 }

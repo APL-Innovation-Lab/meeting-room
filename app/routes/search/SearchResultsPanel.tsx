@@ -1,9 +1,12 @@
 import { Suspense, use, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+
 import { Map as BranchMap } from "~/components/Map";
-import { SearchResult } from "./SearchResult";
-import { type BranchSearchResult } from "./search.data.server";
 import { Spinner } from "~/components/Spinner";
+import { Room } from "~/lib/room";
+
+import { type BranchSearchResult } from "./search.data.server";
+import { SearchResult } from "./SearchResult";
 
 export namespace SearchResultsPanel {
     export type DeferredSearchData = {
@@ -13,6 +16,7 @@ export namespace SearchResultsPanel {
 
     export interface Props {
         heading?: string;
+        roomKind: Room.Kind;
         searchResults?: BranchSearchResult[];
         branchLngLats?: Array<[number, number]>;
         deferredSearchData?: Promise<DeferredSearchData>;
@@ -20,13 +24,20 @@ export namespace SearchResultsPanel {
     }
 }
 
-function SearchResultsList({ searchResults }: { searchResults: BranchSearchResult[] }) {
+function SearchResultsList({
+    searchResults,
+    roomKind,
+}: {
+    searchResults: BranchSearchResult[];
+    roomKind: Room.Kind;
+}) {
     return (
-        <ul className="flex flex-col gap-[1rem] divide-y-[1px] divide-base-light overflow-scroll">
+        <ul className="overflow-scroll flex flex-col gap-[1rem] divide-y-[1px] divide-base-light">
             {searchResults.filter(Boolean).map((result, idx) => (
                 <SearchResult
                     key={result.branch}
                     index={idx + 1}
+                    roomKind={roomKind}
                     image={result.image}
                     branch={result.branch}
                     distance={result.distance}
@@ -42,11 +53,13 @@ function SearchResultsList({ searchResults }: { searchResults: BranchSearchResul
 
 function DeferredSearchResultsList({
     deferredSearchData,
+    roomKind,
 }: {
     deferredSearchData: Promise<SearchResultsPanel.DeferredSearchData>;
+    roomKind: Room.Kind;
 }) {
     const { searchResults } = use(deferredSearchData);
-    return <SearchResultsList searchResults={searchResults} />;
+    return <SearchResultsList searchResults={searchResults} roomKind={roomKind} />;
 }
 
 function DeferredBranchMap({
@@ -82,36 +95,37 @@ function DeferredBranchMap({
 
 function SearchResultsListFallback() {
     return (
-        <div className="flex h-full items-start mt-4 justify-center">
-            <Spinner className="h-8 w-8 " />
+        <div className="mt-4 flex h-full items-start justify-center">
+            <Spinner className="h-8 w-8" />
         </div>
     );
 }
 
 function SearchResultsListError() {
     return (
-        <div className="flex h-full items-center justify-center text-center text-secondary-dark">
+        <div className="text-secondary-dark text-center flex h-full items-center justify-center">
             Could not load room availability right now.
         </div>
     );
 }
 
-export function SearchResultsPanel({ mapboxToken, ...props }: SearchResultsPanel.Props) {
+export function SearchResultsPanel({ mapboxToken, roomKind, ...props }: SearchResultsPanel.Props) {
     const searchResults = props.searchResults ?? [];
     const branchLngLats = props.branchLngLats ?? [];
     const deferredSearchData = props.deferredSearchData;
     const heading = props.heading ?? "All Available Locations";
 
     return (
-        <div className="flex flex-col gap-[0.5rem] overflow-hidden px-4 pb-4">
-            <h4 className="font-bold pt-2">{heading}</h4>
-            <div className="grid grid-cols-2 gap-[1rem] h-[45rem] pt-2">
+        <div className="overflow-hidden flex flex-col gap-[0.5rem] px-4 pb-4">
+            <h4 className="pt-2 font-bold">{heading}</h4>
+            <div className="grid h-[45rem] grid-cols-2 gap-[1rem] pt-2">
                 {deferredSearchData ? (
                     <>
                         <Suspense fallback={<SearchResultsListFallback />}>
                             <ErrorBoundary fallback={<SearchResultsListError />}>
                                 <DeferredSearchResultsList
                                     deferredSearchData={deferredSearchData}
+                                    roomKind={roomKind}
                                 />
                             </ErrorBoundary>
                         </Suspense>
@@ -122,7 +136,7 @@ export function SearchResultsPanel({ mapboxToken, ...props }: SearchResultsPanel
                     </>
                 ) : (
                     <>
-                        <SearchResultsList searchResults={searchResults} />
+                        <SearchResultsList searchResults={searchResults} roomKind={roomKind} />
                         <BranchMap
                             className="h-full w-full"
                             branchLngLats={branchLngLats}

@@ -1,5 +1,5 @@
 import { ExternalLink } from "~/components/ExternalLink";
-import { Room } from "~/route-map";
+import { Room } from "~/lib/room";
 
 export namespace SearchDescription {
     export interface Props {

@@ -1,20 +1,49 @@
 {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "js/ts.preferences.importModuleSpecifierEnding": "js",
+    "js/ts.updateImportsOnFileMove.enabled": "always",
+
+    "oxc.enable": true,
+
+    // Tailwind is now configured CSS-first (Tailwind v4): app/styles/tailwind.css is
+    // the entry (`@import "tailwindcss"` + `@config`). Point IntelliSense at it so it
+    // loads the v4 design system — standard utilities, the USWDS theme tokens, and the
+    // usa-* component classes — instead of auto-detecting the legacy tailwind.config.ts.
+    "tailwindCSS.experimental.configFile": "app/styles/tailwind.css",
+
+    "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-        "source.fixAll": "explicit"
+        "source.fixAll": "explicit",
+        "source.fixAll.oxc": "explicit"
     },
 
     "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.fixAll": "explicit"
-        }
+        "editor.defaultFormatter": "oxc.oxc-vscode"
     },
-    "typescript.updateImportsOnFileMove.enabled": "always",
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "oxc.oxc-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "oxc.oxc-vscode"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "oxc.oxc-vscode"
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "oxc.oxc-vscode"
+    },
+    "[github-actions-workflow]": {
+        "editor.defaultFormatter": "oxc.oxc-vscode"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "oxc.oxc-vscode"
+    },
 
-    "unocss.disable": true,
+    "files.exclude": {
+        "**/.DS_Store": true,
+        ".react-router": true,
+        "build": true
+    },
 
     // "vitest.enable": true,
 
@@ -33,8 +62,5 @@
         "backgroundColor": "#434B54",
         "color": "#fff",
         "borderRadius": "2px"
-    },
-    "[dotenv]": {
-        "editor.defaultFormatter": "foxundermoon.shell-format"
     }
 }

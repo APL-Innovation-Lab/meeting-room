@@ -1,8 +1,11 @@
-import { openKv } from "@deno/kv";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import validator from "validator";
 import { z } from "zod";
-import { Room } from "~/route-map";
+
+import { Room } from "~/lib/room";
+
+import { getRepos, type Repos } from "./db/client.server";
+import type { NewRoom, NewSpecialDate, Room as RoomRow } from "./db/schema";
 
 /**
  * Represents a safe result of an operation that can either be successful with data or fail with an error.
@@ -119,11 +122,7 @@ export type Reservation = {
 };
 
 const DEFAULT_BASE_URL = "https://library.austintexas.gov";
-const CACHE_TTL_MS = 5 * 60 * 1000;
 const RESERVATIONS_FETCH_CONCURRENCY = 8;
-const RESERVATION_CACHE_TTL_MS = 60 * 1000;
-const CACHE_PREFIX = ["apl_live_cache"] as const;
-const MAPPING_PREFIX = ["apl_live_mapping", "location_path"] as const;
 
 const LocationInfoById = {
     "183": {
@@ -155,7 +154,7 @@ const LocationInfoById = {
 
 type LocationId = keyof typeof LocationInfoById;
 
-type LiveRoom = {
+export type LiveRoom = {
     roomId: string;
     locationId: string;
     published: boolean;
@@ -230,7 +229,97 @@ const MeetingRoomReservationSchema = z.object({
     end: z.string(),
 });
 
-const kv = await openKv();
+/** The repositories, seeded with static reference data on first use (lazy, so importing this module
+ * in a unit test never opens the on-disk database — only the async fetchers below reach the store). */
+function repos(): Repos {
+    const r = getRepos();
+    ensureSeeded(r);
+    return r;
+}
+
+let seeded = false;
+/** Mirrors the static domain constants into their tables on first DB use (idempotent per process). */
+function ensureSeeded(r: Repos): void {
+    if (seeded) return;
+    r.branches.seedPaths(STATIC_LOCATION_PATH_MAPPING);
+    r.operatingHours.replaceAll(operatingHoursSeedRows());
+    r.roomConflicts.replaceAll(roomConflictSeedRows());
+    seeded = true;
+}
+
+function operatingHoursSeedRows(): Array<{
+    locationId: string;
+    weekday: number;
+    openingMinute: number | null;
+    closingMinute: number | null;
+}> {
+    const rows = [];
+    for (const [locationId, byWeekday] of Object.entries(OPERATING_HOURS_BY_LOCATION)) {
+        for (const [weekday, hours] of Object.entries(byWeekday)) {
+            rows.push({
+                locationId,
+                weekday: Number(weekday),
+                openingMinute: hours.opening === null ? null : hours.opening * 60,
+                closingMinute: hours.closing === null ? null : hours.closing * 60,
+            });
+        }
+    }
+    return rows;
+}
+
+function roomConflictSeedRows(): Array<{ roomId: string; conflictsWith: string }> {
+    const rows = [];
+    for (const [roomId, conflicts] of Object.entries(MR_COMBINED_ROOM_CONFLICTS)) {
+        for (const conflictsWith of conflicts) {
+            rows.push({ roomId, conflictsWith });
+        }
+    }
+    return rows;
+}
+
+/** Read-through freshness watermark: did we sync this source within the TTL? */
+function isFresh(source: string): boolean {
+    return repos().syncState.isFresh(source);
+}
+
+function markSynced(source: string): void {
+    repos().syncState.touch(source);
+}
+
+/** SLR rooms (a `LiveRoom`) <-> the `rooms` table row. */
+function liveRoomToRow(room: LiveRoom, syncedAt: string): NewRoom {
+    return {
+        roomId: room.roomId,
+        locationId: room.locationId,
+        kind: "shared-learning-room",
+        name: room.name,
+        capacity: room.capacity,
+        floor: room.floor,
+        image: room.image,
+        published: room.published,
+        airplay: room.amenities.airplay,
+        hdmi: room.amenities.hdmi,
+        whiteboard: room.amenities.whiteboard,
+        syncedAt,
+    };
+}
+
+function rowToLiveRoom(row: RoomRow): LiveRoom {
+    return {
+        roomId: row.roomId,
+        locationId: row.locationId,
+        published: row.published,
+        name: row.name ?? "",
+        capacity: row.capacity ?? 0,
+        floor: row.floor ?? 1,
+        image: row.image ?? "",
+        amenities: {
+            airplay: row.airplay,
+            hdmi: row.hdmi,
+            whiteboard: row.whiteboard,
+        },
+    };
+}
 
 function normalizeBaseUrl(baseUrl: string): string {
     return baseUrl.replace(/\/+$/, "");
@@ -239,11 +328,6 @@ function normalizeBaseUrl(baseUrl: string): string {
 function cleanText(value: string): string {
     return value.replace(/\s+/g, " ").trim();
 }
-
-type CachePayload<T> = {
-    fetchedAt: number;
-    data: T;
-};
 
 const STATIC_LOCATION_PATH_MAPPING: Record<string, string> = {
     "183": "/austin-history-center",
@@ -254,24 +338,6 @@ const STATIC_LOCATION_PATH_MAPPING: Record<string, string> = {
     "3939": "/central-library",
 };
 
-async function getCached<T>(
-    bucket: string,
-    scope: string,
-    ttlMs = CACHE_TTL_MS,
-): Promise<T | undefined> {
-    const entry = await kv.get<CachePayload<T>>([...CACHE_PREFIX, bucket, scope]);
-    if (!entry.value) return undefined;
-    if (Date.now() - entry.value.fetchedAt > ttlMs) return undefined;
-    return entry.value.data;
-}
-
-async function setCached<T>(bucket: string, scope: string, data: T): Promise<void> {
-    await kv.set([...CACHE_PREFIX, bucket, scope], {
-        fetchedAt: Date.now(),
-        data,
-    } satisfies CachePayload<T>);
-}
-
 async function mapWithConcurrency<T, U>(
     items: T[],
     concurrency: number,
@@ -280,7 +346,7 @@ async function mapWithConcurrency<T, U>(
     if (items.length === 0) return [];
 
     const limit = Math.max(1, Math.floor(concurrency));
-    const results: U[] = new Array(items.length);
+    const results = Array.from<U>({ length: items.length });
     let cursor = 0;
 
     async function worker(): Promise<void> {
@@ -294,26 +360,9 @@ async function mapWithConcurrency<T, U>(
     return results;
 }
 
-async function ensureLocationPathMapping(): Promise<void> {
-    await Promise.all(
-        Object.entries(STATIC_LOCATION_PATH_MAPPING).map(async ([locationId, path]) => {
-            const key = [...MAPPING_PREFIX, locationId];
-            const existing = await kv.get<string>(key);
-            if (!existing.value) {
-                await kv.set(key, path);
-            }
-        }),
-    );
-}
-
-async function getLocationPathMappingFromKv(): Promise<Record<string, string>> {
-    await ensureLocationPathMapping();
-    const mapping: Record<string, string> = {};
-    for await (const entry of kv.list<string>({ prefix: [...MAPPING_PREFIX] })) {
-        const locationId = String(entry.key[entry.key.length - 1]);
-        mapping[locationId] = entry.value;
-    }
-    return mapping;
+/** location_id -> location-page path. Paths are seeded into `branches` on first DB use. */
+function loadLocationPathMapping(): Record<string, string> {
+    return repos().branches.pathMap();
 }
 
 type ParseNode = DefaultTreeAdapterMap["node"];
@@ -443,6 +492,18 @@ function normalizeMeetingRoomBranchName(value: string): string {
         .replace(/\bahc\b/g, "austin history center")
         .replace(/[^a-z0-9]+/g, " ")
         .trim();
+}
+
+/**
+ * Substring-matches two already-normalized branch names, but treats an empty needle as "no match".
+ * `normalizeMeetingRoomBranchName` can strip a label down to "" (e.g. "(North Village)" or a bare
+ * "- Capacity: 10"), and since every string `.includes("")`, an empty value used to match *every*
+ * branch — assigning unparseable rooms to all locations (AV-5). Requiring both sides to be
+ * non-empty drops the ambiguous room instead of fanning it out everywhere.
+ */
+export function branchNeedleMatches(left: string, right: string): boolean {
+    if (!left || !right) return false;
+    return left === right || left.includes(right) || right.includes(left);
 }
 
 function parseMeetingRoomOptionLabel(
@@ -666,8 +727,10 @@ async function fetchJson<T>(url: string): Promise<T> {
 async function fetchLiveRooms(baseUrl = DEFAULT_BASE_URL): Promise<LiveRoom[]> {
     const now = Date.now();
     const host = normalizeBaseUrl(baseUrl);
-    const cached = await getCached<LiveRoom[]>("rooms", host);
-    if (cached) return cached;
+    const source = `slr_rooms:${host}`;
+    if (isFresh(source)) {
+        return repos().rooms.listByKind("shared-learning-room").map(rowToLiveRoom);
+    }
 
     const [roomStatesRaw, roomMarkupRaw] = await Promise.all([
         fetchJson<unknown>(`${host}/slr_room_states.json?t=${now}`),
@@ -699,50 +762,25 @@ async function fetchLiveRooms(baseUrl = DEFAULT_BASE_URL): Promise<LiveRoom[]> {
         })
         .filter((value): value is LiveRoom => Boolean(value));
 
-    await setCached("rooms", host, rooms);
+    const syncedAt = new Date().toISOString();
+    repos().rooms.replaceByKind(
+        "shared-learning-room",
+        rooms.map(room => liveRoomToRow(room, syncedAt)),
+    );
+    markSynced(source);
 
     return rooms;
 }
 
-async function fetchMeetingRoomBranches(
-    baseUrl = DEFAULT_BASE_URL,
-): Promise<LiveMeetingRoomBranch[]> {
-    const host = normalizeBaseUrl(baseUrl);
-    const now = Date.now();
-    const cached = await getCached<LiveMeetingRoomBranch[]>("meeting_room_branches_v2", host);
-    if (cached) return cached;
-    const response = await fetch(`${host}/meeting-rooms/request?t=${now}`);
-    if (!response.ok) {
-        throw new Error(`Request failed (${response.status}) for ${host}/meeting-rooms/request`);
-    }
-
-    const html = await response.text();
-    const options = parseLocationOptions(html, "edit-location");
-    if (!options.length) {
-        throw new Error("Could not find meeting-room location selector.");
-    }
-    const branches: LiveMeetingRoomBranch[] = options
-        .map(option => {
-            const parsed = parseBranchOptionLabel(option.label);
-            if (!parsed) return undefined;
-
-            return {
-                ...parsed,
-                locationId: option.locationId,
-            };
-        })
-        .filter((value): value is LiveMeetingRoomBranch => Boolean(value && value.locationId));
-
-    await setCached("meeting_room_branches_v2", host, branches);
-    return branches;
-}
-
-async function fetchMeetingRoomInventory(
-    baseUrl = DEFAULT_BASE_URL,
-): Promise<MeetingRoomInventory> {
-    const host = normalizeBaseUrl(baseUrl);
-    const cached = await getCached<MeetingRoomInventory>("meeting_room_inventory_v1", host);
-    if (cached) return cached;
+/**
+ * Scrapes the meeting-rooms request page once per TTL and upserts the normalized rows: branch display
+ * names (keyed by location) and the meeting rooms themselves. Each room is assigned to its single
+ * best-matching location — the old code fanned a fuzzily-matched room out to EVERY matching location;
+ * single assignment is the source-of-truth simplification (see migration notes).
+ */
+async function ensureMeetingRoomsSynced(host: string): Promise<void> {
+    const source = `meeting_rooms:${host}`;
+    if (isFresh(source)) return;
 
     const response = await fetch(`${host}/meeting-rooms/request?t=${Date.now()}`);
     if (!response.ok) {
@@ -753,117 +791,169 @@ async function fetchMeetingRoomInventory(
     const locations = parseLocationOptions(html, "edit-location")
         .map(option => {
             const parsed = parseBranchOptionLabel(option.label);
-            if (!parsed) return undefined;
-
-            return {
-                locationId: option.locationId,
-                branch: parsed.branch,
-            };
+            return parsed ? { locationId: option.locationId, branch: parsed.branch } : undefined;
         })
-        .filter((value): value is MeetingRoomInventoryLocation => Boolean(value));
-
-    const rooms = parseLocationOptions(html, "edit-meeting-room")
-        .map(option => {
-            const parsed = parseMeetingRoomOptionLabel(option.label);
-            if (!parsed) return undefined;
-
-            return {
-                roomId: option.locationId,
-                branch: parsed.branch,
-                capacity: parsed.capacity,
-            };
-        })
-        .filter((value): value is MeetingRoomInventoryRoom => Boolean(value));
-
-    const roomsByLocation: Record<string, MeetingRoomInventoryRoom[]> = {};
-    for (const location of locations) {
-        const normalizedLocation = normalizeMeetingRoomBranchName(location.branch);
-        const matchedRooms = rooms.filter(room => {
-            const normalizedRoom = normalizeMeetingRoomBranchName(room.branch);
-            return (
-                normalizedRoom.includes(normalizedLocation) ||
-                normalizedLocation.includes(normalizedRoom)
-            );
-        });
-
-        roomsByLocation[location.locationId] = matchedRooms;
+        .filter((value): value is { locationId: string; branch: string } => Boolean(value));
+    if (!locations.length) {
+        throw new Error("Could not find meeting-room location selector.");
     }
 
-    const inventory: MeetingRoomInventory = {
-        locations,
-        roomsByLocation,
-    };
-    await setCached("meeting_room_inventory_v1", host, inventory);
-    return inventory;
+    const syncedAt = new Date().toISOString();
+    const roomRows = parseLocationOptions(html, "edit-meeting-room")
+        .map((option): NewRoom | undefined => {
+            const parsed = parseMeetingRoomOptionLabel(option.label);
+            if (!parsed) return undefined;
+            const normalizedRoom = normalizeMeetingRoomBranchName(parsed.branch);
+            const location = locations.find(loc =>
+                branchNeedleMatches(normalizedRoom, normalizeMeetingRoomBranchName(loc.branch)),
+            );
+            if (!location) return undefined;
+            return {
+                roomId: option.locationId,
+                locationId: location.locationId,
+                kind: "meeting-room",
+                name: parsed.branch,
+                capacity: parsed.capacity,
+                published: true,
+                syncedAt,
+            };
+        })
+        .filter((value): value is NewRoom => Boolean(value));
+
+    const r = repos();
+    r.branches.upsertNames(locations.map(loc => ({ locationId: loc.locationId, name: loc.branch })));
+    r.rooms.replaceByKind("meeting-room", roomRows);
+    markSynced(source);
+}
+
+/** Per-location capacities + room count, derived from the meeting rooms in the table. */
+function deriveMeetingRoomBranches(): LiveMeetingRoomBranch[] {
+    const r = repos();
+    const nameByLocation = new Map(r.branches.list().map(b => [b.locationId, b.name ?? ""]));
+    const countByLocation = new Map<string, number>();
+    const capacitiesByLocation = new Map<string, Set<number>>();
+
+    for (const room of r.rooms.listByKind("meeting-room")) {
+        countByLocation.set(room.locationId, (countByLocation.get(room.locationId) ?? 0) + 1);
+        const capacities = capacitiesByLocation.get(room.locationId) ?? new Set<number>();
+        if (room.capacity && room.capacity > 0) capacities.add(room.capacity);
+        capacitiesByLocation.set(room.locationId, capacities);
+    }
+
+    return Array.from(countByLocation.entries()).map(([locationId, roomsAvailable]) => ({
+        locationId,
+        branch: nameByLocation.get(locationId) ?? "",
+        capacities: Array.from(capacitiesByLocation.get(locationId) ?? []).sort((a, b) => a - b),
+        roomsAvailable,
+    }));
+}
+
+/** The inventory view (locations + their rooms), grouped from the meeting rooms in the table. */
+function deriveMeetingRoomInventory(): MeetingRoomInventory {
+    const r = repos();
+    const nameByLocation = new Map(r.branches.list().map(b => [b.locationId, b.name ?? ""]));
+    const roomsByLocation: Record<string, MeetingRoomInventoryRoom[]> = {};
+
+    for (const room of r.rooms.listByKind("meeting-room")) {
+        (roomsByLocation[room.locationId] ??= []).push({
+            roomId: room.roomId,
+            branch: nameByLocation.get(room.locationId) ?? "",
+            capacity: room.capacity ?? 0,
+        });
+    }
+
+    const locations: MeetingRoomInventoryLocation[] = Object.keys(roomsByLocation).map(
+        locationId => ({ locationId, branch: nameByLocation.get(locationId) ?? "" }),
+    );
+
+    return { locations, roomsByLocation };
+}
+
+async function fetchMeetingRoomBranches(
+    baseUrl = DEFAULT_BASE_URL,
+): Promise<LiveMeetingRoomBranch[]> {
+    await ensureMeetingRoomsSynced(normalizeBaseUrl(baseUrl));
+    return deriveMeetingRoomBranches();
+}
+
+async function fetchMeetingRoomInventory(
+    baseUrl = DEFAULT_BASE_URL,
+): Promise<MeetingRoomInventory> {
+    await ensureMeetingRoomsSynced(normalizeBaseUrl(baseUrl));
+    return deriveMeetingRoomInventory();
+}
+
+/** Scrapes the SLR request page once per TTL for branch display names (keyed by location). */
+async function ensureSlrBranchNamesSynced(host: string): Promise<void> {
+    const source = `slr_branch_names:${host}`;
+    if (isFresh(source)) return;
+
+    const response = await fetch(`${host}/slr/request?t=${Date.now()}`);
+    if (!response.ok) {
+        throw new Error(`Request failed (${response.status}) for ${host}/slr/request`);
+    }
+    const html = await response.text();
+    const names = parseLocationOptions(html, "edit-location")
+        .map(option => {
+            const parsed = parseBranchOptionLabel(option.label);
+            return parsed ? { locationId: option.locationId, name: parsed.branch } : undefined;
+        })
+        .filter((value): value is { locationId: string; name: string } => Boolean(value));
+
+    repos().branches.upsertNames(names);
+    markSynced(source);
+}
+
+/** Per-branch SLR availability, derived from PUBLISHED SLR rooms grouped by location. */
+function deriveSharedLearningRoomBranches(): LiveSharedLearningRoomBranch[] {
+    const r = repos();
+    const nameByLocation = new Map(r.branches.list().map(b => [b.locationId, b.name ?? ""]));
+    const countByLocation = new Map<string, number>();
+    const capacitiesByLocation = new Map<string, Set<number>>();
+
+    for (const room of r.rooms.listByKind("shared-learning-room")) {
+        if (!room.published) continue;
+        const locationId = cleanText(room.locationId);
+        countByLocation.set(locationId, (countByLocation.get(locationId) ?? 0) + 1);
+        const capacities = capacitiesByLocation.get(locationId) ?? new Set<number>();
+        if (room.capacity && room.capacity > 0) capacities.add(room.capacity);
+        capacitiesByLocation.set(locationId, capacities);
+    }
+
+    return Array.from(countByLocation.entries())
+        .filter(([, roomsAvailable]) => roomsAvailable > 0)
+        .map(([locationId, roomsAvailable]) => ({
+            locationId,
+            branch: nameByLocation.get(locationId) ?? "",
+            capacities: Array.from(capacitiesByLocation.get(locationId) ?? []).sort((a, b) => a - b),
+            roomsAvailable,
+        }));
 }
 
 async function fetchSharedLearningRoomBranches(
     baseUrl = DEFAULT_BASE_URL,
 ): Promise<LiveSharedLearningRoomBranch[]> {
     const host = normalizeBaseUrl(baseUrl);
-    const now = Date.now();
-    const cached = await getCached<LiveSharedLearningRoomBranch[]>("slr_branches_v2", host);
-    if (cached) return cached;
-    const [liveRooms, slrRequestHtml] = await Promise.all([
-        fetchLiveRooms(host),
-        fetch(`${host}/slr/request?t=${now}`).then(async response => {
-            if (!response.ok) {
-                throw new Error(`Request failed (${response.status}) for ${host}/slr/request`);
-            }
-            return await response.text();
-        }),
-    ]);
-
-    const locationOptions = parseLocationOptions(slrRequestHtml, "edit-location");
-    const publishedCountByLocation = new Map<string, number>();
-    const capacitiesByLocation = new Map<string, Set<number>>();
-
-    for (const room of liveRooms) {
-        if (!room.published) continue;
-        const locationId = cleanText(room.locationId);
-        publishedCountByLocation.set(
-            locationId,
-            (publishedCountByLocation.get(locationId) ?? 0) + 1,
-        );
-
-        const capacities = capacitiesByLocation.get(locationId) ?? new Set<number>();
-        if (Number.isFinite(room.capacity) && room.capacity > 0) {
-            capacities.add(room.capacity);
-        }
-        capacitiesByLocation.set(locationId, capacities);
-    }
-
-    const branches: LiveSharedLearningRoomBranch[] = locationOptions
-        .map(option => {
-            const parsed = parseBranchOptionLabel(option.label);
-            if (!parsed) return undefined;
-            const roomsAvailable = publishedCountByLocation.get(option.locationId) ?? 0;
-            if (roomsAvailable <= 0) return undefined;
-            const computedCapacities = Array.from(
-                capacitiesByLocation.get(option.locationId) ?? [],
-            ).sort((a, b) => a - b);
-
-            return {
-                locationId: option.locationId,
-                branch: parsed.branch,
-                capacities: computedCapacities.length > 0 ? computedCapacities : parsed.capacities,
-                roomsAvailable,
-            };
-        })
-        .filter((value): value is LiveSharedLearningRoomBranch => Boolean(value));
-
-    await setCached("slr_branches_v2", host, branches);
-    return branches;
+    await Promise.all([fetchLiveRooms(host), ensureSlrBranchNamesSynced(host)]);
+    return deriveSharedLearningRoomBranches();
 }
 
 async function fetchBranchDirectory(
     baseUrl = DEFAULT_BASE_URL,
 ): Promise<LiveBranchDirectoryEntry[]> {
     const host = normalizeBaseUrl(baseUrl);
-    const now = Date.now();
-    const cached = await getCached<LiveBranchDirectoryEntry[]>("branch_directory", host);
-    if (cached) return cached;
-    const response = await fetch(`${host}/locations?t=${now}`);
+    const source = `branch_directory:${host}`;
+    if (isFresh(source)) {
+        return repos()
+            .branchDirectory.list()
+            .map(row => ({
+                branch: row.branchName,
+                address: row.address ?? "",
+                image: row.image ?? "",
+                path: row.path ?? "",
+            }));
+    }
+    const response = await fetch(`${host}/locations?t=${Date.now()}`);
     if (!response.ok) {
         throw new Error(`Request failed (${response.status}) for ${host}/locations`);
     }
@@ -871,13 +961,27 @@ async function fetchBranchDirectory(
     const html = await response.text();
     const branches = parseBranchDirectory(html);
 
-    await setCached("branch_directory", host, branches);
+    const syncedAt = new Date().toISOString();
+    repos().branchDirectory.replaceAll(
+        branches.map(branch => ({
+            branchName: branch.branch,
+            address: branch.address,
+            image: branch.image,
+            path: branch.path,
+            syncedAt,
+        })),
+    );
+    markSynced(source);
     return branches;
 }
 
 async function fetchBranchCoordinates(): Promise<LiveBranchCoordinate[]> {
-    const cached = await getCached<LiveBranchCoordinate[]>("branch_coordinates", "global");
-    if (cached) return cached;
+    const source = "branch_coordinates:global";
+    if (isFresh(source)) {
+        return repos()
+            .branchCoordinates.list()
+            .map(row => ({ branch: row.branchName, lngLat: [row.lng, row.lat] as [number, number] }));
+    }
 
     const response = await fetch(
         "https://www.google.com/maps/d/kml?mid=1m7PlBBSOnA2ymIGxBy9WInAlr3Z6_qdL&forcekml=1",
@@ -889,7 +993,16 @@ async function fetchBranchCoordinates(): Promise<LiveBranchCoordinate[]> {
     const kml = await response.text();
     const coordinates = parseBranchCoordinatesKml(kml);
 
-    await setCached("branch_coordinates", "global", coordinates);
+    const syncedAt = new Date().toISOString();
+    repos().branchCoordinates.replaceAll(
+        coordinates.map(coordinate => ({
+            branchName: coordinate.branch,
+            lng: coordinate.lngLat[0],
+            lat: coordinate.lngLat[1],
+            syncedAt,
+        })),
+    );
+    markSynced(source);
     return coordinates;
 }
 
@@ -913,6 +1026,41 @@ function toMinutesFromIsoDateTime(value: string): number | undefined {
     const minute = Number.parseInt(match[2], 10);
     if (!Number.isFinite(hour) || !Number.isFinite(minute)) return undefined;
     return hour * 60 + minute;
+}
+
+/**
+ * Parses a wall-clock time to minutes-since-midnight, accepting BOTH the 12-hour ("5:00 PM") and
+ * 24-hour ("17:00") forms. The upstream `field_early_closing` feed uses the 12-hour form, so a
+ * naive `HH:MM`-only parse silently dropped the meridiem and read "5:00 PM" as 5:00 (AM) — a closing
+ * time *before* opening, which zeroed out the whole day's availability (AV-4). Unlike `toMinutes`,
+ * the meridiem is optional here so a 24-hour value still parses.
+ */
+export function parseClockMinutes(value: string): number | undefined {
+    const match = value.trim().match(/^(\d{1,2}):(\d{2})\s*([AP]M)?$/i);
+    if (!match) return undefined;
+
+    let hour = Number.parseInt(match[1], 10);
+    const minute = Number.parseInt(match[2], 10);
+    if (!Number.isFinite(hour) || !Number.isFinite(minute) || minute > 59) return undefined;
+
+    const period = match[3]?.toUpperCase();
+    if (period) {
+        if (hour < 1 || hour > 12) return undefined;
+        hour = (hour % 12) + (period === "PM" ? 12 : 0);
+    } else if (hour > 23) {
+        return undefined;
+    }
+
+    return hour * 60 + minute;
+}
+
+/**
+ * Extracts the "YYYY-MM-DD" calendar-date portion of a reservation timestamp. Needed because
+ * `toMinutesFromIsoDateTime` keeps only the time-of-day; without the date, a reservation from a
+ * different day would block the same clock-time slot on the searched day (AV-3).
+ */
+export function dateIsoFromIsoDateTime(value: string): string | undefined {
+    return value.match(/\d{4}-\d{2}-\d{2}/)?.[0];
 }
 
 function toTimeLabel(minutes: number): string {
@@ -1015,18 +1163,21 @@ type SpecialDates = {
     earlyClosings: Map<string, { hour: number; minute: number }>;
 };
 
-type RoomAvailability = {
+export type RoomAvailability = {
     availableStartMinutes: number[];
     availableTimes: string[];
     availableDurations: number[];
 };
 
-function getRoomAvailability(
+export function getRoomAvailability(
     room: LiveRoom,
     roomReservations: z.infer<typeof ReservationSchema>[],
     date: Date,
 ): RoomAvailability {
-    const weekday = date.getDay();
+    // The searched date is a UTC-midnight Date parsed from a "YYYY-MM-DD" calendar date,
+    // and dateIso/reservation fetches are all UTC-based. Use getUTCDay() so the weekday
+    // matches that calendar date instead of the server's local weekday (off-by-one west of UTC).
+    const weekday = date.getUTCDay();
     const hours = OPERATING_HOURS_BY_LOCATION[room.locationId]?.[weekday];
     if (!hours || hours.opening === null || hours.closing === null) {
         return { availableStartMinutes: [], availableTimes: [], availableDurations: [] };
@@ -1122,11 +1273,16 @@ function getMeetingRoomOperatingHours(
     const dateIso = date.toISOString().slice(0, 10);
     if (specialDates.closedDates.has(dateIso)) return undefined;
 
+    // Both "closed after" boundaries below use `>=` (closed *on and after* the boundary date) for a
+    // consistent rule. The dates are historical, so every bookable (present/future) search lands on
+    // the closed side regardless of the operator — the choice is latent, but kept uniform so the two
+    // checks can't drift (AV-6).
     if (roomId === MR_WMK_ROOM_ID && dateIso >= MR_SPECIAL_CLOSED_AFTER) {
         return undefined;
     }
 
-    const day = date.getDay();
+    // Match the UTC dateIso above (getDay() would read the server-local weekday, off-by-one west of UTC).
+    const day = date.getUTCDay();
     if (day === 0 && !MR_SUNDAY_OPEN_ROOM_IDS.has(roomId)) {
         return undefined;
     }
@@ -1138,7 +1294,7 @@ function getMeetingRoomOperatingHours(
     if (
         MR_TERRAZAS_ROOM_IDS.has(roomId) &&
         day === 6 &&
-        dateIso > MR_TERRAZAS_CLOSED_ON_SATURDAY_AFTER
+        dateIso >= MR_TERRAZAS_CLOSED_ON_SATURDAY_AFTER
     ) {
         return undefined;
     }
@@ -1176,17 +1332,23 @@ function getMeetingRoomOperatingHours(
     }
 
     const earlyClose = specialDates.earlyClosings.get(dateIso);
-    if (earlyClose) {
-        hours = {
-            opening: hours.opening,
-            closing: earlyClose.hour + earlyClose.minute / 60,
-        };
+    if (earlyClose && hours.opening !== null && hours.closing !== null) {
+        const earlyClosing = earlyClose.hour + earlyClose.minute / 60;
+        // An early closing only ever moves the close *earlier* — never past the normal close, and
+        // never to/before opening. A nonsensical value (e.g. a mis-parsed meridiem) is ignored
+        // rather than allowed to collapse the day to zero slots (AV-4 guard).
+        if (earlyClosing > hours.opening) {
+            hours = {
+                opening: hours.opening,
+                closing: Math.min(hours.closing, earlyClosing),
+            };
+        }
     }
 
     return hours;
 }
 
-function getMeetingRoomAvailability(
+export function getMeetingRoomAvailability(
     roomId: string,
     reservations: z.infer<typeof MeetingRoomReservationSchema>[],
     date: Date,
@@ -1275,17 +1437,38 @@ function getMeetingRoomAvailability(
     };
 }
 
-function reservationBlocksTime(
-    reservation: z.infer<typeof ReservationSchema>,
-    desiredMinutes: number,
+/**
+ * Decides whether a room's computed availability satisfies a search request.
+ *
+ * `availableStartMinutes` already excludes any 15-min slot blocked by a reservation, so this is the
+ * single source of truth for "is the room free". The key correctness point (AV-2): when both a start
+ * time AND a duration are requested, the room qualifies only if EVERY 15-min slot across the
+ * contiguous window `[start, start + duration)` is free — not merely "the start slot is free" plus
+ * "some run somewhere that day is long enough", which previously let an overlapping window through.
+ */
+export function matchesRequestedSlot(
+    availability: RoomAvailability,
+    desiredMinutes: number | undefined,
+    desiredDuration: number | undefined,
 ): boolean {
-    const startMinutes = toMinutesFromIsoDateTime(reservation.start);
-    const endMinutes = toMinutesFromIsoDateTime(reservation.end);
-    if (startMinutes === undefined || endMinutes === undefined) {
-        return false;
+    const step = 15;
+    const hasDuration = desiredDuration !== undefined && desiredDuration > 0;
+
+    if (desiredMinutes !== undefined) {
+        const freeStarts = new Set(availability.availableStartMinutes);
+        const span = hasDuration ? desiredDuration : step;
+        for (let slot = desiredMinutes; slot < desiredMinutes + span; slot += step) {
+            if (!freeStarts.has(slot)) return false;
+        }
+        return true;
     }
 
-    return desiredMinutes >= startMinutes && desiredMinutes < endMinutes;
+    if (hasDuration) {
+        // No specific start requested: any contiguous free run long enough is acceptable.
+        return availability.availableDurations.some(duration => duration >= desiredDuration);
+    }
+
+    return true;
 }
 
 async function fetchReservationsForDateByLocation(
@@ -1294,34 +1477,20 @@ async function fetchReservationsForDateByLocation(
     locationId: string,
 ): Promise<z.infer<typeof ReservationSchema>[]> {
     const host = normalizeBaseUrl(baseUrl);
-    const cacheScope = `${host}:${dateIso}:${locationId}`;
-    const cached = await getCached<z.infer<typeof ReservationSchema>[]>(
-        "slr_reservations_v1",
-        cacheScope,
-        RESERVATION_CACHE_TTL_MS,
-    );
-    if (cached) return cached;
-
+    // Upstream reservations are volatile (the old cache was 60s) and not part of the normalized
+    // read-model, so they are fetched live per search rather than persisted.
     const payload = await fetchJson<unknown>(
         `${host}/slr_dates2.json?date=${dateIso}&location=${locationId}&t=${Date.now()}`,
     );
 
-    const reservations = z.array(ReservationSchema).parse(payload);
-    await setCached("slr_reservations_v1", cacheScope, reservations);
-    return reservations;
+    return z.array(ReservationSchema).parse(payload);
 }
 
 async function fetchSpecialDates(baseUrl = DEFAULT_BASE_URL): Promise<SpecialDates> {
     const host = normalizeBaseUrl(baseUrl);
-    const cached = await getCached<{
-        closedDates: string[];
-        earlyClosings: Record<string, { hour: number; minute: number }>;
-    }>("special_dates", host);
-    if (cached) {
-        return {
-            closedDates: new Set(cached.closedDates),
-            earlyClosings: new Map(Object.entries(cached.earlyClosings)),
-        };
+    const source = `special_dates:${host}`;
+    if (isFresh(source)) {
+        return specialDatesFromRows(repos().specialDates.list());
     }
 
     const payload = await fetchJson<unknown>(
@@ -1356,11 +1525,13 @@ async function fetchSpecialDates(baseUrl = DEFAULT_BASE_URL): Promise<SpecialDat
                 continue;
             }
 
-            const minuteMatch = earlyRaw.match(/(\d{1,2}):(\d{2})/);
-            if (!minuteMatch) continue;
-            const hour = Number.parseInt(minuteMatch[1], 10);
-            const minute = Number.parseInt(minuteMatch[2], 10);
-            if (!Number.isFinite(hour) || !Number.isFinite(minute)) continue;
+            // Pull the time token out of whatever surrounds it ("Closes at 5:00 PM") and parse it
+            // through the meridiem-aware parser so "5:00 PM" becomes 17:00, not 5:00 (AV-4).
+            const timeToken = earlyRaw.match(/\d{1,2}:\d{2}\s*(?:[AP]M)?/i)?.[0];
+            const earlyMinutes = timeToken ? parseClockMinutes(timeToken) : undefined;
+            if (earlyMinutes === undefined) continue;
+            const hour = Math.floor(earlyMinutes / 60);
+            const minute = earlyMinutes % 60;
 
             const previous = earlyClosings.get(dateIso);
             if (!previous || hour * 60 + minute < previous.hour * 60 + previous.minute) {
@@ -1369,15 +1540,43 @@ async function fetchSpecialDates(baseUrl = DEFAULT_BASE_URL): Promise<SpecialDat
         }
     }
 
-    await setCached("special_dates", host, {
-        closedDates: Array.from(closedDates),
-        earlyClosings: Object.fromEntries(earlyClosings.entries()),
+    const syncedAt = new Date().toISOString();
+    // A date that is both closed and early-closing collapses to `closed` (the PK is the date, and
+    // `getMeetingRoomOperatingHours` checks closed first), matching the prior precedence.
+    const dates = new Set<string>([...closedDates, ...earlyClosings.keys()]);
+    const rows: NewSpecialDate[] = Array.from(dates).map(date => {
+        if (closedDates.has(date)) {
+            return { date, closed: true, earlyCloseMinute: null, syncedAt };
+        }
+        const early = earlyClosings.get(date)!;
+        return { date, closed: false, earlyCloseMinute: early.hour * 60 + early.minute, syncedAt };
     });
+    repos().specialDates.replaceAll(rows);
+    markSynced(source);
 
     return {
         closedDates,
         earlyClosings,
     };
+}
+
+/** Rebuilds the in-memory {@link SpecialDates} (closed set + early-closing map) from table rows. */
+function specialDatesFromRows(
+    rows: Array<{ date: string; closed: boolean; earlyCloseMinute: number | null }>,
+): SpecialDates {
+    const closedDates = new Set<string>();
+    const earlyClosings = new Map<string, { hour: number; minute: number }>();
+    for (const row of rows) {
+        if (row.closed) {
+            closedDates.add(row.date);
+        } else if (row.earlyCloseMinute != null) {
+            earlyClosings.set(row.date, {
+                hour: Math.floor(row.earlyCloseMinute / 60),
+                minute: row.earlyCloseMinute % 60,
+            });
+        }
+    }
+    return { closedDates, earlyClosings };
 }
 
 async function fetchMeetingRoomReservationsForLocation(
@@ -1386,28 +1585,19 @@ async function fetchMeetingRoomReservationsForLocation(
     locationId: string,
 ): Promise<z.infer<typeof MeetingRoomReservationSchema>[]> {
     const host = normalizeBaseUrl(baseUrl);
-    const cacheScope = `${host}:${dateIso}:${locationId}`;
-    const cached = await getCached<z.infer<typeof MeetingRoomReservationSchema>[]>(
-        "meeting_room_reservations_v1",
-        cacheScope,
-        RESERVATION_CACHE_TTL_MS,
-    );
-    if (cached) return cached;
-
     const date = new Date(`${dateIso}T12:00:00Z`);
     const nextDate = new Date(date);
     nextDate.setUTCDate(nextDate.getUTCDate() + 1);
     const nextDateIso = nextDate.toISOString().slice(0, 10);
 
+    // Live fetch (see fetchReservationsForDateByLocation): volatile, not part of the read-model.
     const payload = await fetchJson<unknown>(
         `${host}/mr_dates2.json?sid=999999&loc=${encodeURIComponent(
             locationId,
         )}&date11=${dateIso}&date22=${nextDateIso}&t=${Date.now()}`,
     );
 
-    const reservations = z.array(MeetingRoomReservationSchema).parse(payload);
-    await setCached("meeting_room_reservations_v1", cacheScope, reservations);
-    return reservations;
+    return z.array(MeetingRoomReservationSchema).parse(payload);
 }
 
 function toLibraryRoom(room: LiveRoom, targetDateIso: string): LibraryRoom {
@@ -1509,33 +1699,9 @@ export const apl = {
                 };
             });
 
-            const filteredRooms = roomsWithAvailability.filter(room => {
-                if (
-                    desiredMinutes !== undefined &&
-                    !room._availability.availableStartMinutes.includes(desiredMinutes)
-                ) {
-                    return false;
-                }
-
-                if (
-                    desiredDuration !== undefined &&
-                    desiredDuration > 0 &&
-                    !room.info.availableDurations.some(duration => duration >= desiredDuration)
-                ) {
-                    return false;
-                }
-
-                if (
-                    desiredMinutes !== undefined &&
-                    !room._roomReservations.every(
-                        reservation => !reservationBlocksTime(reservation, desiredMinutes),
-                    )
-                ) {
-                    return false;
-                }
-
-                return true;
-            });
+            const filteredRooms = roomsWithAvailability.filter(room =>
+                matchesRequestedSlot(room._availability, desiredMinutes, desiredDuration),
+            );
 
             return {
                 data: filteredRooms.map(
@@ -1591,8 +1757,7 @@ export const apl = {
                         const normalizedBranch = normalizeMeetingRoomBranchName(location.branch);
                         return (
                             location.locationId.toLowerCase() === locationNeedle ||
-                            normalizedBranch.includes(locationNeedle) ||
-                            locationNeedle.includes(normalizedBranch)
+                            branchNeedleMatches(normalizedBranch, locationNeedle)
                         );
                     })
                     .map(location => location.locationId),
@@ -1635,8 +1800,13 @@ export const apl = {
 
                 for (const room of rooms) {
                     const conflictSet = getMeetingRoomConflictSet(room.roomId);
-                    const conflictingReservations = reservations.filter(reservation =>
-                        conflictSet.has(String(reservation.room)),
+                    // The reservations feed is queried over a two-day window (date11..date22), so it
+                    // includes next-day rows. Keep only the searched day; otherwise a next-day
+                    // reservation at the same clock time would block this day's slots (AV-3).
+                    const conflictingReservations = reservations.filter(
+                        reservation =>
+                            conflictSet.has(String(reservation.room)) &&
+                            dateIsoFromIsoDateTime(reservation.start) === dateIso,
                     );
 
                     const availability = getMeetingRoomAvailability(
@@ -1651,17 +1821,7 @@ export const apl = {
                         locationDurations.add(duration);
                     }
 
-                    const matchesTime =
-                        desiredMinutes === undefined ||
-                        availability.availableStartMinutes.includes(desiredMinutes);
-                    const matchesDuration =
-                        desiredDuration === undefined ||
-                        desiredDuration <= 0 ||
-                        availability.availableDurations.some(
-                            duration => duration >= desiredDuration,
-                        );
-
-                    if (matchesTime && matchesDuration) {
+                    if (matchesRequestedSlot(availability, desiredMinutes, desiredDuration)) {
                         hasMatchingRoom = true;
                     }
                 }
@@ -1687,9 +1847,15 @@ export const apl = {
     },
 
     async clearCache(): Promise<void> {
-        for await (const entry of kv.list({ prefix: [...CACHE_PREFIX] })) {
-            await kv.delete(entry.key);
-        }
+        // Invalidates the scraped read-model + watermarks; leaves app-owned reservations and the
+        // seeded reference tables (hours/conflicts/branch paths) intact.
+        const r = repos();
+        r.rooms.replaceByKind("shared-learning-room", []);
+        r.rooms.replaceByKind("meeting-room", []);
+        r.branchDirectory.replaceAll([]);
+        r.branchCoordinates.replaceAll([]);
+        r.specialDates.replaceAll([]);
+        r.syncState.clear();
     },
 
     async getMeetingRoomBranches(
@@ -1760,7 +1926,7 @@ export const apl = {
 
     async getLocationPathMapping(): Promise<SafeResult<Record<string, string>>> {
         try {
-            const mapping = await getLocationPathMappingFromKv();
+            const mapping = loadLocationPathMapping();
             return {
                 data: mapping,
                 error: undefined,

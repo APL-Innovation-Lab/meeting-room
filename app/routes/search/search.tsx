@@ -1,13 +1,12 @@
 import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
+
 import { Breadcrumbs } from "~/components/Breadcrumbs";
 import { type LiveBranchCoordinate } from "~/lib/apl-client/apl-live-client.server";
 import { apl } from "~/lib/apl-client/apl-live-client.server";
+import { Room } from "~/lib/room";
 import { site } from "~/lib/site";
-import { Room } from "~/route-map";
+
 import { Route } from "./+types/search";
-import { SearchDescription } from "./SearchDescription";
-import { SearchFiltersForm } from "./SearchFiltersForm";
-import { SearchResultsPanel } from "./SearchResultsPanel";
 import {
     branchNamesMatch,
     createBranchLngLats,
@@ -18,8 +17,14 @@ import {
     type BranchSearchResult,
     type SearchFilters,
 } from "./search.data.server";
+import { SearchDescription } from "./SearchDescription";
+import { SearchFiltersForm } from "./SearchFiltersForm";
+import { SearchResultsPanel } from "./SearchResultsPanel";
 
-const dateFormatter = new Intl.DateTimeFormat("en-CA");
+// Default the search date to Austin's calendar day, not the server's. Without an explicit timeZone
+// this formats in the host zone, so an evening Austin visitor on a UTC host would default to
+// *tomorrow* (AV-6). en-CA yields the canonical "YYYY-MM-DD" shape the rest of the flow expects.
+const dateFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" });
 const DEFER_GRACE_MS = 120;
 
 type DeferredSearchData = {
@@ -113,10 +118,9 @@ async function resolveDeferredSearchData({
     };
 }
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function loader({ params, url }: Route.LoaderArgs) {
     const roomKind = params.roomKind as Room.Kind;
-    const requestUrl = new URL(request.url);
-    const rawSearchParams = requestUrl.searchParams;
+    const rawSearchParams = url.searchParams;
 
     const [
         meetingOrSharedResult,
@@ -207,7 +211,7 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                             <h1 className="usa-card__heading font-sans text-sans-2xl font-bold">
                                 {room.displayName}
                             </h1>
-                            <p className="font-sans text-sans-xs text-base-darker">
+                            <p className="text-base-darker font-sans text-sans-xs">
                                 <SearchDescription roomKind={roomKind} />
                             </p>
                         </CardHeader>
@@ -219,6 +223,7 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                         />
                         <SearchResultsPanel
                             heading={searchResultsHeading}
+                            roomKind={roomKind}
                             deferredSearchData={deferredSearchData}
                             mapboxToken={mapboxToken}
                         />

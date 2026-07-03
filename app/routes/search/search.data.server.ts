@@ -51,7 +51,7 @@ export function normalizeBranchName(value: string): string {
         .toLowerCase()
         .replace(/^austin\s+/g, "")
         .replace(/^george washington\s+/g, "")
-        .replace(/\s*[\(,]\s*faulk building\)?\s*$/g, "")
+        .replace(/\s*[(,]\s*faulk building\)?\s*$/g, "")
         .replace(/\s+faulk building$/g, "")
         .replace(/\snorth village\s*/g, " north village ")
         .replace(/\sjohn gillum branch/g, "north village branch")
@@ -120,13 +120,54 @@ function parseCheckboxValue(searchParams: URLSearchParams, key: string): boolean
     return value !== null && value !== "false" && value !== "0";
 }
 
+function isRealCalendarDate(year: number, month: number, day: number): boolean {
+    if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return (
+        date.getUTCFullYear() === year &&
+        date.getUTCMonth() === month - 1 &&
+        date.getUTCDate() === day
+    );
+}
+
+/**
+ * Normalizes a date filter to a canonical ISO "YYYY-MM-DD" calendar date, or "" if unparseable.
+ *
+ * The `date` param arrives in two shapes: the default/initial value is already ISO, but the USWDS
+ * DatePicker submits its *visible* external input as US "MM/DD/YYYY". Downstream we build a
+ * UTC-midnight `Date` from this string, and `new Date("MM/DD/YYYY")` parses as *local* midnight
+ * (drifting the calendar day on non-UTC hosts) while `new Date("YYYY-MM-DD")` is UTC. Collapsing
+ * both shapes to one canonical ISO date here makes the searched day unambiguous end-to-end (AV-6).
+ */
+export function normalizeToIsoDate(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+
+    const iso = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (iso) {
+        const [, year, month, day] = iso;
+        return isRealCalendarDate(+year, +month, +day) ? `${year}-${month}-${day}` : "";
+    }
+
+    const us = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (us) {
+        const month = Number(us[1]);
+        const day = Number(us[2]);
+        const year = Number(us[3]);
+        if (!isRealCalendarDate(year, month, day)) return "";
+        return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+
+    return "";
+}
+
 export function createSearchFilters(
     searchParams: URLSearchParams,
     fallbackDate: string,
 ): SearchFilters {
     return {
         location: searchParams.get("location")?.trim() || "all",
-        date: searchParams.get("date")?.trim() || fallbackDate,
+        date: normalizeToIsoDate(searchParams.get("date") ?? "") || fallbackDate,
         duration: searchParams.get("duration")?.trim() || "120",
         people: searchParams.get("people")?.trim() || "",
         display: parseCheckboxValue(searchParams, "display"),
