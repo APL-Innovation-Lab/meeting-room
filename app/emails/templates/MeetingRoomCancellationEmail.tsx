@@ -6,7 +6,6 @@ import {
     Hr,
     Html,
     Img,
-    Link,
     Row,
     Section,
     Tailwind,
@@ -106,7 +105,7 @@ export default function MeetingRoomCancellationEmail() {
                             </Text>
                         </Section>
                         <Text className="m-0 mb-[64px] text-center font-sans text-[16px]">
-                            Questions? Call 512-974-7400 (option 1) or 
+                            Questions? Call 512-974-7400 (option 1) or&nbsp;
                             <a
                                 className="text-[#026E98]"
                                 href="http://library.austintexas.libanswers.com"

@@ -6,16 +6,13 @@ import {
     Hr,
     Html,
     Img,
-    Link,
     Row,
     Section,
     Tailwind,
     Text,
 } from "react-email";
-import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
 
 import { EMAIL_ASSET_BASE_URL } from "../base-url";
-import EmailCalendarButton from "../components/EmailCalendarButton";
 import { SourceSansProFonts } from "../source-sans-pro-fonts";
 import { emailTailwindConfig } from "../theme";
 
@@ -108,7 +105,7 @@ export default function SharedLearningRoomCancellationEmail() {
                             </Text>
                         </Section>
                         <Text className="m-0 mb-[64px] text-center font-sans text-[16px]">
-                            Questions? Call 512-974-7400 (option 1) or 
+                            Questions? Call 512-974-7400 (option 1) or&nbsp;
                             <a
                                 className="text-[#026E98]"
                                 href="http://library.austintexas.libanswers.com"

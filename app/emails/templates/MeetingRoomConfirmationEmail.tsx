@@ -11,6 +11,7 @@ import {
     Tailwind,
     Text,
 } from "react-email";
+
 import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
 
 import { EMAIL_ASSET_BASE_URL } from "../base-url";
@@ -122,17 +123,18 @@ export default function MeetingRoomConfirmationEmail() {
                         </Section>
                         <Section className="mb-[48px] w-[572px] text-center">
                             <Text className="m-0 pb-[24px] font-sans text-[16px]">
-                                Don't need the room anymore? 
+                                Don't need the room anymore?&nbsp;
                                 <a
                                     className="text-[#026E98]"
                                     href={`${baseUrl}/meeting-room/cancel`}
                                 >
                                     Cancel
                                 </a>
-                                 before your reservation time so someone else can book your room.
+                                &nbsp;before your reservation time so someone else can book your
+                                room.
                             </Text>
                             <Text className="m-0 font-sans text-[16px]">
-                                Questions? Call 512-974-7400 (option 1) or 
+                                Questions? Call 512-974-7400 (option 1) or&nbsp;
                                 <a
                                     className="text-[#026E98]"
                                     href="http://library.austintexas.libanswers.com"
