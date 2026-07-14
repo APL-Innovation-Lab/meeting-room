@@ -32,7 +32,7 @@ function SearchResultsList({
     roomKind: Room.Kind;
 }) {
     return (
-        <ul className="overflow-scroll flex flex-col gap-[1rem] divide-y-[1px] divide-base-light">
+        <ul className="flex flex-col gap-[1rem] divide-y divide-base-light overflow-scroll">
             {searchResults.filter(Boolean).map((result, idx) => (
                 <SearchResult
                     key={result.branch}
@@ -103,7 +103,7 @@ function SearchResultsListFallback() {
 
 function SearchResultsListError() {
     return (
-        <div className="text-secondary-dark text-center flex h-full items-center justify-center">
+        <div className="flex h-full items-center justify-center text-center text-secondary-dark">
             Could not load room availability right now.
         </div>
     );
@@ -116,7 +116,7 @@ export function SearchResultsPanel({ mapboxToken, roomKind, ...props }: SearchRe
     const heading = props.heading ?? "All Available Locations";
 
     return (
-        <div className="overflow-hidden flex flex-col gap-[0.5rem] px-4 pb-4">
+        <div className="flex flex-col gap-[0.5rem] overflow-hidden px-4 pb-4">
             <h4 className="pt-2 font-bold">{heading}</h4>
             <div className="grid h-[45rem] grid-cols-2 gap-[1rem] pt-2">
                 {deferredSearchData ? (

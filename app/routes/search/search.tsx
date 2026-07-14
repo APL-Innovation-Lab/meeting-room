@@ -1,4 +1,5 @@
 import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
+import { Suspense, use } from "react";
 
 import { Breadcrumbs } from "~/components/Breadcrumbs";
 import { type LiveBranchCoordinate } from "~/lib/apl-client/apl-live-client.server";
@@ -15,6 +16,7 @@ import {
     createSearchResults,
     filterSearchResults,
     type BranchSearchResult,
+    type LocationOption,
     type SearchFilters,
 } from "./search.data.server";
 import { SearchDescription } from "./SearchDescription";
@@ -31,6 +33,11 @@ type DeferredSearchData = {
     searchResults: BranchSearchResult[];
     branchLngLats: Array<[number, number]>;
 };
+
+interface SearchPageData {
+    locationOptions: LocationOption[];
+    deferredSearchData: Promise<DeferredSearchData>;
+}
 
 async function resolveDeferredSearchData({
     roomKind,
@@ -118,10 +125,13 @@ async function resolveDeferredSearchData({
     };
 }
 
-export async function loader({ params, url }: Route.LoaderArgs) {
-    const roomKind = params.roomKind as Room.Kind;
-    const rawSearchParams = url.searchParams;
-
+async function resolveSearchPageData({
+    roomKind,
+    searchFilters,
+}: {
+    roomKind: Room.Kind;
+    searchFilters: SearchFilters;
+}): Promise<SearchPageData> {
     const [
         meetingOrSharedResult,
         branchDirectoryResult,
@@ -143,22 +153,11 @@ export async function loader({ params, url }: Route.LoaderArgs) {
             ? branchCoordinatesResult.data
             : [];
     const locationPathMapping = !locationPathResult.error ? locationPathResult.data : {};
-
     const allSearchResults = createSearchResults(
         locationBranches,
         branchDirectory,
         locationPathMapping,
     );
-    const currentDate = dateFormatter.format(new Date());
-    const searchFilters = createSearchFilters(rawSearchParams, currentDate);
-    const hasAnyQueryParams = Array.from(rawSearchParams.keys()).length > 0;
-    const hasAnyNonLocationFilter = Array.from(rawSearchParams.entries()).some(
-        ([key, value]) => key !== "location" && value.trim() !== "",
-    );
-    const searchResultsHeading =
-        hasAnyQueryParams && searchFilters.location === "all" && hasAnyNonLocationFilter
-            ? "Results for All Locations"
-            : "All Available Locations";
     const initialSearchResults = filterSearchResults(allSearchResults, searchFilters);
     const deferredSearchDataPromise = resolveDeferredSearchData({
         roomKind,
@@ -172,29 +171,88 @@ export async function loader({ params, url }: Route.LoaderArgs) {
             setTimeout(() => resolve({ type: "timeout" }), DEFER_GRACE_MS),
         ),
     ]);
-    const deferredSearchData =
-        maybeResolved.type === "resolved"
-            ? Promise.resolve(maybeResolved.data)
-            : deferredSearchDataPromise;
+
+    return {
+        locationOptions: createLocationOptions(allSearchResults),
+        deferredSearchData:
+            maybeResolved.type === "resolved"
+                ? Promise.resolve(maybeResolved.data)
+                : deferredSearchDataPromise,
+    };
+}
+
+export async function loader({ params, url }: Route.LoaderArgs) {
+    const roomKind = params.roomKind as Room.Kind;
+    const rawSearchParams = url.searchParams;
+    const currentDate = dateFormatter.format(new Date());
+    const searchFilters = createSearchFilters(rawSearchParams, currentDate);
+    const hasAnyQueryParams = Array.from(rawSearchParams.keys()).length > 0;
+    const hasAnyNonLocationFilter = Array.from(rawSearchParams.entries()).some(
+        ([key, value]) => key !== "location" && value.trim() !== "",
+    );
+    const searchResultsHeading =
+        hasAnyQueryParams && searchFilters.location === "all" && hasAnyNonLocationFilter
+            ? "Results for All Locations"
+            : "All Available Locations";
+    const searchPageData = resolveSearchPageData({ roomKind, searchFilters });
 
     return {
         searchFilters,
         currentDate,
-        locationOptions: createLocationOptions(allSearchResults),
         roomKind,
         accessToken: import.meta.env.VITE_APP_MAPBOX_TOKEN,
         searchResultsHeading,
-        deferredSearchData,
+        searchPageData,
+        deferredSearchData: searchPageData.then(data => data.deferredSearchData),
     };
+}
+
+const EMPTY_LOCATION_OPTIONS: LocationOption[] = [];
+
+function SearchFiltersContent({
+    currentDate,
+    searchFilters,
+    searchPageData,
+}: {
+    currentDate: string;
+    searchFilters: SearchFilters;
+    searchPageData: Promise<SearchPageData>;
+}) {
+    const { locationOptions } = use(searchPageData);
+
+    return (
+        <SearchFiltersForm
+            currentDate={currentDate}
+            locationOptions={locationOptions}
+            searchFilters={searchFilters}
+        />
+    );
+}
+
+function SearchFiltersLoading({
+    currentDate,
+    searchFilters,
+}: {
+    currentDate: string;
+    searchFilters: SearchFilters;
+}) {
+    return (
+        <SearchFiltersForm
+            currentDate={currentDate}
+            isInitialLoading
+            locationOptions={EMPTY_LOCATION_OPTIONS}
+            searchFilters={searchFilters}
+        />
+    );
 }
 
 export default function Component({ loaderData }: Route.ComponentProps) {
     const {
         searchFilters,
         currentDate,
-        locationOptions,
         roomKind,
         accessToken: mapboxToken,
+        searchPageData,
         searchResultsHeading,
         deferredSearchData,
     } = loaderData;
@@ -208,24 +266,33 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                     <div className="px-5">
                         <Breadcrumbs className="pb-0" links={site.breadcrumbs.search(room)} />
                         <CardHeader className="flex flex-col gap-[0.75rem]">
-                            <h1 className="usa-card__heading font-sans text-sans-2xl font-bold">
+                            <h1 className="font-sans text-sans-2xl font-bold usa-card__heading">
                                 {room.displayName}
                             </h1>
-                            <p className="text-base-darker font-sans text-sans-xs">
+                            <p className="font-sans text-sans-xs text-base-darker">
                                 <SearchDescription roomKind={roomKind} />
                             </p>
                         </CardHeader>
 
-                        <SearchFiltersForm
-                            currentDate={currentDate}
-                            locationOptions={locationOptions}
-                            searchFilters={searchFilters}
-                        />
+                        <Suspense
+                            fallback={
+                                <SearchFiltersLoading
+                                    currentDate={currentDate}
+                                    searchFilters={searchFilters}
+                                />
+                            }
+                        >
+                            <SearchFiltersContent
+                                currentDate={currentDate}
+                                searchFilters={searchFilters}
+                                searchPageData={searchPageData}
+                            />
+                        </Suspense>
                         <SearchResultsPanel
-                            heading={searchResultsHeading}
-                            roomKind={roomKind}
                             deferredSearchData={deferredSearchData}
+                            heading={searchResultsHeading}
                             mapboxToken={mapboxToken}
+                            roomKind={roomKind}
                         />
                     </div>
                 </Card>

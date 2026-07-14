@@ -20,6 +20,7 @@ export namespace SearchFiltersForm {
         currentDate: string;
         locationOptions: LocationOption[];
         searchFilters: SearchFilters;
+        isInitialLoading?: boolean;
     }
 }
 
@@ -27,6 +28,7 @@ export function SearchFiltersForm({
     currentDate,
     locationOptions,
     searchFilters,
+    isInitialLoading = false,
 }: SearchFiltersForm.Props) {
     const navigation = useNavigation();
     const location = useLocation();
@@ -83,7 +85,11 @@ export function SearchFiltersForm({
     }, [isSearchLoading, showLoadingState]);
 
     return (
-        <Form className="flex w-full max-w-none flex-col px-3" preventScrollReset>
+        <Form
+            className="flex w-full max-w-none flex-col px-3"
+            preventScrollReset
+            aria-busy={isInitialLoading || undefined}
+        >
             <div className="w-full">
                 <Label className="font-bold" id="location-label" htmlFor="location">
                     Location
@@ -93,8 +99,11 @@ export function SearchFiltersForm({
                     id="location"
                     name="location"
                     defaultValue={searchFilters.location}
+                    disabled={isInitialLoading}
                 >
-                    <option value="all">All Available Locations</option>
+                    <option value="all">
+                        {isInitialLoading ? "Loading locations…" : "All Available Locations"}
+                    </option>
                     {locationOptions.map(option => (
                         <option key={option.locationId} value={option.value}>
                             {option.label}
@@ -112,6 +121,7 @@ export function SearchFiltersForm({
                         id="date"
                         name="date"
                         defaultValue={searchFilters.date || currentDate}
+                        disabled={isInitialLoading}
                         aria-labelledby="date-label"
                     />
                 </div>
@@ -125,6 +135,7 @@ export function SearchFiltersForm({
                         id="duration"
                         name="duration"
                         defaultValue={searchFilters.duration}
+                        disabled={isInitialLoading}
                     >
                         <option value="15">15 min</option>
                         <option value="30">30 min</option>
@@ -149,6 +160,7 @@ export function SearchFiltersForm({
                         mask="___"
                         pattern="\d{3}"
                         defaultValue={searchFilters.people}
+                        disabled={isInitialLoading}
                         aria-labelledby="people-label"
                     />
                 </div>
@@ -161,21 +173,28 @@ export function SearchFiltersForm({
                         name="display"
                         label="Display/Screen"
                         defaultChecked={searchFilters.display}
+                        disabled={isInitialLoading}
                     />
                     <Checkbox
                         id="hdmi"
                         name="hdmi"
                         label="HDMI"
                         defaultChecked={searchFilters.hdmi}
+                        disabled={isInitialLoading}
                     />
                     <Checkbox
                         id="whiteboard"
                         name="whiteboard"
                         label="Whiteboard"
                         defaultChecked={searchFilters.whiteboard}
+                        disabled={isInitialLoading}
                     />
                 </div>
-                <Button className="w-auto" type="submit" disabled={showLoadingState}>
+                <Button
+                    className="w-auto"
+                    type="submit"
+                    disabled={isInitialLoading || showLoadingState}
+                >
                     <span className="flex items-center gap-[0.5rem]">
                         <span className="h-[1em]">
                             {showLoadingState ? "Searching..." : "Search"}
@@ -185,7 +204,7 @@ export function SearchFiltersForm({
                 </Button>
             </div>
 
-            <div className="border-base-light mt-3 border-b-1px" />
+            <div className="mt-3 border-b-1px border-base-light" />
         </Form>
     );
 }
