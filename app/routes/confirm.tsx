@@ -1,12 +1,12 @@
 import { Button, Card, CardGroup, CardHeader, Link } from "@trussworks/react-uswds";
-import { href } from "react-router";
+import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
 
 import CalendarButton from "~/components/CalendarButton";
 import { Room } from "~/lib/room";
-import { site } from "~/lib/site";
-import { getGoogleCalendarUrl, getICSDownloadUrl, getYahooCalendarUrl } from "~/utils/calendar";
-
 import type { Route } from "./+types/confirm";
+import TestEmailButton from "~/components/TestEmailButton";
+import { href } from "react-router";
+import { site } from "~/lib/site";
 
 export default function Component({ params }: Route.ComponentProps) {
     if (params.roomKind === Room.Meeting.kind) {
@@ -36,11 +36,11 @@ function SharedLearningRoomConfirmation() {
     return (
         <div className="flex justify-center">
             <title>{`Confirmation • ${site.title}`}</title>
-            <CardGroup className="min-w-[30rem] max-w-[49rem]">
+            <CardGroup className="max-w-196 min-w-120">
                 <Card>
-                    <div className="ml-5 mr-5 justify-center">
+                    <div className="mr-5 ml-5 justify-center">
                         <CardHeader className="-mt-3">
-                            <h1 className="usa-card__heading text-center py-2 font-sans text-[40px] font-bold">
+                            <h1 className="py-2 text-center font-sans text-[40px] font-bold usa-card__heading">
                                 Submitted!
                             </h1>
 
@@ -53,7 +53,7 @@ function SharedLearningRoomConfirmation() {
                                     textDecoration: "none",
                                 }}
                             >
-                                <h1 className="text-base-darker text-center font-sans text-sans-xs">
+                                <h1 className="text-center font-sans text-sans-xs text-base-darker">
                                     <strong
                                         className="text-bold text-center"
                                         style={{ color: "#000000FF" }}
@@ -142,6 +142,11 @@ function SharedLearningRoomConfirmation() {
                                         Cancel Reservation
                                     </Link>
                                 </div>
+                                <TestEmailButton
+                                    template="sharedConfirmed"
+                                    buttonTitle="Preview confirmation email"
+                                    subject="APL Reservation: Confirmed Shared Learning - 408, Central Library"
+                                />
                             </div>
                         </div>
                     </div>
@@ -154,14 +159,14 @@ function SharedLearningRoomConfirmation() {
 function MeetingRoomConfirmation() {
     return (
         <div className="flex justify-center">
-            <CardGroup className="min-w-[30rem] max-w-[49rem]">
+            <CardGroup className="max-w-196 min-w-120">
                 <Card>
-                    <div className="ml-5 mr-5 justify-center">
+                    <div className="mr-5 ml-5 justify-center">
                         <CardHeader className="-mt-3">
-                            <h1 className="usa-card__heading text-center py-2 font-sans text-[40px] font-bold">
+                            <h1 className="py-2 text-center font-sans text-[40px] font-bold usa-card__heading">
                                 Submitted!
                             </h1>
-                            <p className="text-base-darker text-center font-sans text-sans-xs">
+                            <p className="text-center font-sans text-sans-xs text-base-darker">
                                 <strong className="font-bold">
                                     {" "}
                                     Status: Awaiting Confirmation
@@ -179,7 +184,7 @@ function MeetingRoomConfirmation() {
                                     color: "#343434",
                                 }}
                             >
-                                <h1 className="text-base-darker text-center font-sans text-sans-xs">
+                                <h1 className="text-center font-sans text-sans-xs text-base-darker">
                                     <strong
                                         className="text-bold text-center"
                                         style={{ color: "#000000FF" }}
@@ -189,7 +194,7 @@ function MeetingRoomConfirmation() {
                                     </strong>
                                 </h1>
                                 <h6
-                                    className="text-base-darker text-center font-sans text-sans-xs"
+                                    className="text-center font-sans text-sans-xs text-base-darker"
                                     style={{ color: "#343434" }}
                                 >
                                     If you are booking less than three days in advance of your
@@ -242,7 +247,6 @@ function MeetingRoomConfirmation() {
                                     </Link>
                                 </div>
                                 <br />
-
                                 <div className="flex justify-center">
                                     <Link
                                         href={href("/:roomKind/cancel", {
@@ -252,6 +256,16 @@ function MeetingRoomConfirmation() {
                                         Cancel Request
                                     </Link>
                                 </div>
+                                <TestEmailButton
+                                    template="meetingAwaiting"
+                                    buttonTitle="Preview awaiting confirmation email"
+                                    subject="APL Reservation: Awaiting Meeting Room #1, Carver Branch"
+                                />
+                                <TestEmailButton
+                                    template="meetingConfirmed"
+                                    buttonTitle="Preview confirmation email"
+                                    subject="APL Reservation: Confirmed Meeting Room #1, Carver Branch"
+                                />
                             </div>
                         </div>
                     </div>
