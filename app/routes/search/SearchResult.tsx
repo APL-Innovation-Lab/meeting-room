@@ -30,8 +30,8 @@ export function SearchResult(props: SearchResult.Props) {
     const shouldShowDistance = false;
 
     return (
-        <li className="flex w-full gap-[1rem] [&:not(:first-child)]:pt-2">
-            <img className="h-[100px] w-[100px] object-cover" src={props.image} />
+        <li className="flex w-full gap-[1rem] not-last:pb-2">
+            <img className="size-25 object-cover" src={props.image} />
             <div className="flex w-full flex-col gap-[0.5rem]">
                 <div className="flex w-full items-center justify-between">
                     <a
@@ -65,12 +65,6 @@ export function SearchResult(props: SearchResult.Props) {
                             </span>
                         ) : null}
                     </strong>
-                    <Link
-                        className="usa-button usa-button--outline margin-0 whitespace-nowrap"
-                        to={href("/:roomKind/review", { roomKind: props.roomKind })}
-                    >
-                        Reserve
-                    </Link>
                 </div>
             </div>
         </li>
