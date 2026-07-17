@@ -1,20 +1,18 @@
 import clsx from "clsx";
-import { href, Link } from "react-router";
+import { Link } from "react-router";
 
 import { pluralize } from "~/lib/pluralize";
-import { Room } from "~/lib/room";
 
 export namespace SearchResult {
     export interface Props {
         index: number;
-        roomKind: Room.Kind;
         branch: string;
         address: string;
         distance: string;
         roomsAvailable: number;
         maxAvailableDuration?: number;
         image: string;
-        url: string;
+        searchUrl: string;
     }
 }
 
@@ -31,27 +29,33 @@ export function SearchResult(props: SearchResult.Props) {
 
     return (
         <li className="flex w-full gap-[1rem] not-last:pb-2">
-            <img className="size-25 object-cover" src={props.image} />
+            <img
+                className="size-25 object-cover"
+                alt={`${props.branch} branch`}
+                height={100}
+                src={props.image}
+                width={100}
+            />
             <div className="flex w-full flex-col gap-[0.5rem]">
                 <div className="flex w-full items-center justify-between">
-                    <a
-                        className="usa-link font-bold no-underline"
-                        href={props.url}
-                        rel="noopener noreferrer"
-                        target="_blank"
+                    <Link
+                        className="font-bold no-underline usa-link"
+                        prefetch="intent"
+                        preventScrollReset
+                        to={props.searchUrl}
                     >
-                        <h4>
+                        <h4 aria-level={3}>
                             {props.index}. {props.branch}
                         </h4>
-                    </a>
-                    <h6
+                    </Link>
+                    <span
                         className={clsx(
-                            "text-base-darker font-sans text-sans-3xs",
+                            "font-sans text-sans-3xs text-base-darker",
                             shouldShowDistance && "hidden",
                         )}
                     >
                         {props.distance} mi
-                    </h6>
+                    </span>
                 </div>
                 <span>{props.address}</span>
                 <div className="flex w-full items-center justify-between gap-[1rem]">

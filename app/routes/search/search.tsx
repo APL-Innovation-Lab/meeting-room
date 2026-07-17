@@ -12,11 +12,13 @@ import {
     branchNamesMatch,
     createBranchLngLats,
     createSearchFilters,
+    createRoomSearchResults,
     createLocationOptions,
     createSearchResults,
     filterSearchResults,
     type BranchSearchResult,
     type LocationOption,
+    type RoomSearchResult,
     type SearchFilters,
 } from "./search.data.server";
 import { SearchDescription } from "./SearchDescription";
@@ -29,10 +31,17 @@ import { SearchResultsPanel } from "./SearchResultsPanel";
 const dateFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" });
 const DEFER_GRACE_MS = 120;
 
-type DeferredSearchData = {
-    searchResults: BranchSearchResult[];
-    branchLngLats: Array<[number, number]>;
-};
+type DeferredSearchData =
+    | {
+          mode: "branches";
+          searchResults: BranchSearchResult[];
+          branchLngLats: Array<[number, number]>;
+      }
+    | {
+          mode: "rooms";
+          branch: string;
+          roomResults: RoomSearchResult[];
+      };
 
 interface SearchPageData {
     locationOptions: LocationOption[];
@@ -50,26 +59,45 @@ async function resolveDeferredSearchData({
     initialSearchResults: BranchSearchResult[];
     liveBranchCoordinates: LiveBranchCoordinate[];
 }): Promise<DeferredSearchData> {
+    const parsedDate = new Date(searchFilters.date);
+    const parsedPeople = Number.parseInt(searchFilters.people, 10);
+    const parsedDuration = Number.parseInt(searchFilters.duration, 10);
+    const searchOptions = {
+        location: searchFilters.location === "all" ? undefined : searchFilters.location,
+        date: Number.isNaN(parsedDate.valueOf()) ? undefined : parsedDate,
+        capacity: Number.isFinite(parsedPeople) && parsedPeople > 0 ? parsedPeople : undefined,
+        duration:
+            Number.isFinite(parsedDuration) && parsedDuration > 0 ? parsedDuration : undefined,
+        amenities: {
+            airplay: searchFilters.display || undefined,
+            hdmi: searchFilters.hdmi || undefined,
+            whiteboard: searchFilters.whiteboard || undefined,
+        },
+    };
+
+    if (searchFilters.location !== "all") {
+        const selectedBranch = initialSearchResults[0];
+        if (!selectedBranch) {
+            return { mode: "rooms", branch: searchFilters.location, roomResults: [] };
+        }
+
+        const roomsResult = Room.isMeeting(roomKind)
+            ? await apl.getMeetingRooms(searchOptions)
+            : await apl.getRooms(searchOptions);
+        if (roomsResult.error) throw roomsResult.error;
+
+        return {
+            mode: "rooms",
+            branch: selectedBranch.branch,
+            roomResults: createRoomSearchResults(roomsResult.data, selectedBranch),
+        };
+    }
+
     let searchResults = initialSearchResults;
     const maxAvailableDurationByLocationId = new Map<string, number>();
 
     if (Room.isSharedLearning(roomKind)) {
-        const parsedDate = new Date(searchFilters.date);
-        const parsedPeople = Number.parseInt(searchFilters.people, 10);
-        const parsedDuration = Number.parseInt(searchFilters.duration, 10);
-        const roomsResult = await apl.getRooms({
-            location: searchFilters.location === "all" ? undefined : searchFilters.location,
-            date: Number.isNaN(parsedDate.valueOf()) ? undefined : parsedDate,
-            capacity: Number.isFinite(parsedPeople) && parsedPeople > 0 ? parsedPeople : undefined,
-            duration:
-                Number.isFinite(parsedDuration) && parsedDuration > 0 ? parsedDuration : undefined,
-            amenities: {
-                airplay: searchFilters.display || undefined,
-                hdmi: searchFilters.hdmi || undefined,
-                whiteboard: searchFilters.whiteboard || undefined,
-            },
-        });
-
+        const roomsResult = await apl.getRooms(searchOptions);
         if (!roomsResult.error) {
             searchResults = searchResults.filter(result =>
                 roomsResult.data.some(room => branchNamesMatch(result.branch, room.branch.name)),
@@ -87,18 +115,8 @@ async function resolveDeferredSearchData({
                 }
             }
         }
-    } else if (Room.isMeeting(roomKind)) {
-        const parsedDate = new Date(searchFilters.date);
-        const parsedPeople = Number.parseInt(searchFilters.people, 10);
-        const parsedDuration = Number.parseInt(searchFilters.duration, 10);
-        const availabilityResult = await apl.getMeetingRoomAvailabilityByLocation({
-            location: searchFilters.location === "all" ? undefined : searchFilters.location,
-            date: Number.isNaN(parsedDate.valueOf()) ? undefined : parsedDate,
-            capacity: Number.isFinite(parsedPeople) && parsedPeople > 0 ? parsedPeople : undefined,
-            duration:
-                Number.isFinite(parsedDuration) && parsedDuration > 0 ? parsedDuration : undefined,
-        });
-
+    } else {
+        const availabilityResult = await apl.getMeetingRoomAvailabilityByLocation(searchOptions);
         if (!availabilityResult.error) {
             const availableLocationIds = new Set(Object.keys(availabilityResult.data));
             searchResults = searchResults.filter(result =>
@@ -120,6 +138,7 @@ async function resolveDeferredSearchData({
     }));
 
     return {
+        mode: "branches",
         searchResults: resolvedSearchResults,
         branchLngLats: createBranchLngLats(resolvedSearchResults, liveBranchCoordinates),
     };
@@ -132,19 +151,14 @@ async function resolveSearchPageData({
     roomKind: Room.Kind;
     searchFilters: SearchFilters;
 }): Promise<SearchPageData> {
-    const [
-        meetingOrSharedResult,
-        branchDirectoryResult,
-        branchCoordinatesResult,
-        locationPathResult,
-    ] = await Promise.all([
-        Room.isMeeting(roomKind)
-            ? apl.getMeetingRoomBranches()
-            : apl.getSharedLearningRoomBranches(),
-        apl.getBranchDirectory(),
-        apl.getBranchCoordinates(),
-        apl.getLocationPathMapping(),
-    ]);
+    const [meetingOrSharedResult, branchDirectoryResult, branchCoordinatesResult] =
+        await Promise.all([
+            Room.isMeeting(roomKind)
+                ? apl.getMeetingRoomBranches()
+                : apl.getSharedLearningRoomBranches(),
+            apl.getBranchDirectory(),
+            apl.getBranchCoordinates(),
+        ]);
 
     const locationBranches = !meetingOrSharedResult.error ? meetingOrSharedResult.data : [];
     const branchDirectory = !branchDirectoryResult.error ? branchDirectoryResult.data : [];
@@ -152,11 +166,11 @@ async function resolveSearchPageData({
         !branchCoordinatesResult.error && branchCoordinatesResult.data
             ? branchCoordinatesResult.data
             : [];
-    const locationPathMapping = !locationPathResult.error ? locationPathResult.data : {};
     const allSearchResults = createSearchResults(
         locationBranches,
         branchDirectory,
-        locationPathMapping,
+        roomKind,
+        searchFilters,
     );
     const initialSearchResults = filterSearchResults(allSearchResults, searchFilters);
     const deferredSearchDataPromise = resolveDeferredSearchData({
@@ -166,7 +180,10 @@ async function resolveSearchPageData({
         liveBranchCoordinates,
     });
     const maybeResolved = await Promise.race([
-        deferredSearchDataPromise.then(data => ({ type: "resolved" as const, data })),
+        deferredSearchDataPromise.then(
+            data => ({ type: "resolved" as const, data }),
+            () => ({ type: "rejected" as const }),
+        ),
         new Promise<{ type: "timeout" }>(resolve =>
             setTimeout(() => resolve({ type: "timeout" }), DEFER_GRACE_MS),
         ),
@@ -191,9 +208,11 @@ export async function loader({ params, url }: Route.LoaderArgs) {
         ([key, value]) => key !== "location" && value.trim() !== "",
     );
     const searchResultsHeading =
-        hasAnyQueryParams && searchFilters.location === "all" && hasAnyNonLocationFilter
-            ? "Results for All Locations"
-            : "All Available Locations";
+        searchFilters.location !== "all"
+            ? searchFilters.location
+            : hasAnyQueryParams && hasAnyNonLocationFilter
+              ? "Results for All Locations"
+              : "All Available Locations";
     const searchPageData = resolveSearchPageData({ roomKind, searchFilters });
 
     return {
@@ -261,42 +280,44 @@ export default function Component({ loaderData }: Route.ComponentProps) {
     return (
         <>
             <title>{`${room.displayName} • ${site.title}`}</title>
-            <CardGroup>
-                <Card>
-                    <div className="px-5">
-                        <Breadcrumbs className="pb-0" links={site.breadcrumbs.search(room)} />
-                        <CardHeader className="flex flex-col gap-[0.75rem]">
-                            <h1 className="font-sans text-sans-2xl font-bold usa-card__heading">
-                                {room.displayName}
-                            </h1>
-                            <p className="font-sans text-sans-xs text-base-darker">
-                                <SearchDescription roomKind={roomKind} />
-                            </p>
-                        </CardHeader>
+            <main>
+                <CardGroup>
+                    <Card>
+                        <div className="px-5">
+                            <Breadcrumbs className="pb-0" links={site.breadcrumbs.search(room)} />
+                            <CardHeader className="flex flex-col gap-[0.75rem]">
+                                <h1 className="font-sans text-sans-2xl font-bold usa-card__heading">
+                                    {room.displayName}
+                                </h1>
+                                <p className="font-sans text-sans-xs text-base-darker">
+                                    <SearchDescription roomKind={roomKind} />
+                                </p>
+                            </CardHeader>
 
-                        <Suspense
-                            fallback={
-                                <SearchFiltersLoading
+                            <Suspense
+                                fallback={
+                                    <SearchFiltersLoading
+                                        currentDate={currentDate}
+                                        searchFilters={searchFilters}
+                                    />
+                                }
+                            >
+                                <SearchFiltersContent
                                     currentDate={currentDate}
                                     searchFilters={searchFilters}
+                                    searchPageData={searchPageData}
                                 />
-                            }
-                        >
-                            <SearchFiltersContent
-                                currentDate={currentDate}
+                            </Suspense>
+                            <SearchResultsPanel
+                                deferredSearchData={deferredSearchData}
+                                heading={searchResultsHeading}
+                                mapboxToken={mapboxToken}
                                 searchFilters={searchFilters}
-                                searchPageData={searchPageData}
                             />
-                        </Suspense>
-                        <SearchResultsPanel
-                            deferredSearchData={deferredSearchData}
-                            heading={searchResultsHeading}
-                            mapboxToken={mapboxToken}
-                            roomKind={roomKind}
-                        />
-                    </div>
-                </Card>
-            </CardGroup>
+                        </div>
+                    </Card>
+                </CardGroup>
+            </main>
         </>
     );
 }

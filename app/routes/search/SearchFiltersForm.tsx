@@ -98,6 +98,7 @@ export function SearchFiltersForm({
                     className="max-w-none"
                     id="location"
                     name="location"
+                    key={`${isInitialLoading ? "loading" : "ready"}:${searchFilters.location}`}
                     defaultValue={searchFilters.location}
                     disabled={isInitialLoading}
                 >

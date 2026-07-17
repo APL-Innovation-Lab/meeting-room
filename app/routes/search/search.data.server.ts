@@ -1,4 +1,5 @@
 import {
+    type LibraryRoom,
     type LiveBranchCoordinate,
     type LiveBranchDirectoryEntry,
     type LiveMeetingRoomBranch,
@@ -15,7 +16,21 @@ export type BranchSearchResult = {
     roomsAvailable: number;
     maxAvailableDuration?: number;
     image: string;
-    url: string;
+    searchUrl: string;
+};
+
+export type RoomSearchResult = {
+    roomId: string;
+    roomKind: LibraryRoom["info"]["type"];
+    name: string;
+    branch: string;
+    floor?: number;
+    capacity: number;
+    address: string;
+    image: string;
+    amenities: LibraryRoom["info"]["amenities"];
+    availableTimes: string[];
+    date: string;
 };
 
 export type LocationOption = {
@@ -74,19 +89,14 @@ function toAbsoluteImagePath(image: string): string {
     return `https://library.austintexas.gov${image}`;
 }
 
-function toAbsoluteBranchUrl(path: string): string {
-    if (path.startsWith("http://") || path.startsWith("https://")) return path;
-    if (path.startsWith("/")) return `https://library.austintexas.gov${path}`;
-    return "https://library.austintexas.gov/locations";
-}
-
 export function createSearchResults(
     locationBranches: Array<LiveMeetingRoomBranch | LiveSharedLearningRoomBranch>,
     branchDirectory: LiveBranchDirectoryEntry[],
-    locationPathMapping: Record<string, string>,
+    roomKind: LibraryRoom["info"]["type"],
+    filters: SearchFilters,
 ): BranchSearchResult[] {
     const grouped = new Map<string, BranchSearchResult>();
-    const branchInfo = new Map<string, { address: string; image: string; path: string }>();
+    const branchInfo = new Map<string, { address: string; image: string }>();
 
     for (const branch of branchDirectory) {
         const key = normalizeBranchName(branch.branch);
@@ -94,12 +104,22 @@ export function createSearchResults(
         branchInfo.set(key, {
             address: branch.address,
             image: branch.image,
-            path: branch.path,
         });
     }
 
+    const baseSearchParams = new URLSearchParams();
+    baseSearchParams.set("location", filters.location);
+    baseSearchParams.set("date", filters.date);
+    baseSearchParams.set("duration", filters.duration);
+    if (filters.people) baseSearchParams.set("people", filters.people);
+    if (filters.display) baseSearchParams.set("display", "on");
+    if (filters.hdmi) baseSearchParams.set("hdmi", "on");
+    if (filters.whiteboard) baseSearchParams.set("whiteboard", "on");
+
     for (const branch of locationBranches) {
         const info = branchInfo.get(normalizeBranchName(branch.branch));
+        const branchSearchParams = new URLSearchParams(baseSearchParams);
+        branchSearchParams.set("location", branch.branch);
         grouped.set(branch.locationId, {
             locationId: branch.locationId,
             branch: branch.branch,
@@ -108,11 +128,30 @@ export function createSearchResults(
             distance: "0.0",
             roomsAvailable: branch.roomsAvailable,
             image: toAbsoluteImagePath(info?.image ?? ""),
-            url: toAbsoluteBranchUrl(locationPathMapping[branch.locationId] ?? info?.path ?? ""),
+            searchUrl: `/${roomKind}?${branchSearchParams}`,
         });
     }
 
     return Array.from(grouped.values());
+}
+
+export function createRoomSearchResults(
+    rooms: LibraryRoom[],
+    branchResult: BranchSearchResult,
+): RoomSearchResult[] {
+    return rooms.map(room => ({
+        roomId: room.info.id,
+        roomKind: room.info.type,
+        name: room.info.name,
+        branch: room.branch.name || branchResult.branch,
+        floor: room.branch.floor,
+        capacity: room.info.capacity,
+        address: room.branch.address || branchResult.address,
+        image: toAbsoluteImagePath(room.branch.image || branchResult.image),
+        amenities: room.info.amenities,
+        availableTimes: room.info.availableTimes,
+        date: room.info.date,
+    }));
 }
 
 function parseCheckboxValue(searchParams: URLSearchParams, key: string): boolean {

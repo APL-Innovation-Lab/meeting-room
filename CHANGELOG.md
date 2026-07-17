@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-14
+
+- Added branch-level drill-down on both room search pages: branch names and specific-location searches now render responsive room-by-room availability with room metadata, amenities, duration-valid time links, and preserved search filters using the existing USWDS component and token system.
+
 ## 2026-06-21
 
 - Replaced Prettier with the Oxc toolchain: formatting now runs on Oxfmt (`.oxfmtrc.jsonc`) and linting returns via Oxlint (`.oxlintrc.jsonc`) with `eslint-plugin-perfectionist` and type-aware checks through `oxlint-tsgolint`. Removed Prettier and its plugins, added `format`/`lint` scripts, and pointed the VS Code formatter and recommended extensions at the Oxc extension.
