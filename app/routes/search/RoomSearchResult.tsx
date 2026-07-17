@@ -15,9 +15,9 @@ export namespace RoomSearchResult {
 }
 
 const AMENITIES = [
-    ["airplay", "AirPlay"],
-    ["hdmi", "HDMI"],
-    ["whiteboard", "Whiteboard"],
+    ["airplay", "AirPlay", "/img/material-icons/airplay.svg"],
+    ["hdmi", "HDMI", "/img/material-icons/settings_input_hdmi.svg"],
+    ["whiteboard", "Whiteboard", "/img/material-icons/desktop_windows.svg"],
 ] as const;
 
 export function RoomSearchResult({ filters, priority = false, result }: RoomSearchResult.Props) {
@@ -60,9 +60,17 @@ export function RoomSearchResult({ filters, priority = false, result }: RoomSear
                             className="mt-2 flex list-none flex-wrap gap-1 p-0"
                             aria-label={`Amenities in ${result.name}`}
                         >
-                            {availableAmenities.map(([amenity, label]) => (
+                            {availableAmenities.map(([amenity, label, icon]) => (
                                 <li key={amenity}>
-                                    <Tag className="bg-base-lighter text-ink normal-case">
+                                    <Tag className="!inline-flex items-center gap-05 bg-base-lighter !py-05 text-ink normal-case">
+                                        <img
+                                            className="h-2 w-2 shrink-0"
+                                            alt=""
+                                            aria-hidden="true"
+                                            height={16}
+                                            src={icon}
+                                            width={16}
+                                        />
                                         {label}
                                     </Tag>
                                 </li>

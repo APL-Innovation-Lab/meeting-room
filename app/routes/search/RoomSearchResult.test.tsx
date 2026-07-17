@@ -43,7 +43,10 @@ describe("RoomSearchResult", () => {
         expect(markup).toContain("Central Library, Floor 4");
         expect(markup).toContain("AirPlay");
         expect(markup).toContain("HDMI");
+        expect(markup).toContain('src="/img/material-icons/airplay.svg"');
+        expect(markup).toContain('src="/img/material-icons/settings_input_hdmi.svg"');
         expect(markup).not.toContain("Whiteboard");
+        expect(markup).not.toContain('src="/img/material-icons/desktop_windows.svg"');
         expect(markup).toContain('aria-label="Select 9:00 AM for Shared Learning - 409"');
         expect(markup).toContain(
             'href="/shared-learning-room/review?roomId=409&amp;location=Central+Library&amp;date=2026-07-15&amp;time=9%3A00+AM&amp;duration=120&amp;people=4&amp;display=on"',

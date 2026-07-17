@@ -4,6 +4,7 @@
 
 - Added the empty room-search results view for both room types, including consistent “Results for” headings, the next four matching days at the selected library, filter-preserving alternative-date links, and reference-matched section and button spacing using the existing USWDS system.
 - Standardized room availability buttons into a full-width, responsive grid so every time slot keeps the same dimensions regardless of how many slots are available.
+- Restored the AirPlay, HDMI, and whiteboard icons in room amenity tags with balanced token padding.
 
 ## 2026-07-14
 
