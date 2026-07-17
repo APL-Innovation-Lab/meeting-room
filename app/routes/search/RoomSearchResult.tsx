@@ -74,7 +74,7 @@ export function RoomSearchResult({ filters, priority = false, result }: RoomSear
 
             <div>
                 <h4 className="sr-only">Available times for {result.name}</h4>
-                <ul className="grid max-w-[35rem] list-none grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-2 p-0">
+                <ul className="grid list-none grid-cols-2 gap-2 p-0 tablet:grid-cols-4">
                     {result.availableTimes.map(time => {
                         const reviewParams = new URLSearchParams(baseReviewParams);
                         reviewParams.set("time", time);
