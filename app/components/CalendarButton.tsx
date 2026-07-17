@@ -8,7 +8,7 @@ type Props = {
 export default function CalendarButton({ children }: Props) {
     return (
         <Button
-            className="bg-white border-solid pointer-events-none w-[75px] border-[3px] border-apl-green p-0 py-[12px] text-apl-green"
+            className="pointer-events-none w-[75px] border-[3px] border-solid border-apl-green bg-white p-0 py-[12px] text-apl-green"
             type="button"
         >
             {children}

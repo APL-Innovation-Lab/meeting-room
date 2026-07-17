@@ -6,20 +6,20 @@ import { Room } from "~/lib/room.ts";
 export namespace RoomSelector {
     export function Card({ kind }: { kind: Room.Kind }) {
         return (
-            <div className="rounded-[0.25rem] border border-apl-green p-2 flex flex-col gap-[1.5rem]">
+            <div className="flex flex-col gap-[1.5rem] rounded-[0.25rem] border border-apl-green p-2">
                 <div className="flex flex-col gap-[1.25rem]">
-                    <h4 className="font-bold text-apl-green text-sans-xs">
+                    <h4 className="text-sans-xs font-bold text-apl-green">
                         {kind === "shared-learning-room"
                             ? "Shared Learning/Study Rooms"
                             : "Meeting Rooms"}
                     </h4>
 
-                    <h3 className="font-bold text-sans-lg">
+                    <h3 className="text-sans-lg font-bold">
                         {kind === "shared-learning-room" ? "Small Groups" : "Large Groups"}
                     </h3>
                 </div>
 
-                <ul className="list-disc pl-3 h-full">
+                <ul className="h-full list-disc pl-3">
                     {kind === "shared-learning-room" ? (
                         <>
                             <li>1-12 People</li>
@@ -34,7 +34,7 @@ export namespace RoomSelector {
                     )}
                 </ul>
 
-                <Link className="usa-button m-0" to={href("/:roomKind", { roomKind: kind })}>
+                <Link className="m-0 usa-button" to={href("/:roomKind", { roomKind: kind })}>
                     {kind === "shared-learning-room" ? "Reserve" : "Request"}
                 </Link>
             </div>
@@ -42,6 +42,6 @@ export namespace RoomSelector {
     }
 
     export function Group({ children }: PropsWithChildren) {
-        return <div className="grid grid-cols-2 gap-[1.5rem] items-stretch">{children}</div>;
+        return <div className="grid grid-cols-2 items-stretch gap-[1.5rem]">{children}</div>;
     }
 }

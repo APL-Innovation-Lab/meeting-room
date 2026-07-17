@@ -32,7 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <link rel="stylesheet" href={tailwind} />
                 <link rel="stylesheet" href={uswdsReact} />
             </head>
-            <body className="bg-base-lightest mx-auto my-2 max-w-[60rem]">
+            <body className="mx-auto my-2 max-w-[60rem] bg-base-lightest">
                 {children}
                 <ScrollRestoration />
                 <Scripts />

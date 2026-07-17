@@ -24,7 +24,7 @@ export function Breadcrumbs({ links, className }: Breadcrumbs.Props) {
             {links.map((item, idx) => {
                 const isCurrent = idx === links.length - 1;
                 return (
-                    <Breadcrumb className="left-0 relative" key={item.href} current={isCurrent}>
+                    <Breadcrumb className="relative left-0" key={item.href} current={isCurrent}>
                         {isCurrent ? (
                             item.text
                         ) : (

@@ -16,13 +16,13 @@ export default function CancellationConfirmation({ params }: Route.ComponentProp
 function MeetingRoomCancellationConfirmation() {
     return (
         <div className="flex justify-center">
-            <CardGroup className="min-w-[50rem] max-w-[49rem]">
+            <CardGroup className="max-w-[49rem] min-w-[50rem]">
                 <Card>
-                    <div className="ml-5 mr-5 justify-center">
-                        <h1 className="text-center m-0 pt-4 font-sans text-[40px] font-bold">
+                    <div className="mr-5 ml-5 justify-center">
+                        <h1 className="m-0 pt-4 text-center font-sans text-[40px] font-bold">
                             Canceled
                         </h1>
-                        <h3 className="text-center pt-3 font-sans text-sans-xs">
+                        <h3 className="pt-3 text-center font-sans text-sans-xs">
                             The following has been canceled.
                         </h3>
                         <div className="flex-col px-3 pt-3">
@@ -37,10 +37,10 @@ function MeetingRoomCancellationConfirmation() {
                             <p className="text-center font-sans text-sans-xs">Mon 3/4/24</p>
                             <p className="text-center font-sans text-sans-xs">9:00 AM to 9:15 AM</p>
                             <p className="text-center font-sans text-sans-xs">Capacity: 100</p>
-                            <div className="flex justify-center pb-[194px] pt-7">
+                            <div className="flex justify-center pt-7 pb-[194px]">
                                 <Link href={href("/")}>
                                     <Button
-                                        className="text-white pointer-events-none mr-0 w-[228px] bg-[#016E98] font-sans text-sans-xs"
+                                        className="pointer-events-none mr-0 w-[228px] bg-[#016E98] font-sans text-sans-xs text-white"
                                         type="button"
                                     >
                                         Back to Meeting Spaces
@@ -58,13 +58,13 @@ function MeetingRoomCancellationConfirmation() {
 function SharedLearningRoomCancellationConfirmation() {
     return (
         <div className="flex justify-center">
-            <CardGroup className="min-w-[50rem] max-w-[49rem]">
+            <CardGroup className="max-w-[49rem] min-w-[50rem]">
                 <Card>
-                    <div className="ml-5 mr-5 justify-center">
-                        <h1 className="text-center m-0 pt-4 font-sans text-[40px] font-bold">
+                    <div className="mr-5 ml-5 justify-center">
+                        <h1 className="m-0 pt-4 text-center font-sans text-[40px] font-bold">
                             Canceled
                         </h1>
-                        <h3 className="text-center pt-3 font-sans text-sans-xs">
+                        <h3 className="pt-3 text-center font-sans text-sans-xs">
                             The following has been canceled.
                         </h3>
                         <div className="flex-col px-3 pt-3">
@@ -81,10 +81,10 @@ function SharedLearningRoomCancellationConfirmation() {
                                 11:00 AM to 12:00 PM
                             </p>
                             <p className="text-center font-sans text-sans-xs">Capacity: 4</p>
-                            <div className="flex justify-center pb-[194px] pt-7">
+                            <div className="flex justify-center pt-7 pb-[194px]">
                                 <Link href={href("/")}>
                                     <Button
-                                        className="text-white pointer-events-none mr-0 w-[228px] bg-[#016E98] font-sans text-sans-xs"
+                                        className="pointer-events-none mr-0 w-[228px] bg-[#016E98] font-sans text-sans-xs text-white"
                                         type="button"
                                     >
                                         Back to Meeting Spaces

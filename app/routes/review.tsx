@@ -13,14 +13,14 @@ export default function Component({ params }: Route.ComponentProps) {
     return (
         <div className="flex justify-center">
             <title>{`Review Reservation • ${site.title}`}</title>
-            <CardGroup className="min-w-[30rem] max-w-[49rem]">
+            <CardGroup className="max-w-[49rem] min-w-[30rem]">
                 <Card>
-                    <div className="ml-5 mr-5 justify-center">
+                    <div className="mr-5 ml-5 justify-center">
                         <CardHeader className="-mt-3">
-                            <h1 className="usa-card__heading text-center py-2 font-sans text-[40px] font-bold">
+                            <h1 className="py-2 text-center font-sans text-[40px] font-bold usa-card__heading">
                                 Review Request
                             </h1>
-                            <p className="text-base-darker text-center font-sans text-sans-xs">
+                            <p className="text-center font-sans text-sans-xs text-base-darker">
                                 {isMeetingRoom
                                     ? "Review your meeting room request before submitting."
                                     : "Review your shared learning room reservation before submitting."}

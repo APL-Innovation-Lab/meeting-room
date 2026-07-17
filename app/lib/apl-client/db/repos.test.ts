@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { createDatabase, Repos, type Database } from "./client.server";
 import type { NewRoom } from "./schema";
+
+import { createDatabase, Repos, type Database } from "./client.server";
 
 // Unit tests for the scraped-entity repos (slice 2). They back the live client's read-through cache,
 // so their correctness — full-replace semantics, transactional rollback, type round-tripping, and the
@@ -156,7 +157,13 @@ describe("SpecialDatesRepo", () => {
 describe("BranchDirectoryRepo / BranchCoordinatesRepo", () => {
     it("directory round-trips and replaces wholesale (incl. null fields)", () => {
         repos.branchDirectory.replaceAll([
-            { branchName: "Carver", address: "1161 Angelina", image: "/i.jpg", path: "/carver", syncedAt: now() },
+            {
+                branchName: "Carver",
+                address: "1161 Angelina",
+                image: "/i.jpg",
+                path: "/carver",
+                syncedAt: now(),
+            },
         ]);
         expect(repos.branchDirectory.list()).toHaveLength(1);
 
@@ -202,7 +209,8 @@ describe("OperatingHoursRepo / RoomConflictsRepo (seed targets)", () => {
             { roomId: "848", conflictsWith: "781" },
         ]);
         const count = () =>
-            (db.$client.prepare("SELECT count(*) AS n FROM room_conflicts").get() as { n: number }).n;
+            (db.$client.prepare("SELECT count(*) AS n FROM room_conflicts").get() as { n: number })
+                .n;
         expect(count()).toBe(2);
 
         repos.roomConflicts.replaceAll([]);

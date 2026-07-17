@@ -11,7 +11,7 @@ export default function Component() {
     return (
         <div className="flex justify-center">
             <title>{`Meeting Spaces • ${site.title}`}</title>
-            <CardGroup className="min-w-120 max-w-196">
+            <CardGroup className="max-w-196 min-w-120">
                 <Card>
                     <Header>
                         <div className="object-contain">
@@ -23,13 +23,13 @@ export default function Component() {
                             />
                         </div>
                     </Header>
-                    <div className="ml-5 mr-5">
+                    <div className="mr-5 ml-5">
                         <Breadcrumbs links={site.breadcrumbs.home} />
                         <CardHeader className="-mt-3">
-                            <h1 className="usa-card__heading py-2 font-sans text-[40px] font-bold">
+                            <h1 className="py-2 font-sans text-[40px] font-bold usa-card__heading">
                                 Meeting Spaces
                             </h1>
-                            <p className="text-base-darker font-sans text-sans-xs">
+                            <p className="font-sans text-sans-xs text-base-darker">
                                 Austin Public Library Meeting Spaces are
                                 <strong className="font-bold"> free of charge</strong>.
                             </p>

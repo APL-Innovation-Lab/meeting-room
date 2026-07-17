@@ -36,11 +36,11 @@ function SharedLearningRoomConfirmation() {
     return (
         <div className="flex justify-center">
             <title>{`Confirmation • ${site.title}`}</title>
-            <CardGroup className="min-w-[30rem] max-w-[49rem]">
+            <CardGroup className="max-w-[49rem] min-w-[30rem]">
                 <Card>
-                    <div className="ml-5 mr-5 justify-center">
+                    <div className="mr-5 ml-5 justify-center">
                         <CardHeader className="-mt-3">
-                            <h1 className="usa-card__heading text-center py-2 font-sans text-[40px] font-bold">
+                            <h1 className="py-2 text-center font-sans text-[40px] font-bold usa-card__heading">
                                 Submitted!
                             </h1>
 
@@ -53,7 +53,7 @@ function SharedLearningRoomConfirmation() {
                                     textDecoration: "none",
                                 }}
                             >
-                                <h1 className="text-base-darker text-center font-sans text-sans-xs">
+                                <h1 className="text-center font-sans text-sans-xs text-base-darker">
                                     <strong
                                         className="text-bold text-center"
                                         style={{ color: "#000000FF" }}
@@ -154,14 +154,14 @@ function SharedLearningRoomConfirmation() {
 function MeetingRoomConfirmation() {
     return (
         <div className="flex justify-center">
-            <CardGroup className="min-w-[30rem] max-w-[49rem]">
+            <CardGroup className="max-w-[49rem] min-w-[30rem]">
                 <Card>
-                    <div className="ml-5 mr-5 justify-center">
+                    <div className="mr-5 ml-5 justify-center">
                         <CardHeader className="-mt-3">
-                            <h1 className="usa-card__heading text-center py-2 font-sans text-[40px] font-bold">
+                            <h1 className="py-2 text-center font-sans text-[40px] font-bold usa-card__heading">
                                 Submitted!
                             </h1>
-                            <p className="text-base-darker text-center font-sans text-sans-xs">
+                            <p className="text-center font-sans text-sans-xs text-base-darker">
                                 <strong className="font-bold">
                                     {" "}
                                     Status: Awaiting Confirmation
@@ -179,7 +179,7 @@ function MeetingRoomConfirmation() {
                                     color: "#343434",
                                 }}
                             >
-                                <h1 className="text-base-darker text-center font-sans text-sans-xs">
+                                <h1 className="text-center font-sans text-sans-xs text-base-darker">
                                     <strong
                                         className="text-bold text-center"
                                         style={{ color: "#000000FF" }}
@@ -189,7 +189,7 @@ function MeetingRoomConfirmation() {
                                     </strong>
                                 </h1>
                                 <h6
-                                    className="text-base-darker text-center font-sans text-sans-xs"
+                                    className="text-center font-sans text-sans-xs text-base-darker"
                                     style={{ color: "#343434" }}
                                 >
                                     If you are booking less than three days in advance of your
