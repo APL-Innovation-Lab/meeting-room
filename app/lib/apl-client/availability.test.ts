@@ -6,6 +6,7 @@ import {
     branchNeedleMatches,
     dateIsoFromIsoDateTime,
     getMeetingRoomAvailability,
+    getAvailableTimesForDuration,
     getRoomAvailability,
     matchesRequestedSlot,
     parseClockMinutes,
@@ -88,6 +89,22 @@ describe("matchesRequestedSlot — AV-2 start time + duration require a contiguo
         };
         expect(matchesRequestedSlot(tight, undefined, 120)).toBe(false);
         expect(matchesRequestedSlot(tight, 540, 120)).toBe(false);
+    });
+});
+
+describe("getAvailableTimesForDuration", () => {
+    const availability: RoomAvailability = {
+        availableStartMinutes: [540, 555, 570, 600],
+        availableTimes: ["9:00 AM", "9:15 AM", "9:30 AM", "10:00 AM"],
+        availableDurations: [15, 30, 45],
+    };
+
+    it("returns only starts followed by enough contiguous free slots", () => {
+        expect(getAvailableTimesForDuration(availability, 30)).toEqual(["9:00 AM", "9:15 AM"]);
+    });
+
+    it("keeps every available start when no duration is requested", () => {
+        expect(getAvailableTimesForDuration(availability)).toEqual(availability.availableTimes);
     });
 });
 

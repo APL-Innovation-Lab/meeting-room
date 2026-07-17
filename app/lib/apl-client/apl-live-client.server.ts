@@ -4,8 +4,9 @@ import { z } from "zod";
 
 import { Room } from "~/lib/room";
 
-import { getRepos, type Repos } from "./db/client.server";
 import type { NewRoom, NewSpecialDate, Room as RoomRow } from "./db/schema";
+
+import { getRepos, type Repos } from "./db/client.server";
 
 /**
  * Represents a safe result of an operation that can either be successful with data or fail with an error.
@@ -34,7 +35,7 @@ export type Amenities = {
  */
 export type LibraryBranch = {
     name: string;
-    floor: number;
+    floor?: number;
     address: string;
     image: string;
 };
@@ -49,7 +50,7 @@ export type LibraryRoom = {
         name: string;
         type: "shared-learning-room" | "meeting-room";
         capacity: number;
-        amenities: Amenities;
+        amenities: Partial<Amenities>;
         availableTimes: string[];
         availableDurations: number[];
         date: string;
@@ -67,6 +68,18 @@ export type SearchOptions = {
     capacity?: number;
     amenities?: Partial<Amenities>;
 };
+
+function matchesRequestedAmenities(
+    available: Partial<Amenities>,
+    requested: Partial<Amenities> | undefined,
+): boolean {
+    if (!requested) return true;
+    return Object.entries(requested).every(([key, expected]) => {
+        if (expected === undefined) return true;
+        const actual = available[key as keyof Amenities];
+        return actual === undefined || actual === expected;
+    });
+}
 
 /**
  * Schema for validating shared learning room reservation options.
@@ -174,6 +187,10 @@ type MeetingRoomInventoryRoom = {
     roomId: string;
     branch: string;
     capacity: number;
+    name: string;
+    floor?: number;
+    image?: string;
+    amenities: Partial<Amenities>;
 };
 
 type MeetingRoomInventory = {
@@ -821,7 +838,9 @@ async function ensureMeetingRoomsSynced(host: string): Promise<void> {
         .filter((value): value is NewRoom => Boolean(value));
 
     const r = repos();
-    r.branches.upsertNames(locations.map(loc => ({ locationId: loc.locationId, name: loc.branch })));
+    r.branches.upsertNames(
+        locations.map(loc => ({ locationId: loc.locationId, name: loc.branch })),
+    );
     r.rooms.replaceByKind("meeting-room", roomRows);
     markSynced(source);
 }
@@ -855,10 +874,21 @@ function deriveMeetingRoomInventory(): MeetingRoomInventory {
     const roomsByLocation: Record<string, MeetingRoomInventoryRoom[]> = {};
 
     for (const room of r.rooms.listByKind("meeting-room")) {
+        const hasRoomDetails = room.floor !== null || room.image !== null;
         (roomsByLocation[room.locationId] ??= []).push({
             roomId: room.roomId,
             branch: nameByLocation.get(room.locationId) ?? "",
             capacity: room.capacity ?? 0,
+            name: room.name ?? "",
+            floor: room.floor ?? undefined,
+            image: room.image ?? undefined,
+            amenities: hasRoomDetails
+                ? {
+                      airplay: room.airplay,
+                      hdmi: room.hdmi,
+                      whiteboard: room.whiteboard,
+                  }
+                : {},
         });
     }
 
@@ -925,7 +955,9 @@ function deriveSharedLearningRoomBranches(): LiveSharedLearningRoomBranch[] {
         .map(([locationId, roomsAvailable]) => ({
             locationId,
             branch: nameByLocation.get(locationId) ?? "",
-            capacities: Array.from(capacitiesByLocation.get(locationId) ?? []).sort((a, b) => a - b),
+            capacities: Array.from(capacitiesByLocation.get(locationId) ?? []).sort(
+                (a, b) => a - b,
+            ),
             roomsAvailable,
         }));
 }
@@ -980,7 +1012,10 @@ async function fetchBranchCoordinates(): Promise<LiveBranchCoordinate[]> {
     if (isFresh(source)) {
         return repos()
             .branchCoordinates.list()
-            .map(row => ({ branch: row.branchName, lngLat: [row.lng, row.lat] as [number, number] }));
+            .map(row => ({
+                branch: row.branchName,
+                lngLat: [row.lng, row.lat] as [number, number],
+            }));
     }
 
     const response = await fetch(
@@ -1471,6 +1506,27 @@ export function matchesRequestedSlot(
     return true;
 }
 
+export function getAvailableTimesForDuration(
+    availability: RoomAvailability,
+    desiredDuration?: number,
+): string[] {
+    if (
+        !Number.isFinite(desiredDuration) ||
+        desiredDuration === undefined ||
+        desiredDuration <= 15
+    ) {
+        return availability.availableTimes;
+    }
+
+    const freeStarts = new Set(availability.availableStartMinutes);
+    return availability.availableTimes.filter((_, index) => {
+        const start = availability.availableStartMinutes[index];
+        for (let slot = start; slot < start + desiredDuration; slot += 15) {
+            if (!freeStarts.has(slot)) return false;
+        }
+        return true;
+    });
+}
 async function fetchReservationsForDateByLocation(
     baseUrl: string,
     dateIso: string,
@@ -1627,6 +1683,35 @@ function toLibraryRoom(room: LiveRoom, targetDateIso: string): LibraryRoom {
     };
 }
 
+function toMeetingLibraryRoom(
+    locationId: string,
+    room: MeetingRoomInventoryRoom,
+    availability: RoomAvailability,
+    targetDateIso: string,
+    desiredDuration?: number,
+): LibraryRoom {
+    const location = LocationInfoById[locationId as LocationId];
+
+    return {
+        branch: {
+            name: room.branch || location?.name || `Location ${locationId}`,
+            floor: room.floor,
+            address: location?.address ?? "",
+            image: room.image || location?.image || "",
+        },
+        info: {
+            id: room.roomId,
+            name: room.name,
+            type: "meeting-room",
+            capacity: room.capacity,
+            amenities: room.amenities,
+            availableTimes: getAvailableTimesForDuration(availability, desiredDuration),
+            availableDurations: availability.availableDurations,
+            date: targetDateIso,
+        },
+    };
+}
+
 export const apl = {
     async getRooms(
         options: Partial<SearchOptions> = {},
@@ -1661,14 +1746,9 @@ export const apl = {
                 publishedRooms = publishedRooms.filter(room => room.capacity >= options.capacity!);
             }
 
-            if (options.amenities) {
-                publishedRooms = publishedRooms.filter(room =>
-                    Object.entries(options.amenities!).every(([key, value]) => {
-                        if (value === undefined) return true;
-                        return room.amenities[key as keyof Amenities] === value;
-                    }),
-                );
-            }
+            publishedRooms = publishedRooms.filter(room =>
+                matchesRequestedAmenities(room.amenities, options.amenities),
+            );
 
             const locationIds = Array.from(new Set(publishedRooms.map(room => room.locationId)));
             const reservationsByLocation = new Map<string, z.infer<typeof ReservationSchema>[]>(
@@ -1691,7 +1771,7 @@ export const apl = {
                     ...libraryRoom,
                     info: {
                         ...libraryRoom.info,
-                        availableTimes: availability.availableTimes,
+                        availableTimes: getAvailableTimesForDuration(availability, desiredDuration),
                         availableDurations: availability.availableDurations,
                     },
                     _availability: availability,
@@ -1710,6 +1790,99 @@ export const apl = {
                 error: undefined,
             };
         } catch (error: any) {
+            return {
+                data: undefined,
+                error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
+    },
+
+    async getMeetingRooms(
+        options: Partial<SearchOptions> = {},
+        baseUrl = DEFAULT_BASE_URL,
+    ): Promise<SafeResult<LibraryRoom[]>> {
+        try {
+            const date = options.date ?? new Date();
+            const dateIso = date.toISOString().slice(0, 10);
+            const desiredMinutes = options.time ? toMinutes(options.time) : undefined;
+            const desiredDuration = Number.isFinite(options.duration)
+                ? options.duration
+                : undefined;
+            const desiredCapacity = Number.isFinite(options.capacity)
+                ? options.capacity
+                : undefined;
+            const [inventory, specialDates] = await Promise.all([
+                fetchMeetingRoomInventory(baseUrl),
+                fetchSpecialDates(baseUrl),
+            ]);
+            const locationNeedle = options.location
+                ? normalizeMeetingRoomBranchName(options.location)
+                : undefined;
+            const allowedLocationIds = inventory.locations
+                .filter(location => {
+                    if (!locationNeedle) return true;
+                    const normalizedBranch = normalizeMeetingRoomBranchName(location.branch);
+                    return (
+                        location.locationId.toLowerCase() === locationNeedle ||
+                        branchNeedleMatches(normalizedBranch, locationNeedle)
+                    );
+                })
+                .map(location => location.locationId);
+            const reservationsByLocation = new Map<
+                string,
+                z.infer<typeof MeetingRoomReservationSchema>[]
+            >(
+                await mapWithConcurrency(
+                    allowedLocationIds,
+                    RESERVATIONS_FETCH_CONCURRENCY,
+                    async locationId => [
+                        locationId,
+                        await fetchMeetingRoomReservationsForLocation(baseUrl, dateIso, locationId),
+                    ],
+                ),
+            );
+            const matchingRooms: LibraryRoom[] = [];
+
+            for (const locationId of allowedLocationIds) {
+                const reservations = reservationsByLocation.get(locationId) ?? [];
+                const rooms = (inventory.roomsByLocation[locationId] ?? []).filter(room => {
+                    if (desiredCapacity !== undefined && room.capacity < desiredCapacity) {
+                        return false;
+                    }
+                    return matchesRequestedAmenities(room.amenities, options.amenities);
+                });
+
+                for (const room of rooms) {
+                    const conflictSet = getMeetingRoomConflictSet(room.roomId);
+                    const conflictingReservations = reservations.filter(
+                        reservation =>
+                            conflictSet.has(String(reservation.room)) &&
+                            dateIsoFromIsoDateTime(reservation.start) === dateIso,
+                    );
+                    const availability = getMeetingRoomAvailability(
+                        room.roomId,
+                        conflictingReservations,
+                        date,
+                        specialDates,
+                    );
+                    if (!matchesRequestedSlot(availability, desiredMinutes, desiredDuration)) {
+                        continue;
+                    }
+
+                    matchingRooms.push(
+                        toMeetingLibraryRoom(
+                            locationId,
+                            room,
+                            availability,
+                            dateIso,
+                            desiredDuration,
+                        ),
+                    );
+                }
+            }
+
+            return { data: matchingRooms, error: undefined };
+        } catch (error: unknown) {
             return {
                 data: undefined,
                 error: error instanceof Error ? error : new Error(String(error)),
@@ -1787,8 +1960,10 @@ export const apl = {
 
             for (const locationId of allowedLocationIds) {
                 const rooms = (inventory.roomsByLocation[locationId] ?? []).filter(room => {
-                    if (desiredCapacity === undefined) return true;
-                    return room.capacity >= desiredCapacity;
+                    if (desiredCapacity !== undefined && room.capacity < desiredCapacity) {
+                        return false;
+                    }
+                    return matchesRequestedAmenities(room.amenities, options.amenities);
                 });
 
                 if (!rooms.length) continue;
