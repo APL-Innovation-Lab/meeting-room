@@ -308,6 +308,15 @@ function unflattenColors(obj: any) {
     );
 }
 
+function resolveSpacingReferences(
+    values: Record<string, string>,
+    spacing: Record<string, string>,
+): Record<string, string> {
+    return Object.fromEntries(
+        Object.entries(values).map(([key, value]) => [key, spacing[value] ?? value]),
+    );
+}
+
 async function generateTailwindTokens(variables: JsonObject) {
     let {
         allProjectColors,
@@ -322,11 +331,17 @@ async function generateTailwindTokens(variables: JsonObject) {
         tokensFontSystem,
         tokensFontTheme,
     } = parseValues(variables);
+    const spacing = systemProperties.padding.standard;
+    const gap = {
+        standard: resolveSpacingReferences(systemProperties.gap.standard, spacing),
+        extended: resolveSpacingReferences(systemProperties.gap.extended, spacing),
+    };
 
     let colors = unflattenColors(tokensColorSystem);
 
     let theme = {
         ...systemProperties,
+        gap,
         borderWidth: {
             standard: {
                 ...systemProperties.borderWidth.standard,

@@ -3,6 +3,7 @@
 ## 2026-07-14
 
 - Added branch-level drill-down on both room search pages: branch names and specific-location searches now render responsive room-by-room availability with room metadata, amenities, duration-valid time links, and preserved search filters using the existing USWDS component and token system.
+- Corrected generated `gap-*` token values so standard spacing utilities emit valid CSS lengths.
 
 ## 2026-06-21
 
