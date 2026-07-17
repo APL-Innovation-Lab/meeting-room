@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-16
+
+- Added the empty room-search results view for both room types, including consistent “Results for” headings, the next four matching days at the selected library, filter-preserving alternative-date links, and reference-matched section and button spacing using the existing USWDS system.
+
 ## 2026-07-14
 
 - Added branch-level drill-down on both room search pages: branch names and specific-location searches now render responsive room-by-room availability with room metadata, amenities, duration-valid time links, and preserved search filters using the existing USWDS component and token system.

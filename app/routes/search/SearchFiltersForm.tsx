@@ -120,6 +120,7 @@ export function SearchFiltersForm({
                     </Label>
                     <DatePicker
                         id="date"
+                        key={searchFilters.date || currentDate}
                         name="date"
                         defaultValue={searchFilters.date || currentDate}
                         disabled={isInitialLoading}

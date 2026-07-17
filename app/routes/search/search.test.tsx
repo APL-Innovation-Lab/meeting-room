@@ -16,6 +16,16 @@ import { loader } from "./search";
 
 const unresolved = () => new Promise<never>(() => undefined);
 
+const austinDateFormatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+});
+
+function addIsoDays(isoDate: string, days: number): string {
+    const date = new Date(`${isoDate}T00:00:00.000Z`);
+    date.setUTCDate(date.getUTCDate() + days);
+    return date.toISOString().slice(0, 10);
+}
+
 const branch = {
     locationId: "3939",
     branch: "Central Library",
@@ -128,6 +138,40 @@ describe("search route loader", () => {
                 },
             ],
         });
+    });
+
+    it("returns the next four matching days when a branch has no rooms", async () => {
+        mockResolvedMetadata("shared-learning-room");
+        const selectedDate = austinDateFormatter.format(new Date());
+        const expectedDates = [1, 2, 3, 4].map(days => addIsoDays(selectedDate, days));
+        aplMocks.getRooms.mockImplementation(async (options: { date?: Date }) => ({
+            data: options.date?.toISOString().slice(0, 10) === selectedDate ? [] : [room],
+            error: undefined,
+        }));
+
+        const loaderData = await loader({
+            params: { roomKind: "shared-learning-room" },
+            url: new URL(
+                `http://localhost/shared-learning-room?location=Central+Library&date=${selectedDate}&duration=120&people=4&display=on&whiteboard=on`,
+            ),
+        } as never);
+        const searchPageData = await loaderData.searchPageData;
+        const result = await searchPageData.deferredSearchData;
+
+        if (result.mode !== "rooms") throw new Error("Expected room-level search results");
+        expect(result.roomResults).toEqual([]);
+        expect(result.suggestedAlternativeDays.map(day => day.date)).toEqual(expectedDates);
+        expect(result.suggestedAlternativeDays).toHaveLength(4);
+
+        for (const day of result.suggestedAlternativeDays) {
+            const searchUrl = new URL(day.searchUrl, "http://localhost/shared-learning-room");
+            expect(searchUrl.searchParams.get("location")).toBe("Central Library");
+            expect(searchUrl.searchParams.get("date")).toBe(day.date);
+            expect(searchUrl.searchParams.get("duration")).toBe("120");
+            expect(searchUrl.searchParams.get("people")).toBe("4");
+            expect(searchUrl.searchParams.get("display")).toBe("on");
+            expect(searchUrl.searchParams.get("whiteboard")).toBe("on");
+        }
     });
 
     it("uses the meeting-room detail query for a selected meeting-room branch", async () => {

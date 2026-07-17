@@ -88,27 +88,66 @@ describe("SearchResultsPanel", () => {
                         mode: "rooms",
                         branch: "Central Library",
                         roomResults: [roomResult],
+                        suggestedAlternativeDays: [],
                     }}
                     searchFilters={searchFilters}
                 />
             </MemoryRouter>,
         );
 
-        expect(markup).toContain(">Central Library</h2>");
+        expect(markup).toContain(">Results for Central Library</h2>");
         expect(markup).toContain("Shared Learning - 409");
         expect(markup).toContain('aria-label="Select 9:00 AM for Shared Learning - 409"');
         expect(markup).not.toContain("Map loading…");
     });
 
-    it("explains when the selected branch has no matching rooms", () => {
+    it("shows the Figma empty state with four actionable alternative days", () => {
         const markup = renderToStaticMarkup(
-            <SearchResultsPanel
-                mapboxToken="test-token"
-                searchData={{ mode: "rooms", branch: "Central Library", roomResults: [] }}
-                searchFilters={searchFilters}
-            />,
+            <MemoryRouter initialEntries={["/shared-learning-room"]}>
+                <SearchResultsPanel
+                    mapboxToken="test-token"
+                    searchData={{
+                        mode: "rooms",
+                        branch: "Central Library",
+                        roomResults: [],
+                        suggestedAlternativeDays: [
+                            {
+                                date: "2026-07-20",
+                                label: "Mon Jul 20",
+                                searchUrl: "?location=Central+Library&date=2026-07-20&duration=120",
+                            },
+                            {
+                                date: "2026-07-21",
+                                label: "Tue Jul 21",
+                                searchUrl: "?location=Central+Library&date=2026-07-21&duration=120",
+                            },
+                            {
+                                date: "2026-07-22",
+                                label: "Wed Jul 22",
+                                searchUrl: "?location=Central+Library&date=2026-07-22&duration=120",
+                            },
+                            {
+                                date: "2026-07-23",
+                                label: "Thu Jul 23",
+                                searchUrl: "?location=Central+Library&date=2026-07-23&duration=120",
+                            },
+                        ],
+                    }}
+                    searchFilters={searchFilters}
+                />
+            </MemoryRouter>,
         );
 
-        expect(markup).toContain("No rooms match these filters at Central Library.");
+        expect(markup).toContain("Results for Central Library");
+        expect(markup).toContain("None Available");
+        expect(markup).toContain(
+            "There are no rooms available that match your preference. Please consider a different date, or adjust the filters for alternatives.",
+        );
+        expect(markup).toContain("Suggested Alternative Days");
+        expect(markup).toContain("Mon Jul 20");
+        expect(markup).toContain(
+            'href="/shared-learning-room?location=Central+Library&amp;date=2026-07-20&amp;duration=120"',
+        );
+        expect(markup.match(/usa-button--outline/g)).toHaveLength(4);
     });
 });

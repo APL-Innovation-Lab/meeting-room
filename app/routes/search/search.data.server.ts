@@ -49,6 +49,27 @@ export type SearchFilters = {
     whiteboard: boolean;
 };
 
+export type SuggestedAlternativeDay = {
+    date: string;
+    label: string;
+    searchUrl: string;
+};
+
+export function createSearchParams(
+    filters: SearchFilters,
+    { date = filters.date }: { date?: string } = {},
+): URLSearchParams {
+    const searchParams = new URLSearchParams();
+    searchParams.set("location", filters.location);
+    searchParams.set("date", date);
+    searchParams.set("duration", filters.duration);
+    if (filters.people) searchParams.set("people", filters.people);
+    if (filters.display) searchParams.set("display", "on");
+    if (filters.hdmi) searchParams.set("hdmi", "on");
+    if (filters.whiteboard) searchParams.set("whiteboard", "on");
+    return searchParams;
+}
+
 export function formatLocationOptionLabel(result: BranchSearchResult): string {
     const hasCapacities = result.capacities.length > 0;
     const capacityLabel = pluralize(result.capacities.length, {
@@ -107,14 +128,7 @@ export function createSearchResults(
         });
     }
 
-    const baseSearchParams = new URLSearchParams();
-    baseSearchParams.set("location", filters.location);
-    baseSearchParams.set("date", filters.date);
-    baseSearchParams.set("duration", filters.duration);
-    if (filters.people) baseSearchParams.set("people", filters.people);
-    if (filters.display) baseSearchParams.set("display", "on");
-    if (filters.hdmi) baseSearchParams.set("hdmi", "on");
-    if (filters.whiteboard) baseSearchParams.set("whiteboard", "on");
+    const baseSearchParams = createSearchParams(filters);
 
     for (const branch of locationBranches) {
         const info = branchInfo.get(normalizeBranchName(branch.branch));

@@ -1,5 +1,6 @@
 import { Suspense, use, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { Link } from "react-router";
 
 import { Map as BranchMap } from "~/components/Map";
 import { Spinner } from "~/components/Spinner";
@@ -9,6 +10,7 @@ import {
     type BranchSearchResult,
     type RoomSearchResult as RoomSearchResultData,
     type SearchFilters,
+    type SuggestedAlternativeDay,
 } from "./search.data.server";
 import { SearchResult } from "./SearchResult";
 
@@ -23,6 +25,7 @@ export namespace SearchResultsPanel {
               mode: "rooms";
               branch: string;
               roomResults: RoomSearchResultData[];
+              suggestedAlternativeDays: SuggestedAlternativeDay[];
           };
 
     export interface Props {
@@ -169,22 +172,72 @@ function BranchSearchResults({
     );
 }
 
+function EmptyRoomSearchResults({
+    suggestedAlternativeDays,
+}: {
+    suggestedAlternativeDays: SuggestedAlternativeDay[];
+}) {
+    return (
+        <>
+            <div
+                className="flex min-h-48 flex-col items-center border-b border-base-light px-4 py-5 text-center tablet:min-h-[15rem]"
+                role="status"
+            >
+                <h3 className="m-0 font-sans text-sans-md font-bold text-base-dark">
+                    None Available
+                </h3>
+                <p className="leading-relaxed mt-3 max-w-[58rem] font-sans text-sans-md text-base-dark">
+                    There are no rooms available that match your preference. Please consider a
+                    different date, or adjust the filters for alternatives.
+                </p>
+            </div>
+
+            {suggestedAlternativeDays.length > 0 ? (
+                <section className="pt-3 pb-5" aria-labelledby="alternative-days-heading">
+                    <h3
+                        className="mb-3 font-sans text-sans-md font-bold"
+                        id="alternative-days-heading"
+                    >
+                        Suggested Alternative Days
+                    </h3>
+                    <ul className="grid list-none grid-cols-1 gap-3 p-0 mobile-lg:grid-cols-2 desktop:grid-cols-4">
+                        {suggestedAlternativeDays.map(day => (
+                            <li key={day.date}>
+                                <Link
+                                    className="m-0 inline-flex min-h-12 w-full items-center justify-center bg-transparent px-2 text-center font-sans text-sans-md font-bold no-underline usa-button usa-button--outline"
+                                    preventScrollReset
+                                    prefetch="intent"
+                                    to={day.searchUrl}
+                                >
+                                    {day.label}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            ) : null}
+        </>
+    );
+}
+
 function RoomSearchResults({
     branch,
     roomResults,
     searchFilters,
+    suggestedAlternativeDays,
 }: {
     branch: string;
     roomResults: RoomSearchResultData[];
     searchFilters: SearchFilters;
+    suggestedAlternativeDays: SuggestedAlternativeDay[];
 }) {
     return (
         <section aria-labelledby="room-results-heading">
             <h2
-                className="border-b border-base-light py-3 font-sans text-sans-md font-bold"
+                className="border-b border-base-light py-3 font-sans text-sans-md font-bold uppercase"
                 id="room-results-heading"
             >
-                {branch}
+                Results for {branch}
             </h2>
             {roomResults.length > 0 ? (
                 <ul className="list-none divide-y divide-base-light p-0">
@@ -199,7 +252,7 @@ function RoomSearchResults({
                     ))}
                 </ul>
             ) : (
-                <p className="py-5 text-base-darker">No rooms match these filters at {branch}.</p>
+                <EmptyRoomSearchResults suggestedAlternativeDays={suggestedAlternativeDays} />
             )}
         </section>
     );
@@ -218,6 +271,7 @@ function DeferredRoomSearchResults({
             branch={data.branch}
             roomResults={data.roomResults}
             searchFilters={searchFilters}
+            suggestedAlternativeDays={data.suggestedAlternativeDays}
         />
     ) : null;
 }
@@ -265,6 +319,7 @@ export function SearchResultsPanel({
     const fallbackData: SearchResultsPanel.DeferredSearchData = {
         mode: "rooms",
         branch: searchFilters.location,
+        suggestedAlternativeDays: [],
         roomResults: [],
     };
 
@@ -291,6 +346,11 @@ export function SearchResultsPanel({
                         searchData?.mode === "rooms"
                             ? searchData.roomResults
                             : fallbackData.roomResults
+                    }
+                    suggestedAlternativeDays={
+                        searchData?.mode === "rooms"
+                            ? searchData.suggestedAlternativeDays
+                            : fallbackData.suggestedAlternativeDays
                     }
                     searchFilters={searchFilters}
                 />

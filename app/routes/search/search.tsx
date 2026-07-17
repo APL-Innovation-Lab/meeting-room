@@ -2,8 +2,11 @@ import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
 import { Suspense, use } from "react";
 
 import { Breadcrumbs } from "~/components/Breadcrumbs";
-import { type LiveBranchCoordinate } from "~/lib/apl-client/apl-live-client.server";
-import { apl } from "~/lib/apl-client/apl-live-client.server";
+import {
+    apl,
+    type LiveBranchCoordinate,
+    type SearchOptions,
+} from "~/lib/apl-client/apl-live-client.server";
 import { Room } from "~/lib/room";
 import { site } from "~/lib/site";
 
@@ -11,15 +14,17 @@ import { Route } from "./+types/search";
 import {
     branchNamesMatch,
     createBranchLngLats,
-    createSearchFilters,
-    createRoomSearchResults,
     createLocationOptions,
+    createRoomSearchResults,
+    createSearchFilters,
+    createSearchParams,
     createSearchResults,
     filterSearchResults,
     type BranchSearchResult,
     type LocationOption,
     type RoomSearchResult,
     type SearchFilters,
+    type SuggestedAlternativeDay,
 } from "./search.data.server";
 import { SearchDescription } from "./SearchDescription";
 import { SearchFiltersForm } from "./SearchFiltersForm";
@@ -30,6 +35,77 @@ import { SearchResultsPanel } from "./SearchResultsPanel";
 // *tomorrow* (AV-6). en-CA yields the canonical "YYYY-MM-DD" shape the rest of the flow expects.
 const dateFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" });
 const DEFER_GRACE_MS = 120;
+const alternativeDayFormatter = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+});
+const ALTERNATIVE_DAY_BATCH_SIZE = 7;
+const ALTERNATIVE_DAY_LIMIT = 4;
+
+function addUtcDays(date: Date, days: number): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days));
+}
+
+async function findSuggestedAlternativeDays({
+    currentDate,
+    roomKind,
+    searchFilters,
+    searchOptions,
+}: {
+    currentDate: string;
+    roomKind: Room.Kind;
+    searchFilters: SearchFilters;
+    searchOptions: Partial<SearchOptions>;
+}): Promise<SuggestedAlternativeDay[]> {
+    const selectedDate = searchOptions.date;
+    if (!selectedDate) return [];
+
+    const today = new Date(`${currentDate}T00:00:00.000Z`);
+    const bookingHorizonInDays = Room.isMeeting(roomKind) ? 90 : 14;
+    const lastBookableDate = addUtcDays(today, bookingHorizonInDays);
+    let nextDate = selectedDate < today ? today : addUtcDays(selectedDate, 1);
+    const suggestedDates: Date[] = [];
+    const searchRooms = Room.isMeeting(roomKind)
+        ? (options: Partial<SearchOptions>) => apl.getMeetingRooms(options)
+        : (options: Partial<SearchOptions>) => apl.getRooms(options);
+
+    while (nextDate <= lastBookableDate && suggestedDates.length < ALTERNATIVE_DAY_LIMIT) {
+        const batch: Date[] = [];
+        while (batch.length < ALTERNATIVE_DAY_BATCH_SIZE && nextDate <= lastBookableDate) {
+            batch.push(nextDate);
+            nextDate = addUtcDays(nextDate, 1);
+        }
+
+        const availability = await Promise.all(
+            batch.map(async date => {
+                const result = await searchRooms({ ...searchOptions, date });
+                return {
+                    date,
+                    failed: Boolean(result.error),
+                    hasRooms: !result.error && result.data.length > 0,
+                };
+            }),
+        );
+
+        if (availability.every(candidate => candidate.failed)) break;
+        suggestedDates.push(
+            ...availability
+                .filter(candidate => candidate.hasRooms)
+                .map(candidate => candidate.date),
+        );
+    }
+
+    return suggestedDates.slice(0, ALTERNATIVE_DAY_LIMIT).map(date => {
+        const isoDate = date.toISOString().slice(0, 10);
+        return {
+            date: isoDate,
+            label: alternativeDayFormatter.format(date).replace(",", ""),
+            searchUrl: `?${createSearchParams(searchFilters, { date: isoDate })}`,
+        };
+    });
+}
 
 type DeferredSearchData =
     | {
@@ -41,6 +117,7 @@ type DeferredSearchData =
           mode: "rooms";
           branch: string;
           roomResults: RoomSearchResult[];
+          suggestedAlternativeDays: SuggestedAlternativeDay[];
       };
 
 interface SearchPageData {
@@ -50,10 +127,12 @@ interface SearchPageData {
 
 async function resolveDeferredSearchData({
     roomKind,
+    currentDate,
     searchFilters,
     initialSearchResults,
     liveBranchCoordinates,
 }: {
+    currentDate: string;
     roomKind: Room.Kind;
     searchFilters: SearchFilters;
     initialSearchResults: BranchSearchResult[];
@@ -78,7 +157,12 @@ async function resolveDeferredSearchData({
     if (searchFilters.location !== "all") {
         const selectedBranch = initialSearchResults[0];
         if (!selectedBranch) {
-            return { mode: "rooms", branch: searchFilters.location, roomResults: [] };
+            return {
+                mode: "rooms",
+                branch: searchFilters.location,
+                roomResults: [],
+                suggestedAlternativeDays: [],
+            };
         }
 
         const roomsResult = Room.isMeeting(roomKind)
@@ -86,10 +170,20 @@ async function resolveDeferredSearchData({
             : await apl.getRooms(searchOptions);
         if (roomsResult.error) throw roomsResult.error;
 
+        const roomResults = createRoomSearchResults(roomsResult.data, selectedBranch);
         return {
             mode: "rooms",
             branch: selectedBranch.branch,
-            roomResults: createRoomSearchResults(roomsResult.data, selectedBranch),
+            roomResults,
+            suggestedAlternativeDays:
+                roomResults.length === 0
+                    ? await findSuggestedAlternativeDays({
+                          currentDate,
+                          roomKind,
+                          searchFilters,
+                          searchOptions,
+                      })
+                    : [],
         };
     }
 
@@ -147,9 +241,11 @@ async function resolveDeferredSearchData({
 async function resolveSearchPageData({
     roomKind,
     searchFilters,
+    currentDate,
 }: {
     roomKind: Room.Kind;
     searchFilters: SearchFilters;
+    currentDate: string;
 }): Promise<SearchPageData> {
     const [meetingOrSharedResult, branchDirectoryResult, branchCoordinatesResult] =
         await Promise.all([
@@ -174,6 +270,7 @@ async function resolveSearchPageData({
     );
     const initialSearchResults = filterSearchResults(allSearchResults, searchFilters);
     const deferredSearchDataPromise = resolveDeferredSearchData({
+        currentDate,
         roomKind,
         searchFilters,
         initialSearchResults,
@@ -213,7 +310,11 @@ export async function loader({ params, url }: Route.LoaderArgs) {
             : hasAnyQueryParams && hasAnyNonLocationFilter
               ? "Results for All Locations"
               : "All Available Locations";
-    const searchPageData = resolveSearchPageData({ roomKind, searchFilters });
+    const searchPageData = resolveSearchPageData({
+        currentDate,
+        roomKind,
+        searchFilters,
+    });
 
     return {
         searchFilters,
