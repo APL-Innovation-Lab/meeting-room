@@ -7,6 +7,11 @@ import { Room } from "~/lib/room";
 import type { NewRoom, NewSpecialDate, Room as RoomRow } from "./db/schema";
 
 import { getRepos, type Repos } from "./db/client.server";
+import {
+    RoomNotAvailableAtTimeError,
+    RoomNotAvailableOnDateError,
+    RoomNotFoundError,
+} from "./errors";
 
 /**
  * Represents a safe result of an operation that can either be successful with data or fail with an error.
@@ -85,12 +90,12 @@ function matchesRequestedAmenities(
  * Schema for validating shared learning room reservation options.
  */
 export const SharedLearningRoomReservationOptionsSchema = z.object({
-    roomId: z.string(),
-    meetingTopic: z.string(),
-    fullName: z.string(),
+    roomId: z.string().trim().min(1),
+    meetingTopic: z.string().trim().min(1),
+    fullName: z.string().trim().min(1),
     emailAddress: z.email(),
-    date: z.string(),
-    time: z.string(),
+    date: z.string().trim().min(1),
+    time: z.string().trim().min(1),
 });
 
 /**
@@ -98,16 +103,18 @@ export const SharedLearningRoomReservationOptionsSchema = z.object({
  */
 export const MeetingRoomReservationOptionsSchema =
     SharedLearningRoomReservationOptionsSchema.extend({
-        orgName: z.string(),
-        orgPurpose: z.string(),
+        orgName: z.string().trim().min(1),
+        orgPurpose: z.string().trim().min(1),
         website: z.url().optional(),
         phoneNumber: z.string().refine(value => validator.isMobilePhone(value, "any")),
     });
 
 /**
- * Union schema for validating reservation options for any room type.
+ * Union schema for validating reservation options for any room type. Discriminated on `roomKind`
+ * so a failed parse reports the matched branch's field-level issues (a plain union would collapse
+ * them into one opaque "invalid union" error).
  */
-export const ReservationOptionsSchema = z.union([
+export const ReservationOptionsSchema = z.discriminatedUnion("roomKind", [
     MeetingRoomReservationOptionsSchema.extend({ roomKind: z.literal("meeting-room") }),
     SharedLearningRoomReservationOptionsSchema.extend({
         roomKind: z.literal("shared-learning-room"),
@@ -1098,7 +1105,8 @@ export function dateIsoFromIsoDateTime(value: string): string | undefined {
     return value.match(/\d{4}-\d{2}-\d{2}/)?.[0];
 }
 
-function toTimeLabel(minutes: number): string {
+/** Formats minutes-since-midnight as the 12-hour slot label used throughout ("5:00 PM"). */
+export function toTimeLabel(minutes: number): string {
     const hour24 = Math.floor(minutes / 60);
     const minute = minutes % 60;
     const period = hour24 >= 12 ? "PM" : "AM";
@@ -2014,6 +2022,78 @@ export const apl = {
                 error: undefined,
             };
         } catch (error: any) {
+            return {
+                data: undefined,
+                error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
+    },
+
+    /**
+     * Books a room on behalf of a customer. Validates the submitted options, re-resolves the room
+     * upstream (never trusting client-supplied names), verifies the requested slot is still open,
+     * and persists the booking. The `reservations` table's partial unique index is the final
+     * arbiter against double-booking, surfacing as {@link RoomAlreadyReservedError}.
+     */
+    async createReservation(
+        options: z.infer<typeof ReservationOptionsSchema>,
+        baseUrl = DEFAULT_BASE_URL,
+    ): Promise<SafeResult<Reservation & { id: number }>> {
+        try {
+            const parsed = ReservationOptionsSchema.parse(options);
+            const date = new Date(parsed.date);
+            const roomsResult =
+                parsed.roomKind === "meeting-room"
+                    ? await apl.getMeetingRooms({ date }, baseUrl)
+                    : await apl.getRooms({ date }, baseUrl);
+            if (roomsResult.error) throw roomsResult.error;
+
+            const room = roomsResult.data.find(candidate => candidate.info.id === parsed.roomId);
+            if (!room) throw new RoomNotFoundError(parsed.roomId);
+            if (room.info.availableTimes.length === 0) {
+                throw new RoomNotAvailableOnDateError(parsed.date);
+            }
+            if (!room.info.availableTimes.includes(parsed.time)) {
+                throw new RoomNotAvailableAtTimeError(parsed.time);
+            }
+
+            const isMeeting = parsed.roomKind === "meeting-room";
+            const row = repos().reservations.create({
+                roomId: parsed.roomId,
+                roomKind: parsed.roomKind,
+                roomName: room.info.name,
+                branchName: room.branch.name,
+                meetingTopic: parsed.meetingTopic,
+                fullName: parsed.fullName,
+                emailAddress: parsed.emailAddress,
+                date: parsed.date,
+                time: parsed.time,
+                orgName: isMeeting ? parsed.orgName : undefined,
+                orgPurpose: isMeeting ? parsed.orgPurpose : undefined,
+                website: isMeeting ? parsed.website : undefined,
+                phoneNumber: isMeeting ? parsed.phoneNumber : undefined,
+            });
+
+            return {
+                data: {
+                    id: row.id,
+                    roomId: row.roomId,
+                    roomKind: row.roomKind,
+                    roomName: row.roomName,
+                    branchName: row.branchName,
+                    meetingTopic: row.meetingTopic,
+                    fullName: row.fullName,
+                    emailAddress: row.emailAddress,
+                    date: row.date,
+                    time: row.time,
+                    orgName: row.orgName ?? undefined,
+                    orgPurpose: row.orgPurpose ?? undefined,
+                    website: row.website ?? undefined,
+                    phoneNumber: row.phoneNumber ?? undefined,
+                },
+                error: undefined,
+            };
+        } catch (error: unknown) {
             return {
                 data: undefined,
                 error: error instanceof Error ? error : new Error(String(error)),
