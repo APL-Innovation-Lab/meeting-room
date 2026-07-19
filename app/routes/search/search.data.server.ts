@@ -104,7 +104,7 @@ export function branchNamesMatch(a: string, b: string): boolean {
     return left === right || left.includes(right) || right.includes(left);
 }
 
-function toAbsoluteImagePath(image: string): string {
+export function toAbsoluteImagePath(image: string): string {
     if (!image) return "https://library.austintexas.gov/library/slr-408.jpg";
     if (image.startsWith("http://") || image.startsWith("https://")) return image;
     return `https://library.austintexas.gov${image}`;

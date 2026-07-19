@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-19
+
+- Made the review page functional for both room types (#26, #27): the page now loads the selected room from the `roomId`/`date`/`time`/`duration` query params and displays the real branch, room, capacity, amenity, and formatted date/time-range details; invalid, stale, or unavailable selections redirect back to the search page with filters preserved.
+- Wired the review form to a route action that validates submissions server-side (required fields must be non-blank; email, phone, and website formats checked via the reservation schemas), persists bookings through the new `apl.createReservation` client method, and redirects to the confirmation page with the reservation id. Slot conflicts and rooms that became unavailable surface as form-level errors; field problems render inline USWDS error messages.
+- Disabled the Submit button until every required field is filled and the policy agreement is checked, and pointed the policy links (Meeting Room Policies, Austin History Center Guidelines, Care and Use of Facilities Guidelines, Shared Learning Room Policy) at the live library.austintexas.gov pages.
+- Tightened the reservation option schemas to reject blank required values and switched `ReservationOptionsSchema` to a discriminated union so validation failures report per-field errors.
+- Filled in missing meeting-room branch addresses and photos on the review page by joining the branch-directory feed (the same fallback the search results use), since the scraped meeting-room inventory carries neither.
+
 ## 2026-07-16
 
 - Added the empty room-search results view for both room types, including consistent “Results for” headings, the next four matching days at the selected library, filter-preserving alternative-date links, and reference-matched section and button spacing using the existing USWDS system.

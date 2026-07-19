@@ -5,7 +5,7 @@ export default [
     route("calendar.ics", "./routes/calendar-ics.ts"),
     ...prefix(":roomKind", [
         index("./routes/search/search.tsx"),
-        route("review", "./routes/review.tsx"),
+        route("review", "./routes/review/review.tsx"),
         route("confirm", "./routes/confirm.tsx"),
         ...prefix("cancel", [
             index("./routes/cancel/cancel.tsx"),
