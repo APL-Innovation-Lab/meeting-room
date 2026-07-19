@@ -1,11 +1,15 @@
-import { index, route, type RouteConfig } from "@react-router/dev/routes";
+import { index, prefix, route, type RouteConfig } from "@react-router/dev/routes";
 
 export default [
     index("./routes/home/home.tsx"),
     route("calendar.ics", "./routes/calendar-ics.ts"),
-    route(":roomKind", "./routes/search/search.tsx"),
-    route(":roomKind/review", "./routes/review.tsx"),
-    route(":roomKind/confirm", "./routes/confirm.tsx"),
-    route(":roomKind/cancel", "./routes/cancel/cancel.tsx"),
-    route(":roomKind/cancel/confirm", "./routes/cancel/confirm.tsx"),
+    ...prefix(":roomKind", [
+        index("./routes/search/search.tsx"),
+        route("review", "./routes/review.tsx"),
+        route("confirm", "./routes/confirm.tsx"),
+        ...prefix("cancel", [
+            index("./routes/cancel/cancel.tsx"),
+            route("confirm", "./routes/cancel/confirm.tsx"),
+        ]),
+    ]),
 ] satisfies RouteConfig;

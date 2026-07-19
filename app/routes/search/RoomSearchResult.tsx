@@ -37,7 +37,7 @@ export function RoomSearchResult({ filters, priority = false, result }: RoomSear
         <article className="flex flex-col gap-3 py-4 first:pt-3">
             <header className="flex flex-col gap-3 mobile-lg:flex-row">
                 <img
-                    className="aspect-[4/3] w-full object-cover mobile-lg:w-40 mobile-lg:shrink-0"
+                    className="aspect-4/3 w-full object-cover mobile-lg:w-40 mobile-lg:shrink-0"
                     alt={`${result.name} at ${result.branch}`}
                     decoding="async"
                     fetchPriority={priority ? "high" : "low"}
@@ -62,14 +62,14 @@ export function RoomSearchResult({ filters, priority = false, result }: RoomSear
                         >
                             {availableAmenities.map(([amenity, label, icon]) => (
                                 <li key={amenity}>
-                                    <Tag className="!inline-flex items-center gap-05 bg-base-lighter !py-05 text-ink normal-case">
+                                    <Tag className="inline-flex! items-center gap-05 bg-base-lighter !py-05 text-ink normal-case">
                                         <img
                                             className="h-2 w-2 shrink-0"
                                             alt=""
-                                            aria-hidden="true"
                                             height={16}
                                             src={icon}
                                             width={16}
+                                            aria-hidden="true"
                                         />
                                         {label}
                                     </Tag>
