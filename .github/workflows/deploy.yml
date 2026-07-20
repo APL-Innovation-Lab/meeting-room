@@ -1,0 +1,56 @@
+# Deploys to Railway from GitHub Actions (instead of Railway's GitHub integration,
+# which must stay disconnected — see README.md "Deployment").
+#
+# The deploy job uploads the repo with `railway up`; Railway then builds the root
+# Dockerfile and swaps the deployment only if that build succeeds. Secrets/variables
+# this workflow needs:
+#   - secrets.RAILWAY_TOKEN     — a Railway PROJECT token (scoped to one environment)
+#   - vars.RAILWAY_SERVICE_ID   — the app service's name or id (not a secret)
+name: Deploy
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+# Never run two deploys at once; let an in-flight deploy finish rather than
+# cancelling it mid-upload.
+concurrency:
+    group: railway-deploy
+    cancel-in-progress: false
+
+jobs:
+    check:
+        name: Check
+        runs-on: ubuntu-latest
+        env:
+            # Varlock validates the env contract wherever the Vite config loads. Checks
+            # never render a map, so a placeholder satisfies the required (public) token;
+            # the real one lives in Railway service variables and is used at image build.
+            VITE_APP_MAPBOX_TOKEN: pk.ci-placeholder
+        steps:
+            - uses: actions/checkout@v7
+            - uses: actions/setup-node@v6
+              with:
+                  node-version-file: .node-version
+                  cache: npm
+            - run: npm ci
+            # typecheck runs `react-router typegen` first, which oxlint's type-aware
+            # rules also depend on — keep it ahead of the lint step.
+            - run: node --run typecheck
+            - run: npx oxfmt --check
+            - run: npx oxlint
+            - run: node --run test
+
+    deploy:
+        name: Deploy to Railway
+        needs: check
+        runs-on: ubuntu-latest
+        container: ghcr.io/railwayapp/cli:latest
+        env:
+            RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        steps:
+            - uses: actions/checkout@v7
+            # --ci streams build logs and exits non-zero on a failed image build, so a
+            # broken build fails the workflow instead of silently keeping the old deploy.
+            - run: railway up --ci --service="${{ vars.RAILWAY_SERVICE_ID }}"
