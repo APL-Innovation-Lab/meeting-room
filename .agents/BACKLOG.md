@@ -18,20 +18,16 @@ this file is the durable record. No source files were modified as part of this r
    redirect home; a room kind that contradicts the reservation redirects to the canonical URL.
    Verified end-to-end in the browser for both room kinds (reservations 5 and 6 in `data/apl.db`).
 
-2. **Cancel flow claims success without cancelling anything**
-   (2026-07-19 update: the confirmation page's cancel link now carries `?reservationId=`, but the
-   cancel routes still ignore it — the finding below stands.)
-   `app/routes/cancel/cancel.tsx`, `app/routes/cancel/confirm.tsx`. Neither route has a
-   `loader`/`action`; there is no reservation identifier anywhere in the `/:roomKind/cancel` or
-   `/:roomKind/cancel/confirm` URLs, and `repos.reservations.cancel()` (the only code path that
-   flips a row to `cancelled`) is called from nowhere outside unit tests. Clicking through
-   "Cancel Reservation" → "Yes, Cancel Reservation" renders a "Canceled" success screen against
-   hardcoded fake room data, while the real reservation stays `status: "confirmed"` in the
-   database. This is a false state claim, not just stale UI.
-   Repro: from the confirmation page for reservation id 4, click "Cancel Reservation" → "Yes,
-   Cancel Reservation" → page reads "Canceled — The following has been canceled." Queried
-   `data/apl.db` immediately after: `SELECT status FROM reservations WHERE id=4` → still
-   `confirmed`.
+2. ~~**Cancel flow claims success without cancelling anything**~~ — FIXED (2026-07-19).
+   The cancel routes (`app/routes/cancel/cancel.tsx`, `cancel/confirm.tsx`, plus the new
+   `cancel.data.server.ts`) now have loaders that read `?reservationId=`, load the persisted
+   booking, and render the real branch, room, address, capacity, date, and booked time range.
+   "Yes, Cancel Request/Reservation" posts to a route action that cancels through the new
+   `apl.cancelReservation` client method (backed by `repos.reservations.cancel`) and redirects
+   to the receipt, which only renders reservations whose status is actually `cancelled` —
+   still-confirmed ids bounce back to the prompt, unknown ids redirect home, and mismatched
+   room kinds canonicalize. Verified end-to-end in the browser for both room kinds:
+   reservations 4 and 6 in `data/apl.db` flipped to `cancelled`; 3 and 5 stayed `confirmed`.
 
 ## P1 — Fix before/at Railway deployment
 
@@ -83,7 +79,8 @@ this file is the durable record. No source files were modified as part of this r
   Enforcing it would mean widening the uniqueness check to every 15-min slot in
   `[time, time + duration)` (plus the `room_conflicts` graph for combined rooms).
 - `TEST COVERAGE GAP`: zero test files for `cancel.tsx` and `cancel/confirm.tsx` — this is why
-  P0-1 and P0-2 shipped undetected. (2026-07-19: the confirm route is now covered by
-  `confirm.data.server.test.ts`; the cancel routes remain untested.)
+  P0-1 and P0-2 shipped undetected. (2026-07-19: the confirm route is covered by
+  `confirm.data.server.test.ts` and the cancel flow by `cancel.data.server.test.ts`; the cancel
+  loader/action guards were verified in the browser, not by automated tests.)
 - `SUSPICION`: `search-*.js` client bundle is ~1.8 MB / 500 KB gzip (largest asset by far,
   likely `mapbox-gl`), unverified impact on tester devices/networks.
