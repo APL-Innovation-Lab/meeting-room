@@ -17,7 +17,7 @@ It's a full-stack [React Router](https://reactrouter.com) app that lets people s
 - [USWDS](https://designsystem.digital.gov)
     - [trussworks/react-uswds](https://trussworks.github.io/react-uswds/?path=/docs/welcome--docs)
 - [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/guides)
-- [@deno/kv](https://github.com/denoland/denokv/tree/main/npm)
+- [Drizzle ORM](https://orm.drizzle.team) on SQLite (`node:sqlite`)
 - [Varlock](https://varlock.dev) for environment variable schema, validation, and type generation
 - [npm](https://docs.npmjs.com/cli/v11)
 - [Oxfmt](https://oxc.rs/docs/guide/usage/formatter) for formatting
