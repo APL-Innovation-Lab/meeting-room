@@ -17,6 +17,8 @@ import {
 /** The slot the customer picked on the search page, carried into review through query params. */
 export type ReviewSelection = {
     roomId: string;
+    /** Branch filter carried over from search ("" or "all" means unfiltered). */
+    location: string;
     /** Canonical "YYYY-MM-DD" calendar date. */
     date: string;
     /** Slot label as rendered on the search page, e.g. "11:00 AM". */
@@ -36,8 +38,6 @@ export type ReviewRoomSummary = {
     capacity: number;
     amenities: Array<{ label: string; icon: string }>;
     image: string;
-    dateLabel: string;
-    timeLabel: string;
 };
 
 // Mirrors the search page's duration fallback (createSearchFilters).
@@ -59,7 +59,13 @@ export function parseReviewSelection(searchParams: URLSearchParams): ReviewSelec
             ? parsedDuration
             : DEFAULT_DURATION_MINUTES;
 
-    return { roomId, date, time, duration };
+    return {
+        roomId,
+        location: searchParams.get("location")?.trim() ?? "",
+        date,
+        time,
+        duration,
+    };
 }
 
 /** The search page for the same room kind, preserving the filters that carried into review. */
@@ -72,21 +78,49 @@ export function searchPageUrl(roomKind: Room.Kind, searchParams: URLSearchParams
 }
 
 /**
- * Re-resolves the selected room upstream for the selected date and duration. The room's
- * `availableTimes` are already narrowed to starts that fit the duration, so the caller can verify
- * the selected slot with a plain `includes`.
+ * Re-resolves the selected room upstream for the selected date and duration. The `location`
+ * carried over from search narrows the per-branch reservation fetches to the selected branch —
+ * without it a meeting-room lookup scrapes every branch's reservations before responding. The
+ * room's `availableTimes` are already narrowed to starts that fit the duration, so the caller can
+ * verify the selected slot with a plain `includes`.
  */
 export async function findReviewRoom(
     roomKind: Room.Kind,
     selection: ReviewSelection,
 ): Promise<LibraryRoom | undefined> {
-    const options = { date: new Date(selection.date), duration: selection.duration };
+    const options = {
+        date: new Date(selection.date),
+        duration: selection.duration,
+        location:
+            selection.location && selection.location !== "all" ? selection.location : undefined,
+    };
     const roomsResult = Room.isMeeting(roomKind)
         ? await apl.getMeetingRooms(options)
         : await apl.getRooms(options);
     if (roomsResult.error) throw roomsResult.error;
 
     return roomsResult.data.find(room => room.info.id === selection.roomId);
+}
+
+/**
+ * Resolves everything the room-summary panel needs, or `null` when the room is gone or the
+ * selected slot is no longer open. Kicked off without `await` by the loader so the page shell
+ * renders immediately while this streams in under a Suspense boundary.
+ */
+export async function resolveReviewSummary(
+    roomKind: Room.Kind,
+    selection: ReviewSelection,
+): Promise<ReviewRoomSummary | null> {
+    const [room, branchDirectoryResult] = await Promise.all([
+        findReviewRoom(roomKind, selection),
+        apl.getBranchDirectory(),
+    ]);
+    if (!room || !room.info.availableTimes.includes(selection.time)) return null;
+
+    // Degrade gracefully (like search) if the directory feed fails: the page just falls back to
+    // whatever address/image the room itself carries.
+    const branchDirectory = branchDirectoryResult.error ? [] : branchDirectoryResult.data;
+    return createReviewRoomSummary(room, branchDirectory);
 }
 
 // Same amenity labels/icons as the search results, so the two pages never disagree.
@@ -118,7 +152,6 @@ export function formatTimeRange(time: string, durationMinutes: number): string {
 
 export function createReviewRoomSummary(
     room: LibraryRoom,
-    selection: ReviewSelection,
     branchDirectory: LiveBranchDirectoryEntry[],
 ): ReviewRoomSummary {
     // Meeting-room inventory carries no address or photo of its own; like the search results
@@ -139,7 +172,5 @@ export function createReviewRoomSummary(
             ([, label, icon]) => ({ label, icon }),
         ),
         image: toAbsoluteImagePath(room.branch.image || directoryEntry?.image || ""),
-        dateLabel: formatReviewDate(selection.date),
-        timeLabel: formatTimeRange(selection.time, selection.duration),
     };
 }

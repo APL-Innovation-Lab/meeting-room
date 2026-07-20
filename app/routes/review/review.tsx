@@ -12,8 +12,9 @@ import {
     Tag,
     TextInput,
 } from "@trussworks/react-uswds";
-import { useState } from "react";
-import { data, Form, href, redirect, useNavigation } from "react-router";
+import { Suspense, use, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { data, Form, href, redirect, Link as RouterLink, useNavigation } from "react-router";
 import { z } from "zod";
 
 import { apl, ReservationOptionsSchema } from "~/lib/apl-client/apl-live-client.server";
@@ -25,14 +26,17 @@ import {
 } from "~/lib/apl-client/errors";
 import { Room } from "~/lib/room";
 import { site } from "~/lib/site";
+import { Spinner } from "~/components/Spinner";
 
 import type { Route } from "./+types/review";
 
 import {
-    createReviewRoomSummary,
-    findReviewRoom,
+    formatReviewDate,
+    formatTimeRange,
     parseReviewSelection,
+    resolveReviewSummary,
     searchPageUrl,
+    type ReviewRoomSummary,
 } from "./review.data.server";
 
 const POLICY_LINKS = {
@@ -66,24 +70,39 @@ const MEETING_ROOM_REQUIRED_FIELDS = [
 ];
 const SHARED_LEARNING_REQUIRED_FIELDS = ["meetingTopic", "fullName", "emailAddress"];
 
+// Same grace window as the search loader: give a warm cache a beat to resolve so the common fast
+// path renders the finished summary instead of flashing the loading state.
+const DEFER_GRACE_MS = 120;
+
 export async function loader({ params, url }: Route.LoaderArgs) {
     const roomKind = params.roomKind as Room.Kind;
+    const searchUrl = searchPageUrl(roomKind, url.searchParams);
     const selection = parseReviewSelection(url.searchParams);
-    if (!selection) throw redirect(searchPageUrl(roomKind, url.searchParams));
+    if (!selection) throw redirect(searchUrl);
 
-    const [room, branchDirectoryResult] = await Promise.all([
-        findReviewRoom(roomKind, selection),
-        apl.getBranchDirectory(),
+    // Kick the slow upstream lookup off without awaiting it: the page shell (header, policy
+    // details, form) renders immediately and the room summary streams in under Suspense.
+    const summaryPromise = resolveReviewSummary(roomKind, selection);
+    const maybeResolved = await Promise.race([
+        summaryPromise.then(
+            summary => ({ type: "resolved" as const, summary }),
+            () => ({ type: "rejected" as const }),
+        ),
+        new Promise<{ type: "timeout" }>(resolve =>
+            setTimeout(() => resolve({ type: "timeout" }), DEFER_GRACE_MS),
+        ),
     ]);
-    if (!room || !room.info.availableTimes.includes(selection.time)) {
-        throw redirect(searchPageUrl(roomKind, url.searchParams));
-    }
 
-    // Degrade gracefully (like search) if the directory feed fails: the page just falls back to
-    // whatever address/image the room itself carries.
-    const branchDirectory = branchDirectoryResult.error ? [] : branchDirectoryResult.data;
-
-    return { selection, summary: createReviewRoomSummary(room, selection, branchDirectory) };
+    return {
+        selection,
+        searchUrl,
+        dateLabel: formatReviewDate(selection.date),
+        timeLabel: formatTimeRange(selection.time, selection.duration),
+        deferredSummary:
+            maybeResolved.type === "resolved"
+                ? Promise.resolve(maybeResolved.summary)
+                : summaryPromise,
+    };
 }
 
 function formValue(formData: FormData, name: string): string {
@@ -194,7 +213,7 @@ const DETAILS = {
 export default function Component({ actionData, loaderData, params }: Route.ComponentProps) {
     const roomKind = params.roomKind;
     const isMeetingRoom = Room.isMeeting(roomKind);
-    const { selection, summary } = loaderData;
+    const { dateLabel, deferredSummary, searchUrl, selection, timeLabel } = loaderData;
     const errors = actionData?.errors;
 
     const navigation = useNavigation();
@@ -226,62 +245,24 @@ export default function Component({ actionData, loaderData, params }: Route.Comp
 
                             <div className="flex flex-col">
                                 <div>
-                                    <span className="font-bold">Date:</span> {summary.dateLabel}
+                                    <span className="font-bold">Date:</span> {dateLabel}
                                 </div>
                                 <div>
-                                    <span className="font-bold">Time:</span> {summary.timeLabel}
+                                    <span className="font-bold">Time:</span> {timeLabel}
                                 </div>
                             </div>
                         </CardHeader>
 
                         <hr className="my-4 border-t border-base-light" />
 
-                        <div className="flex w-full flex-row items-center justify-between gap-6">
-                            <div className="w-full">
-                                <h3 className="text-body-lg font-bold">{summary.branch}</h3>
-                                <p>{summary.address}</p>
-                                <div className="flex flex-col gap-1 py-1">
-                                    <h4 className="text-body-sm font-bold">{summary.name}</h4>
-                                    <div className="flex flex-col">
-                                        <span>{summary.kindLabel}</span>
-                                        {summary.floor !== undefined && (
-                                            <span>Floor {summary.floor}</span>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="">
-                                    <Tag className="inline-flex! items-center gap-05 bg-base-lighter py-05! text-ink normal-case">
-                                        <img
-                                            className="h-2 w-2 shrink-0"
-                                            alt=""
-                                            height={16}
-                                            src="/img/material-icons/people.svg"
-                                            width={16}
-                                            aria-hidden="true"
-                                        />
-                                        {summary.capacity}
-                                    </Tag>
-                                    {summary.amenities.map(amenity => (
-                                        <Tag
-                                            className="inline-flex! items-center gap-05 bg-base-lighter py-05! text-ink normal-case"
-                                            key={amenity.label}
-                                        >
-                                            <img
-                                                className="h-2 w-2 shrink-0"
-                                                alt=""
-                                                height={16}
-                                                src={amenity.icon}
-                                                width={16}
-                                                aria-hidden="true"
-                                            />
-                                            {amenity.label}
-                                        </Tag>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <img className="h-full w-62 object-cover" alt="" src={summary.image} />
-                        </div>
+                        <Suspense fallback={<ReviewSummaryFallback />}>
+                            <ErrorBoundary fallback={<ReviewSummaryError />}>
+                                <DeferredReviewSummary
+                                    deferredSummary={deferredSummary}
+                                    searchUrl={searchUrl}
+                                />
+                            </ErrorBoundary>
+                        </Suspense>
 
                         <hr className="my-4 border-t border-base-light" />
 
@@ -351,6 +332,98 @@ export default function Component({ actionData, loaderData, params }: Route.Comp
                     </div>
                 </Card>
             </CardGroup>
+        </div>
+    );
+}
+
+function ReviewSummaryFallback() {
+    return (
+        <div className="flex min-h-32 w-full items-center justify-center" role="status">
+            <Spinner className="h-8 w-8" />
+            <span className="sr-only">Loading room details…</span>
+        </div>
+    );
+}
+
+function ReviewSummaryError() {
+    return (
+        <div
+            className="flex min-h-32 items-center justify-center text-center text-secondary-dark"
+            role="alert"
+        >
+            Could not load room details right now.
+        </div>
+    );
+}
+
+function DeferredReviewSummary({
+    deferredSummary,
+    searchUrl,
+}: {
+    deferredSummary: Promise<ReviewRoomSummary | null>;
+    searchUrl: string;
+}) {
+    const summary = use(deferredSummary);
+    if (!summary) {
+        return (
+            <div className="flex min-h-32 flex-col items-center justify-center gap-1 text-center">
+                <p>This room is no longer available at the selected time.</p>
+                <RouterLink className="usa-link" to={searchUrl}>
+                    Back to search
+                </RouterLink>
+            </div>
+        );
+    }
+
+    return <ReviewRoomSummaryView summary={summary} />;
+}
+
+// The room panel exactly as the design implemented it, populated from the resolved summary.
+function ReviewRoomSummaryView({ summary }: { summary: ReviewRoomSummary }) {
+    return (
+        <div className="flex w-full flex-row items-center justify-between gap-6">
+            <div className="w-full">
+                <h3 className="text-body-lg font-bold">{summary.branch}</h3>
+                <p>{summary.address}</p>
+                <div className="flex flex-col gap-1 py-1">
+                    <h4 className="text-body-sm font-bold">{summary.name}</h4>
+                    <div className="flex flex-col">
+                        <span>{summary.kindLabel}</span>
+                        {summary.floor !== undefined && <span>Floor {summary.floor}</span>}
+                    </div>
+                </div>
+                <div className="">
+                    <Tag className="inline-flex! items-center gap-05 bg-base-lighter py-05! text-ink normal-case">
+                        <img
+                            className="h-2 w-2 shrink-0"
+                            alt=""
+                            height={16}
+                            src="/img/material-icons/people.svg"
+                            width={16}
+                            aria-hidden="true"
+                        />
+                        {summary.capacity}
+                    </Tag>
+                    {summary.amenities.map(amenity => (
+                        <Tag
+                            className="inline-flex! items-center gap-05 bg-base-lighter py-05! text-ink normal-case"
+                            key={amenity.label}
+                        >
+                            <img
+                                className="h-2 w-2 shrink-0"
+                                alt=""
+                                height={16}
+                                src={amenity.icon}
+                                width={16}
+                                aria-hidden="true"
+                            />
+                            {amenity.label}
+                        </Tag>
+                    ))}
+                </div>
+            </div>
+
+            <img className="h-full w-62 object-cover" alt="" src={summary.image} />
         </div>
     );
 }

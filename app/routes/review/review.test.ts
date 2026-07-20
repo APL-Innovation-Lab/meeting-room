@@ -91,40 +91,40 @@ describe("review route loader", () => {
         expect(aplMocks.getRooms).not.toHaveBeenCalled();
     });
 
-    it("redirects back to search when the room no longer exists", async () => {
+    it("resolves a null summary when the room no longer exists", async () => {
         aplMocks.getRooms.mockResolvedValue({ data: [], error: undefined });
-        const location = await expectRedirect(
-            loader(loaderArgs("shared-learning-room", REVIEW_URL)),
-        );
-        expect(location).toBe(
+        const loaderData = await loader(loaderArgs("shared-learning-room", REVIEW_URL));
+
+        await expect(loaderData.deferredSummary).resolves.toBeNull();
+        expect(loaderData.searchUrl).toBe(
             "/shared-learning-room?location=Central+Library&date=2026-07-24&duration=60",
         );
     });
 
-    it("redirects back to search when the requested time is no longer open", async () => {
-        const location = await expectRedirect(
-            loader(
-                loaderArgs(
-                    "shared-learning-room",
-                    REVIEW_URL.replace("time=11%3A00+AM", "time=9%3A00+AM"),
-                ),
+    it("resolves a null summary when the requested time is no longer open", async () => {
+        const loaderData = await loader(
+            loaderArgs(
+                "shared-learning-room",
+                REVIEW_URL.replace("time=11%3A00+AM", "time=9%3A00+AM"),
             ),
         );
-        expect(location).toBe(
-            "/shared-learning-room?location=Central+Library&date=2026-07-24&duration=60",
-        );
+
+        await expect(loaderData.deferredSummary).resolves.toBeNull();
     });
 
-    it("returns the selection and a display-ready room summary", async () => {
+    it("returns the selection, header labels, and a display-ready room summary", async () => {
         const loaderData = await loader(loaderArgs("shared-learning-room", REVIEW_URL));
 
         expect(loaderData.selection).toEqual({
             roomId: "408",
+            location: "Central Library",
             date: "2026-07-24",
             time: "11:00 AM",
             duration: 60,
         });
-        expect(loaderData.summary).toEqual({
+        expect(loaderData.dateLabel).toBe("Fri 7/24/2026");
+        expect(loaderData.timeLabel).toBe("11:00 AM - 12:00 PM");
+        await expect(loaderData.deferredSummary).resolves.toEqual({
             roomId: "408",
             name: "Shared Learning - 408",
             kindLabel: "Shared Learning Room",
@@ -137,13 +137,26 @@ describe("review route loader", () => {
                 { label: "HDMI", icon: "/img/material-icons/settings_input_hdmi.svg" },
             ],
             image: "https://library.austintexas.gov/library/slr-408.jpg",
-            dateLabel: "Fri 7/24/2026",
-            timeLabel: "11:00 AM - 12:00 PM",
         });
 
+        // The location carried over from search narrows the per-branch reservation fetches.
         const [options] = aplMocks.getRooms.mock.calls[0];
+        expect(options.location).toBe("Central Library");
         expect(options.duration).toBe(60);
         expect(options.date.toISOString().slice(0, 10)).toBe("2026-07-24");
+    });
+
+    it("leaves the room fetch unfiltered when no location carried over", async () => {
+        await loader(
+            loaderArgs(
+                "meeting-room",
+                "http://localhost/meeting-room/review?roomId=782&date=2026-07-24&time=5%3A00+PM&duration=120",
+            ),
+        );
+
+        expect(aplMocks.getRooms).not.toHaveBeenCalled();
+        const [options] = aplMocks.getMeetingRooms.mock.calls[0];
+        expect(options.location).toBeUndefined();
     });
 
     it("resolves meeting rooms through the meeting-room client", async () => {
@@ -154,9 +167,9 @@ describe("review route loader", () => {
             ),
         );
 
-        expect(aplMocks.getRooms).not.toHaveBeenCalled();
-        expect(loaderData.summary.kindLabel).toBe("Meeting Room");
-        expect(loaderData.summary.timeLabel).toBe("5:00 PM - 7:00 PM");
+        const summary = await loaderData.deferredSummary;
+        expect(summary?.kindLabel).toBe("Meeting Room");
+        expect(loaderData.timeLabel).toBe("5:00 PM - 7:00 PM");
     });
 
     it("fills address and image from the branch directory when the room has neither", async () => {
@@ -185,14 +198,16 @@ describe("review route loader", () => {
         const loaderData = await loader(
             loaderArgs(
                 "meeting-room",
-                "http://localhost/meeting-room/review?roomId=783&date=2026-07-24&time=5%3A00+PM&duration=120",
+                "http://localhost/meeting-room/review?roomId=783&location=Cepeda+Branch&date=2026-07-24&time=5%3A00+PM&duration=120",
             ),
         );
 
-        expect(loaderData.summary.address).toBe("651 N. Pleasant Valley Rd.");
-        expect(loaderData.summary.image).toBe(
-            "https://library.austintexas.gov/library/acp%5B1%5D_0.jpg",
-        );
+        const summary = await loaderData.deferredSummary;
+        expect(summary?.address).toBe("651 N. Pleasant Valley Rd.");
+        expect(summary?.image).toBe("https://library.austintexas.gov/library/acp%5B1%5D_0.jpg");
+        // The carried-over location narrows the meeting-room lookup.
+        const [options] = aplMocks.getMeetingRooms.mock.calls[0];
+        expect(options.location).toBe("Cepeda Branch");
     });
 });
 

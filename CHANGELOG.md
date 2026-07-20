@@ -8,6 +8,8 @@
 - Tightened the reservation option schemas to reject blank required values and switched `ReservationOptionsSchema` to a discriminated union so validation failures report per-field errors.
 - Filled in missing meeting-room branch addresses and photos on the review page by joining the branch-directory feed (the same fallback the search results use), since the scraped meeting-room inventory carries neither.
 - Fixed two typos in the meeting-room policy agreement copy: added the missing space after "Meeting Room Policies," and corrected "Guidelines regard to" to "Guidelines with regard to".
+- Made the search-to-review transition instant by deferring the room-summary lookup: the review loader now streams the summary under a Suspense boundary (with the shared spinner as fallback and the same 120 ms warm-cache grace race the search loader uses) instead of blocking navigation on the upstream fetch. Selections that turn out stale render an inline "no longer available" notice with a filter-preserving link back to search rather than a redirect.
+- Cut the review lookup itself down by carrying the search page's `location` filter through to the room fetch, so a meeting-room review scrapes one branch's reservations instead of every branch's.
 
 ## 2026-07-16
 
