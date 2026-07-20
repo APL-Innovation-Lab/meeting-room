@@ -132,6 +132,10 @@ export const SyncState = sqliteTable("sync_state", {
  * at the database level — this is what powers {@link RoomAlreadyReservedError} without a read-modify-write
  * race. Cancelling flips `status` to `cancelled`, which drops the row out of the partial index and frees
  * the slot for re-booking.
+ *
+ * Room facts (`room_name`, `branch_name`, `branch_address`, `capacity`) and the booked window are
+ * snapshotted at booking time so the confirmation page renders from this row alone, with no live
+ * upstream lookup. The column defaults exist only to backfill rows created before the columns did.
  */
 export const Reservations = sqliteTable(
     "reservations",
@@ -141,11 +145,14 @@ export const Reservations = sqliteTable(
         roomKind: text("room_kind", { enum: ROOM_KINDS }).notNull(),
         roomName: text("room_name").notNull(),
         branchName: text("branch_name").notNull(),
+        branchAddress: text("branch_address").notNull().default(""),
+        capacity: integer("capacity").notNull().default(0),
         meetingTopic: text("meeting_topic").notNull(),
         fullName: text("full_name").notNull(),
         emailAddress: text("email_address").notNull(),
         date: text("date").notNull(), // YYYY-MM-DD
         time: text("time").notNull(), // slot label, e.g. "5:00 PM"
+        durationMinutes: integer("duration_minutes").notNull().default(120),
         // Meeting-room-only fields (null for shared-learning rooms).
         orgName: text("org_name"),
         orgPurpose: text("org_purpose"),

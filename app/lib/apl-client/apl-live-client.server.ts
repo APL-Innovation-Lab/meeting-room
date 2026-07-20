@@ -4,7 +4,12 @@ import { z } from "zod";
 
 import { Room } from "~/lib/room";
 
-import type { NewRoom, NewSpecialDate, Room as RoomRow } from "./db/schema";
+import type {
+    NewRoom,
+    NewSpecialDate,
+    Reservation as ReservationRow,
+    Room as RoomRow,
+} from "./db/schema";
 
 import { getRepos, type Repos } from "./db/client.server";
 import {
@@ -96,6 +101,7 @@ export const SharedLearningRoomReservationOptionsSchema = z.object({
     emailAddress: z.email(),
     date: z.string().trim().min(1),
     time: z.string().trim().min(1),
+    duration: z.coerce.number().int().positive(),
 });
 
 /**
@@ -131,15 +137,43 @@ export type Reservation = {
     emailAddress: string;
     date: string;
     time: string;
+    durationMinutes: number;
     roomKind: Room.Kind;
     roomName: string;
     branchName: string;
+    branchAddress: string;
+    capacity: number;
+    status: "confirmed" | "cancelled";
     // Optional fields for meeting rooms
     orgName?: string;
     orgPurpose?: string;
     website?: string;
     phoneNumber?: string;
 };
+
+/** Maps a persisted reservation row to the client's {@link Reservation} shape. */
+function toReservationDto(row: ReservationRow): Reservation & { id: number } {
+    return {
+        id: row.id,
+        roomId: row.roomId,
+        roomKind: row.roomKind,
+        roomName: row.roomName,
+        branchName: row.branchName,
+        branchAddress: row.branchAddress,
+        capacity: row.capacity,
+        meetingTopic: row.meetingTopic,
+        fullName: row.fullName,
+        emailAddress: row.emailAddress,
+        date: row.date,
+        time: row.time,
+        durationMinutes: row.durationMinutes,
+        status: row.status,
+        orgName: row.orgName ?? undefined,
+        orgPurpose: row.orgPurpose ?? undefined,
+        website: row.website ?? undefined,
+        phoneNumber: row.phoneNumber ?? undefined,
+    };
+}
 
 const DEFAULT_BASE_URL = "https://library.austintexas.gov";
 const RESERVATIONS_FETCH_CONCURRENCY = 8;
@@ -2063,36 +2097,37 @@ export const apl = {
                 roomKind: parsed.roomKind,
                 roomName: room.info.name,
                 branchName: room.branch.name,
+                branchAddress: room.branch.address,
+                capacity: room.info.capacity,
                 meetingTopic: parsed.meetingTopic,
                 fullName: parsed.fullName,
                 emailAddress: parsed.emailAddress,
                 date: parsed.date,
                 time: parsed.time,
+                durationMinutes: parsed.duration,
                 orgName: isMeeting ? parsed.orgName : undefined,
                 orgPurpose: isMeeting ? parsed.orgPurpose : undefined,
                 website: isMeeting ? parsed.website : undefined,
                 phoneNumber: isMeeting ? parsed.phoneNumber : undefined,
             });
 
+            return { data: toReservationDto(row), error: undefined };
+        } catch (error: unknown) {
             return {
-                data: {
-                    id: row.id,
-                    roomId: row.roomId,
-                    roomKind: row.roomKind,
-                    roomName: row.roomName,
-                    branchName: row.branchName,
-                    meetingTopic: row.meetingTopic,
-                    fullName: row.fullName,
-                    emailAddress: row.emailAddress,
-                    date: row.date,
-                    time: row.time,
-                    orgName: row.orgName ?? undefined,
-                    orgPurpose: row.orgPurpose ?? undefined,
-                    website: row.website ?? undefined,
-                    phoneNumber: row.phoneNumber ?? undefined,
-                },
-                error: undefined,
+                data: undefined,
+                error: error instanceof Error ? error : new Error(String(error)),
             };
+        }
+    },
+
+    /**
+     * Looks up a persisted reservation by id — the confirmation page's data source. Reads only the
+     * local database, so it stays correct even if the room later disappears upstream. Synchronous
+     * because the node:sqlite driver is.
+     */
+    getReservation(id: number): SafeResult<Reservation & { id: number }> {
+        try {
+            return { data: toReservationDto(repos().reservations.get(id)), error: undefined };
         } catch (error: unknown) {
             return {
                 data: undefined,

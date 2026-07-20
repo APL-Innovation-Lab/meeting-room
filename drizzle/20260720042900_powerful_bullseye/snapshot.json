@@ -1,0 +1,708 @@
+{
+    "version": "7",
+    "dialect": "sqlite",
+    "id": "0d29a984-aaab-4827-9377-5e3db59aa5fb",
+    "prevIds": ["f2370fba-47ee-473d-80e6-681268a6a0c0"],
+    "ddl": [
+        {
+            "name": "branch_coordinates",
+            "entityType": "tables"
+        },
+        {
+            "name": "branch_directory",
+            "entityType": "tables"
+        },
+        {
+            "name": "branches",
+            "entityType": "tables"
+        },
+        {
+            "name": "operating_hours",
+            "entityType": "tables"
+        },
+        {
+            "name": "reservations",
+            "entityType": "tables"
+        },
+        {
+            "name": "room_conflicts",
+            "entityType": "tables"
+        },
+        {
+            "name": "rooms",
+            "entityType": "tables"
+        },
+        {
+            "name": "special_dates",
+            "entityType": "tables"
+        },
+        {
+            "name": "sync_state",
+            "entityType": "tables"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "branch_name",
+            "entityType": "columns",
+            "table": "branch_coordinates"
+        },
+        {
+            "type": "real",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "lng",
+            "entityType": "columns",
+            "table": "branch_coordinates"
+        },
+        {
+            "type": "real",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "lat",
+            "entityType": "columns",
+            "table": "branch_coordinates"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "synced_at",
+            "entityType": "columns",
+            "table": "branch_coordinates"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "branch_name",
+            "entityType": "columns",
+            "table": "branch_directory"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "address",
+            "entityType": "columns",
+            "table": "branch_directory"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "image",
+            "entityType": "columns",
+            "table": "branch_directory"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "path",
+            "entityType": "columns",
+            "table": "branch_directory"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "synced_at",
+            "entityType": "columns",
+            "table": "branch_directory"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "location_id",
+            "entityType": "columns",
+            "table": "branches"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "name",
+            "entityType": "columns",
+            "table": "branches"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "path",
+            "entityType": "columns",
+            "table": "branches"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "synced_at",
+            "entityType": "columns",
+            "table": "branches"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "location_id",
+            "entityType": "columns",
+            "table": "operating_hours"
+        },
+        {
+            "type": "integer",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "weekday",
+            "entityType": "columns",
+            "table": "operating_hours"
+        },
+        {
+            "type": "integer",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "opening_minute",
+            "entityType": "columns",
+            "table": "operating_hours"
+        },
+        {
+            "type": "integer",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "closing_minute",
+            "entityType": "columns",
+            "table": "operating_hours"
+        },
+        {
+            "type": "integer",
+            "notNull": false,
+            "autoincrement": true,
+            "default": null,
+            "generated": null,
+            "name": "id",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "room_id",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "room_kind",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "room_name",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "branch_name",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": "''",
+            "generated": null,
+            "name": "branch_address",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "integer",
+            "notNull": true,
+            "autoincrement": false,
+            "default": "0",
+            "generated": null,
+            "name": "capacity",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "meeting_topic",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "full_name",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "email_address",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "date",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "time",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "integer",
+            "notNull": true,
+            "autoincrement": false,
+            "default": "120",
+            "generated": null,
+            "name": "duration_minutes",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "org_name",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "org_purpose",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "website",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "phone_number",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": "'confirmed'",
+            "generated": null,
+            "name": "status",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "created_at",
+            "entityType": "columns",
+            "table": "reservations"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "room_id",
+            "entityType": "columns",
+            "table": "room_conflicts"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "conflicts_with",
+            "entityType": "columns",
+            "table": "room_conflicts"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "room_id",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "location_id",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "kind",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "name",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "integer",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "capacity",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "integer",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "floor",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "image",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "integer",
+            "notNull": true,
+            "autoincrement": false,
+            "default": "false",
+            "generated": null,
+            "name": "published",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "integer",
+            "notNull": true,
+            "autoincrement": false,
+            "default": "false",
+            "generated": null,
+            "name": "airplay",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "integer",
+            "notNull": true,
+            "autoincrement": false,
+            "default": "false",
+            "generated": null,
+            "name": "hdmi",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "integer",
+            "notNull": true,
+            "autoincrement": false,
+            "default": "false",
+            "generated": null,
+            "name": "whiteboard",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "synced_at",
+            "entityType": "columns",
+            "table": "rooms"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "date",
+            "entityType": "columns",
+            "table": "special_dates"
+        },
+        {
+            "type": "integer",
+            "notNull": true,
+            "autoincrement": false,
+            "default": "false",
+            "generated": null,
+            "name": "closed",
+            "entityType": "columns",
+            "table": "special_dates"
+        },
+        {
+            "type": "integer",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "early_close_minute",
+            "entityType": "columns",
+            "table": "special_dates"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "synced_at",
+            "entityType": "columns",
+            "table": "special_dates"
+        },
+        {
+            "type": "text",
+            "notNull": false,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "source",
+            "entityType": "columns",
+            "table": "sync_state"
+        },
+        {
+            "type": "text",
+            "notNull": true,
+            "autoincrement": false,
+            "default": null,
+            "generated": null,
+            "name": "synced_at",
+            "entityType": "columns",
+            "table": "sync_state"
+        },
+        {
+            "columns": ["location_id", "weekday"],
+            "nameExplicit": false,
+            "name": "operating_hours_pk",
+            "entityType": "pks",
+            "table": "operating_hours"
+        },
+        {
+            "columns": ["room_id", "conflicts_with"],
+            "nameExplicit": false,
+            "name": "room_conflicts_pk",
+            "entityType": "pks",
+            "table": "room_conflicts"
+        },
+        {
+            "columns": ["branch_name"],
+            "nameExplicit": false,
+            "name": "branch_coordinates_pk",
+            "table": "branch_coordinates",
+            "entityType": "pks"
+        },
+        {
+            "columns": ["branch_name"],
+            "nameExplicit": false,
+            "name": "branch_directory_pk",
+            "table": "branch_directory",
+            "entityType": "pks"
+        },
+        {
+            "columns": ["location_id"],
+            "nameExplicit": false,
+            "name": "branches_pk",
+            "table": "branches",
+            "entityType": "pks"
+        },
+        {
+            "columns": ["id"],
+            "nameExplicit": false,
+            "name": "reservations_pk",
+            "table": "reservations",
+            "entityType": "pks"
+        },
+        {
+            "columns": ["room_id"],
+            "nameExplicit": false,
+            "name": "rooms_pk",
+            "table": "rooms",
+            "entityType": "pks"
+        },
+        {
+            "columns": ["date"],
+            "nameExplicit": false,
+            "name": "special_dates_pk",
+            "table": "special_dates",
+            "entityType": "pks"
+        },
+        {
+            "columns": ["source"],
+            "nameExplicit": false,
+            "name": "sync_state_pk",
+            "table": "sync_state",
+            "entityType": "pks"
+        },
+        {
+            "columns": [
+                {
+                    "value": "room_id",
+                    "isExpression": false
+                },
+                {
+                    "value": "date",
+                    "isExpression": false
+                },
+                {
+                    "value": "time",
+                    "isExpression": false
+                }
+            ],
+            "isUnique": true,
+            "where": "\"reservations\".\"status\" = 'confirmed'",
+            "origin": "manual",
+            "name": "uq_active_reservation_slot",
+            "entityType": "indexes",
+            "table": "reservations"
+        },
+        {
+            "columns": [
+                {
+                    "value": "kind",
+                    "isExpression": false
+                },
+                {
+                    "value": "location_id",
+                    "isExpression": false
+                }
+            ],
+            "isUnique": false,
+            "where": null,
+            "origin": "manual",
+            "name": "ix_rooms_kind_location",
+            "entityType": "indexes",
+            "table": "rooms"
+        }
+    ],
+    "renames": []
+}

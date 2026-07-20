@@ -17,6 +17,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { data, Form, href, redirect, Link as RouterLink, useNavigation } from "react-router";
 import { z } from "zod";
 
+import { Spinner } from "~/components/Spinner";
 import { apl, ReservationOptionsSchema } from "~/lib/apl-client/apl-live-client.server";
 import {
     RoomAlreadyReservedError,
@@ -26,7 +27,6 @@ import {
 } from "~/lib/apl-client/errors";
 import { Room } from "~/lib/room";
 import { site } from "~/lib/site";
-import { Spinner } from "~/components/Spinner";
 
 import type { Route } from "./+types/review";
 
@@ -131,6 +131,7 @@ export async function action({ params, request }: Route.ActionArgs) {
         roomId: formValue(formData, "roomId"),
         date: formValue(formData, "date"),
         time: formValue(formData, "time"),
+        duration: formValue(formData, "duration"),
         meetingTopic: formValue(formData, "meetingTopic"),
         fullName: formValue(formData, "fullName"),
         emailAddress: formValue(formData, "emailAddress"),
@@ -157,7 +158,7 @@ export async function action({ params, request }: Route.ActionArgs) {
             if (field in FIELD_ERROR_MESSAGES) {
                 errors[field] = FIELD_ERROR_MESSAGES[field];
             } else {
-                // roomId/date/time travel in hidden inputs; a blank one means a tampered or stale form.
+                // roomId/date/time/duration travel in hidden inputs; a blank one means a tampered or stale form.
                 errors.form = SELECTION_INCOMPLETE_MESSAGE;
             }
         }
@@ -308,6 +309,7 @@ export default function Component({ actionData, loaderData, params }: Route.Comp
                             <input name="roomId" type="hidden" value={selection.roomId} />
                             <input name="date" type="hidden" value={selection.date} />
                             <input name="time" type="hidden" value={selection.time} />
+                            <input name="duration" type="hidden" value={selection.duration} />
 
                             {isMeetingRoom ? (
                                 <MeetingRoomForm errors={errors} />
