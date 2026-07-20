@@ -7,6 +7,7 @@
 - Disabled the Submit button until every required field is filled and the policy agreement is checked, and pointed the policy links (Meeting Room Policies, Austin History Center Guidelines, Care and Use of Facilities Guidelines, Shared Learning Room Policy) at the live library.austintexas.gov pages.
 - Tightened the reservation option schemas to reject blank required values and switched `ReservationOptionsSchema` to a discriminated union so validation failures report per-field errors.
 - Filled in missing meeting-room branch addresses and photos on the review page by joining the branch-directory feed (the same fallback the search results use), since the scraped meeting-room inventory carries neither.
+- Fixed two typos in the meeting-room policy agreement copy: added the missing space after "Meeting Room Policies," and corrected "Guidelines regard to" to "Guidelines with regard to".
 
 ## 2026-07-16
 

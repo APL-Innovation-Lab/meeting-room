@@ -452,7 +452,7 @@ function MeetingRoomForm({ errors }: { errors?: Record<string, string> }) {
                         >
                             Meeting Room Policies
                         </Link>
-                        ,
+                        ,{" "}
                         <Link
                             href={POLICY_LINKS.historyCenterGuidelines}
                             rel="noreferrer"
@@ -468,7 +468,7 @@ function MeetingRoomForm({ errors }: { errors?: Record<string, string> }) {
                         >
                             Care and Use of Facilities Guidelines
                         </Link>{" "}
-                        regard to meeting room use.
+                        with regard to meeting room use.
                     </>
                 }
                 required
