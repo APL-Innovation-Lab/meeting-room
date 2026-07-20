@@ -120,8 +120,8 @@ export function SearchFiltersForm({
                     </Label>
                     <DatePicker
                         id="date"
-                        key={searchFilters.date || currentDate}
                         name="date"
+                        key={searchFilters.date || currentDate}
                         defaultValue={searchFilters.date || currentDate}
                         disabled={isInitialLoading}
                         aria-labelledby="date-label"
