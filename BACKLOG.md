@@ -63,9 +63,10 @@ this file is the durable record. No source files were modified as part of this r
 6. **FAQ item 5 has no answer** — `app/routes/home/MeetingRoomFaq.tsx` L47–50, "How frequently
    can I book a room?" content is `<div />`. Expanding it shows a blank accordion panel.
 
-7. **Stale README tech list** — `README.md` L20 lists `@deno/kv`, which isn't a dependency and
-   isn't used; `schema.ts`'s own doc comment says the Drizzle/SQLite schema "replaces the opaque
-   KV blob store."
+7. ~~**Stale README tech list**~~ — FIXED (2026-07-19). `README.md` L20 listed `@deno/kv`,
+   which wasn't a dependency and wasn't used; `schema.ts`'s own doc comment says the
+   Drizzle/SQLite schema "replaces the opaque KV blob store." Line now reads
+   `Drizzle ORM on SQLite (\`node:sqlite\`)`, matching `AGENTS.md` and the actual stack.
 
 ## Not itemized here (see chat report)
 
