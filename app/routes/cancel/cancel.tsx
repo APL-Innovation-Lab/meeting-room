@@ -1,112 +1,91 @@
 import { Button, Card, CardGroup, Link } from "@trussworks/react-uswds";
-import { href } from "react-router";
+import { Form, href, redirect } from "react-router";
 
-import { Room } from "~/lib/room";
+import type { Room } from "~/lib/room";
+
+import { apl } from "~/lib/apl-client/apl-live-client.server";
+import { CancellationFailedError, ReservationNotFoundError } from "~/lib/apl-client/errors";
 
 import type { Route } from "./+types/cancel";
 
-export default function Cancellation({ params }: Route.ComponentProps) {
-    if (params.roomKind === Room.Meeting.kind) {
-        return <MeetingRoomCancellation />;
+import { loadCancellationDetails, parseReservationId } from "./cancel.data.server";
+import { ReservationFacts } from "./ReservationFacts";
+
+export function loader({ params, url }: Route.LoaderArgs) {
+    const reservationId = parseReservationId(url);
+    const details = reservationId ? loadCancellationDetails(reservationId) : undefined;
+    if (!details) throw redirect(href("/"));
+
+    // A stale or hand-edited URL can pair a reservation with the wrong room kind; canonicalize so
+    // the prompt always names what was actually booked.
+    if (details.roomKind !== params.roomKind) {
+        const canonical = href("/:roomKind/cancel", { roomKind: details.roomKind });
+        throw redirect(`${canonical}?reservationId=${details.id}`);
     }
 
-    return <SharedLearningRoomCancellation />;
+    // Nothing left to cancel — show the receipt instead of re-asking.
+    if (details.status === "cancelled") {
+        const receipt = href("/:roomKind/cancel/confirm", { roomKind: details.roomKind });
+        throw redirect(`${receipt}?reservationId=${details.id}`);
+    }
+
+    return { details };
 }
 
-function MeetingRoomCancellation() {
+export async function action({ params, request }: Route.ActionArgs) {
+    const formData = await request.formData();
+    const submitted = formData.get("reservationId");
+    const reservationId = typeof submitted === "string" ? Number.parseInt(submitted, 10) : NaN;
+    if (!Number.isInteger(reservationId) || reservationId <= 0) throw redirect(href("/"));
+
+    const result = apl.cancelReservation(reservationId);
+    if (result.error instanceof ReservationNotFoundError) throw redirect(href("/"));
+    // Already cancelled is the state the user asked for — fall through to the receipt.
+    if (result.error && !(result.error instanceof CancellationFailedError)) throw result.error;
+
+    return redirect(
+        `${href("/:roomKind/cancel/confirm", { roomKind: params.roomKind })}?reservationId=${reservationId}`,
+    );
+}
+
+const COPY = {
+    "meeting-room": {
+        prompt: "Are you sure you want to cancel for the room below?",
+        confirmLabel: "Yes, Cancel Request",
+    },
+    "shared-learning-room": {
+        prompt: "Are you sure you want to cancel your booking for the room below?",
+        confirmLabel: "Yes, Cancel Reservation",
+    },
+} satisfies Record<Room.Kind, { prompt: string; confirmLabel: string }>;
+
+export default function Cancellation({ loaderData }: Route.ComponentProps) {
+    const { details } = loaderData;
+    const copy = COPY[details.roomKind];
+
     return (
         <div className="flex justify-center">
             <CardGroup className="max-w-[49rem] min-w-[50rem]">
                 <Card>
                     <div className="mr-5 ml-5 justify-center">
-                        <h3 className="pt-4 text-center font-sans text-sans-xs">
-                            Are you sure you want to cancel for the room below?
-                        </h3>
+                        <h3 className="pt-4 text-center font-sans text-sans-xs">{copy.prompt}</h3>
                         <div className="flex-col px-3 pt-3">
-                            <div className="flex-col pb-[20px]">
-                                <h3 className="text-center font-sans text-[22px] font-bold">
-                                    Carver Branch, Room #1
-                                </h3>
-                                <p className="text-center font-sans text-sans-xs">
-                                    1161 Angelina St, Austin, TX 78702
-                                </p>
-                            </div>
-                            <p className="text-center font-sans text-sans-xs">Mon 3/4/24</p>
-                            <p className="text-center font-sans text-sans-xs">9:00 AM to 9:15 AM</p>
-                            <p className="text-center font-sans text-sans-xs">Capacity: 100</p>
+                            <ReservationFacts details={details} />
                             <div className="flex justify-center pt-7">
-                                <Link
-                                    href={href("/:roomKind/cancel/confirm", {
-                                        roomKind: Room.Meeting.kind,
-                                    })}
-                                >
+                                <Form method="post">
+                                    <input name="reservationId" type="hidden" value={details.id} />
                                     <Button
-                                        className="pointer-events-none mr-0 w-[206px] bg-[#016E98] font-sans text-sans-xs text-white"
-                                        type="button"
+                                        className="mr-0 w-[206px] bg-[#016E98] font-sans text-sans-xs text-white"
+                                        type="submit"
                                     >
-                                        Yes, Cancel Request
+                                        {copy.confirmLabel}
                                     </Button>
-                                </Link>
+                                </Form>
                             </div>
                             <div className="flex justify-center pt-[18px] pb-[208px]">
                                 <Link href={href("/")}>
                                     <Button
                                         className="pointer-events-none mr-0 w-[232px] border-[#026E98] bg-transparent font-sans text-sans-xs text-[#026E98] usa-button--outline"
-                                        type="button"
-                                    >
-                                        No, Back to Meeting Spaces
-                                    </Button>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-            </CardGroup>
-        </div>
-    );
-}
-
-function SharedLearningRoomCancellation() {
-    return (
-        <div className="flex justify-center">
-            <CardGroup className="max-w-[49rem] min-w-[50rem]">
-                <Card>
-                    <div className="mr-5 ml-5 justify-center">
-                        <h3 className="pt-4 text-center font-sans text-sans-xs">
-                            Are you sure you want to cancel your booking for the room below?
-                        </h3>
-                        <div className="flex-col px-3 pt-3">
-                            <div className="flex-col pb-[20px]">
-                                <h3 className="text-center font-sans text-[22px] font-bold">
-                                    Central Library, Shared Learning - 408
-                                </h3>
-                                <p className="text-center font-sans text-sans-xs">
-                                    710 W Cesar Chavez St, Austin, TX 78702
-                                </p>
-                            </div>
-                            <p className="text-center font-sans text-sans-xs">Mon 3/4/24</p>
-                            <p className="text-center font-sans text-sans-xs">
-                                11:00 AM to 12:00 AM
-                            </p>
-                            <p className="text-center font-sans text-sans-xs">Capacity: 4</p>
-                            <div className="flex justify-center pt-7">
-                                <Link
-                                    href={href("/:roomKind/cancel/confirm", {
-                                        roomKind: Room.SharedLearning.kind,
-                                    })}
-                                >
-                                    <Button
-                                        className="pointer-events-none w-[206px] bg-[#016E98] font-sans text-sans-xs text-white"
-                                        type="button"
-                                    >
-                                        Yes, Cancel Reservation
-                                    </Button>
-                                </Link>
-                            </div>
-                            <div className="flex justify-center pt-[18px] pb-[208px]">
-                                <Link href={href("/")}>
-                                    <Button
-                                        className="pointer-events-none w-[232px] border-[#026E98] bg-transparent font-sans text-sans-xs text-[#026E98] usa-button--outline"
                                         type="button"
                                     >
                                         No, Back to Meeting Spaces

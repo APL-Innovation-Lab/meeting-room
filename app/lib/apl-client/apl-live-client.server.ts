@@ -2136,6 +2136,22 @@ export const apl = {
         }
     },
 
+    /**
+     * Cancels a persisted reservation — the cancel flow's mutation. Repo errors surface unchanged:
+     * ReservationNotFoundError for unknown ids, CancellationFailedError when the reservation is
+     * already cancelled (the end state the caller wanted, so callers may treat it as settled).
+     */
+    cancelReservation(id: number): SafeResult<Reservation & { id: number }> {
+        try {
+            return { data: toReservationDto(repos().reservations.cancel(id)), error: undefined };
+        } catch (error: unknown) {
+            return {
+                data: undefined,
+                error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
+    },
+
     async clearCache(): Promise<void> {
         // Invalidates the scraped read-model + watermarks; leaves app-owned reservations and the
         // seeded reference tables (hours/conflicts/branch paths) intact.

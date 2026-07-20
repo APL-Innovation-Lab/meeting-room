@@ -1,19 +1,35 @@
 import { Button, Card, CardGroup, Link } from "@trussworks/react-uswds";
-import { href } from "react-router";
-
-import { Room } from "~/lib/room";
+import { href, redirect } from "react-router";
 
 import type { Route } from "./+types/confirm";
 
-export default function CancellationConfirmation({ params }: Route.ComponentProps) {
-    if (params.roomKind === Room.Meeting.kind) {
-        return <MeetingRoomCancellationConfirmation />;
+import { loadCancellationDetails, parseReservationId } from "./cancel.data.server";
+import { ReservationFacts } from "./ReservationFacts";
+
+export function loader({ params, url }: Route.LoaderArgs) {
+    const reservationId = parseReservationId(url);
+    const details = reservationId ? loadCancellationDetails(reservationId) : undefined;
+    if (!details) throw redirect(href("/"));
+
+    // A stale or hand-edited URL can pair a reservation with the wrong room kind; canonicalize so
+    // the receipt always names what was actually cancelled.
+    if (details.roomKind !== params.roomKind) {
+        const canonical = href("/:roomKind/cancel/confirm", { roomKind: details.roomKind });
+        throw redirect(`${canonical}?reservationId=${details.id}`);
     }
 
-    return <SharedLearningRoomCancellationConfirmation />;
+    // Never claim a cancellation that didn't happen — send back to the "are you sure" prompt.
+    if (details.status !== "cancelled") {
+        const prompt = href("/:roomKind/cancel", { roomKind: details.roomKind });
+        throw redirect(`${prompt}?reservationId=${details.id}`);
+    }
+
+    return { details };
 }
 
-function MeetingRoomCancellationConfirmation() {
+export default function CancellationConfirmation({ loaderData }: Route.ComponentProps) {
+    const { details } = loaderData;
+
     return (
         <div className="flex justify-center">
             <CardGroup className="max-w-[49rem] min-w-[50rem]">
@@ -26,61 +42,7 @@ function MeetingRoomCancellationConfirmation() {
                             The following has been canceled.
                         </h3>
                         <div className="flex-col px-3 pt-3">
-                            <div className="flex-col pb-[20px]">
-                                <h3 className="text-center font-sans text-[22px] font-bold">
-                                    Carver Branch, Room #1
-                                </h3>
-                                <p className="text-center font-sans text-sans-xs">
-                                    1161 Angelina St, Austin, TX 78702
-                                </p>
-                            </div>
-                            <p className="text-center font-sans text-sans-xs">Mon 3/4/24</p>
-                            <p className="text-center font-sans text-sans-xs">9:00 AM to 9:15 AM</p>
-                            <p className="text-center font-sans text-sans-xs">Capacity: 100</p>
-                            <div className="flex justify-center pt-7 pb-[194px]">
-                                <Link href={href("/")}>
-                                    <Button
-                                        className="pointer-events-none mr-0 w-[228px] bg-[#016E98] font-sans text-sans-xs text-white"
-                                        type="button"
-                                    >
-                                        Back to Meeting Spaces
-                                    </Button>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-            </CardGroup>
-        </div>
-    );
-}
-
-function SharedLearningRoomCancellationConfirmation() {
-    return (
-        <div className="flex justify-center">
-            <CardGroup className="max-w-[49rem] min-w-[50rem]">
-                <Card>
-                    <div className="mr-5 ml-5 justify-center">
-                        <h1 className="m-0 pt-4 text-center font-sans text-[40px] font-bold">
-                            Canceled
-                        </h1>
-                        <h3 className="pt-3 text-center font-sans text-sans-xs">
-                            The following has been canceled.
-                        </h3>
-                        <div className="flex-col px-3 pt-3">
-                            <div className="flex-col pb-[20px]">
-                                <h3 className="text-center font-sans text-[22px] font-bold">
-                                    Central Library, Shared Learning - 408
-                                </h3>
-                                <p className="text-center font-sans text-sans-xs">
-                                    710 W Cesar Chavez St, Austin, TX 78702
-                                </p>
-                            </div>
-                            <p className="text-center font-sans text-sans-xs">Mon 3/4/24</p>
-                            <p className="text-center font-sans text-sans-xs">
-                                11:00 AM to 12:00 PM
-                            </p>
-                            <p className="text-center font-sans text-sans-xs">Capacity: 4</p>
+                            <ReservationFacts details={details} />
                             <div className="flex justify-center pt-7 pb-[194px]">
                                 <Link href={href("/")}>
                                     <Button
