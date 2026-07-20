@@ -2,7 +2,7 @@
 
 Austin Public Library meeting room booking prototype. A full-stack **React Router v8 (framework mode)** app: search library meeting rooms, view them on a Mapbox map, review/confirm a booking, cancel a reservation, and export a booking as an `.ics` file.
 
-Stack: TypeScript, React 19, Vite, Tailwind CSS v4 + USWDS (`@trussworks/react-uswds`), Zod, Drizzle ORM on SQLite (`node:sqlite`), Vitest, Oxfmt/Oxlint, Varlock for env validation.
+Stack: TypeScript, React 19, Vite, Tailwind CSS v4 + USWDS (`@trussworks/react-uswds`), Zod, Drizzle ORM on SQLite (libSQL, `@libsql/client`), Vitest, Oxfmt/Oxlint, Varlock for env validation.
 
 ## Rules (required reading)
 
@@ -62,7 +62,7 @@ data/apl.db              # Local SQLite database
 - **Server-only code carries the `.server.ts` suffix** (e.g. `search.data.server.ts`, `db/client.server.ts`) so it never leaks into the client bundle. Keep it that way.
 - **Group by feature, not by layer** — a route's components, data loaders, and tests live in its `routes/<feature>/` directory.
 - **Components stay dumb**; domain logic lives in `app/lib/`. The domain layer doesn't import framework code.
-- **Database**: `app/lib/apl-client/db/schema.ts` is the single source of truth. Change the schema → run `node --run db:generate` to produce a migration under `drizzle/` — never write migration SQL by hand. Migrations apply at runtime via the `node:sqlite` migrator in `db/client.server.ts`.
+- **Database**: `app/lib/apl-client/db/schema.ts` is the single source of truth. Change the schema → run `node --run db:generate` to produce a migration under `drizzle/` — never write migration SQL by hand. Migrations apply at runtime via the libSQL migrator in `db/client.server.ts`. `APL_DB_URL` selects the database: a local `file:` path by default, or a remote libSQL/sqld URL in deployment.
 - **Environment**: `.env.schema` is the contract (Varlock-validated, types generated into `env.d.ts`). Add new env vars to `.env.schema`, not just `.env`. `.env` is gitignored — never commit it. `VITE_APP_MAPBOX_TOKEN` is deliberately a public token; do not mark it `@sensitive`.
 - **Formatting/linting** is Oxfmt + Oxlint (configs: `.oxfmtrc.jsonc`, `.oxlintrc.jsonc`). Don't hand-format or fight the tools; run them.
 - **Progressive enhancement**: routes should work without client JS where feasible — prefer React Router forms/actions over ad-hoc `fetch`.

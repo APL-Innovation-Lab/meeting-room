@@ -31,20 +31,21 @@ this file is the durable record. No source files were modified as part of this r
 
 ## P1 — Fix before/at Railway deployment
 
-3. **`APL_DB_PATH` is dead at runtime — no way to point persistence at a Railway volume**
-   `drizzle.config.ts:11` reads `process.env.APL_DB_PATH`, but `app/lib/apl-client/db/
-   client.server.ts` (`DEFAULT_DB_PATH`, `createDatabase()`, `getDb()`) never reads it — the
-   running app always writes to `<cwd>/data/apl.db` with no env override. `APL_DB_PATH` only
-   affects `drizzle-kit generate/push/studio`. If the plan is "set `APL_DB_PATH` to a Railway
-   Volume mount path," it will silently have zero effect on the deployed app.
+3. ~~**`APL_DB_PATH` is dead at runtime — no way to point persistence at a Railway volume**~~ —
+   FIXED (2026-07-19) by migrating persistence to libSQL. `db/client.server.ts` now opens the
+   database through `@libsql/client` + `drizzle-orm/libsql`, and the runtime reads `APL_DB_URL`
+   (unset/empty → the local `file:data/apl.db` dev default; `http(s)://`/`libsql://` → a remote
+   libSQL server, with optional `APL_DB_AUTH_TOKEN`). `drizzle.config.ts` reads the same variable;
+   `APL_DB_PATH` is gone. The whole repo/apl-client/route stack went async to match the driver.
+   Verified end-to-end in the browser against a local `sqld` (the Railway libSQL template's
+   server): booked reservation 1 over HTTP, cancelled it, and confirmed both survive an app
+   restart; the pre-existing node:sqlite-created `data/apl.db` also opens cleanly on the file path.
 
-4. **No documented/committed Railway persistence strategy**
-   No `railway.json`, `railway.toml`, `Procfile`, `Dockerfile`, or Volume-mount documentation
-   exists anywhere in the repo. `node:sqlite` writes to the container's local filesystem, which
-   Railway resets on every redeploy unless a Volume is attached at the write path. Combined with
-   finding 3, there is currently no supported way to survive a redeploy with reservations intact.
-   Needs an explicit decision + setup (Railway Volume mounted at the app's `data/` dir, or an
-   env-driven DB path that's actually wired up) before running a multi-day user test.
+4. **No documented/committed Railway persistence strategy** — narrowed by the item-3 fix
+   (2026-07-19): the supported deployment is now "deploy Railway's libSQL Server template
+   (`railway.com/deploy/p121Tx`, volume at `/var/lib/sqld`), set `APL_DB_URL` to its private URL,
+   keep it off the public network or set `SQLD_HTTP_AUTH` + `APL_DB_AUTH_TOKEN`" — the app itself
+   stays stateless. Still missing: committed `railway.json`/docs recording that setup.
 
 ## P2 — Should fix, not blocking a short user test
 
