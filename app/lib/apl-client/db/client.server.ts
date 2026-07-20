@@ -1,8 +1,9 @@
-import { drizzle } from "drizzle-orm/node-sqlite";
-import { migrate } from "drizzle-orm/node-sqlite/migrator";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { createClient, type Client } from "@libsql/client";
+import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
+import { migrate } from "drizzle-orm/libsql/migrator";
+import { mkdirSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 
 import {
     BranchCoordinatesRepo,
@@ -17,45 +18,65 @@ import {
 } from "./repos";
 import * as schema from "./schema";
 
-const DEFAULT_DB_PATH = "data/apl.db";
+const DEFAULT_DB_URL = "file:data/apl.db";
 const MIGRATIONS_FOLDER = "drizzle";
 
-export type Database = ReturnType<typeof createDatabase>;
+/** The Drizzle handle every repo runs queries through, with the raw libSQL client at `$client`. */
+export type Database = LibSQLDatabase<typeof schema> & { $client: Client };
 
 /**
- * Opens a SQLite database, applies any pending migrations, and returns the Drizzle handle plus the
- * raw client. Pass `":memory:"` for an ephemeral, isolated database (tests); any other value is a
- * filesystem path that persists across restarts — required now that the app owns reservation data.
+ * Opens a libSQL database, applies any pending migrations, and returns the Drizzle handle plus the
+ * raw client. Accepts any libSQL URL: `":memory:"` for an ephemeral, isolated database (tests),
+ * realized as a unique temp file — see below,
+ * `file:<path>` for a persistent local file, or `http(s)://`/`libsql://` for a remote libSQL
+ * server (`APL_DB_AUTH_TOKEN` is sent along when set).
  *
- * Migrations are applied from the committed `./drizzle` folder via the node:sqlite migrator, so the
+ * The default URL comes from `APL_DB_URL` — a deployed app points this at a libSQL server (e.g.
+ * `http://<sqld-host>:8080` on Railway's private network) — falling back to the local dev file.
+ * Read at runtime, not build time, so the deploy environment decides where data lives. Empty
+ * means unset: varlock injects declared-but-blank vars as `""`.
+ *
+ * Migrations are applied from the committed `./drizzle` folder via the libSQL migrator, so the
  * schema in `schema.ts` is the single source of truth (no hand-maintained DDL).
  */
-export function createDatabase(path = DEFAULT_DB_PATH) {
-    if (path !== ":memory:") {
-        // node:sqlite creates the database file but not its parent directory.
-        mkdirSync(dirname(path), { recursive: true });
+export async function createDatabase(
+    url: string = process.env.APL_DB_URL || DEFAULT_DB_URL,
+): Promise<Database> {
+    if (url === ":memory:") {
+        // Not a literal SQLite ":memory:" database: @libsql/client's local driver reopens the
+        // database per transaction, so a plain in-memory database comes back empty after the first
+        // BEGIN, and its only escape hatch (`file::memory:?cache=shared`) is one process-wide
+        // database with no isolation between callers. A unique temp file keeps ":memory:"'s
+        // isolation contract with real SQLite semantics.
+        url = `file:${join(mkdtempSync(join(tmpdir(), "apl-db-")), "ephemeral.db")}`;
+    } else if (url.startsWith("file:")) {
+        // libSQL creates the database file but not its parent directory.
+        mkdirSync(dirname(url.slice("file:".length)), { recursive: true });
     }
 
-    const client = new DatabaseSync(path);
-    client.exec("PRAGMA foreign_keys = ON;");
-    if (path !== ":memory:") {
-        client.exec("PRAGMA journal_mode = WAL;");
+    const client = createClient({ url, authToken: process.env.APL_DB_AUTH_TOKEN || undefined });
+    if (url.startsWith("file:")) {
+        // Connection-scoped pragmas apply only to a local database we own outright; a remote
+        // libSQL server manages its own journal mode and connection settings.
+        await client.execute("PRAGMA foreign_keys = ON;");
+        await client.execute("PRAGMA journal_mode = WAL;");
     }
 
     const db = drizzle({ client, schema });
-    migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+    await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
 
     return db;
 }
 
-let singleton: Database | undefined;
+let singleton: Promise<Database> | undefined;
 
 /**
- * The process-wide, file-backed database handle, created lazily on first use. Lazy (rather than a
- * top-level `const`) so that importing this module in a test — to grab `createDatabase(":memory:")` —
- * does not, as a side effect, open and migrate the real on-disk database.
+ * The process-wide database handle, created lazily on first use. Lazy (rather than a top-level
+ * `const`) so that importing this module in a test — to grab `createDatabase(":memory:")` — does
+ * not, as a side effect, open and migrate the real database. Memoizes the promise, not the value,
+ * so concurrent first callers share one open+migrate.
  */
-export function getDb(): Database {
+export function getDb(): Promise<Database> {
     singleton ??= createDatabase();
     return singleton;
 }
@@ -65,8 +86,8 @@ export function getDb(): Database {
  * database handle so callers reach persistence through `repos.reservations.*` (and future
  * `repos.rooms.*`, etc.) instead of importing free functions and threading a Drizzle instance around.
  *
- * Defaults to the lazy file-backed database; pass an explicit handle (e.g. `createDatabase(":memory:")`)
- * to scope a container to an isolated database, as the tests do.
+ * Takes a resolved database handle; use `getRepos()` for the process-wide container, or pass
+ * `await createDatabase(":memory:")` to scope a container to an isolated database, as the tests do.
  */
 export class Repos {
     readonly reservations: ReservationsRepo;
@@ -79,7 +100,7 @@ export class Repos {
     readonly roomConflicts: RoomConflictsRepo;
     readonly syncState: SyncStateRepo;
 
-    constructor(db: Database = getDb()) {
+    constructor(db: Database) {
         this.reservations = new ReservationsRepo(db);
         this.rooms = new RoomsRepo(db);
         this.branches = new BranchesRepo(db);
@@ -92,10 +113,10 @@ export class Repos {
     }
 }
 
-let singletonRepos: Repos | undefined;
+let singletonRepos: Promise<Repos> | undefined;
 
-/** The process-wide repositories, backed by the lazy file-backed database. */
-export function getRepos(): Repos {
-    singletonRepos ??= new Repos();
+/** The process-wide repositories, backed by the lazy database. */
+export function getRepos(): Promise<Repos> {
+    singletonRepos ??= getDb().then(db => new Repos(db));
     return singletonRepos;
 }

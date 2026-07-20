@@ -18,6 +18,7 @@
         "skills:update": "skills update"
     },
     "dependencies": {
+        "@libsql/client": "^0.17.4",
         "@react-router/node": "^8.0.1",
         "@react-router/serve": "^8.0.1",
         "@trussworks/react-uswds": "^11.0.0",

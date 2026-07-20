@@ -30,8 +30,10 @@ export function parseReservationId(url: URL): number | undefined {
  * `undefined` when no such reservation exists (the caller redirects home). Any other database
  * failure propagates — a broken store must not masquerade as a missing booking.
  */
-export function loadCancellationDetails(reservationId: number): CancellationDetails | undefined {
-    const result = apl.getReservation(reservationId);
+export async function loadCancellationDetails(
+    reservationId: number,
+): Promise<CancellationDetails | undefined> {
+    const result = await apl.getReservation(reservationId);
     if (result.error instanceof ReservationNotFoundError) return undefined;
     if (result.error) throw result.error;
     return createCancellationDetails(result.data);

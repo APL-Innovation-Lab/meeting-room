@@ -40,15 +40,45 @@ export type ReservationFilter = {
     status?: Reservation["status"];
 };
 
-/** node:sqlite surfaces a constraint breach as an Error whose message names the failure. */
+/**
+ * libSQL surfaces a constraint breach as an Error whose message names the failure; Drizzle may wrap
+ * it, so walk the `cause` chain rather than trusting the outermost message.
+ */
 function isUniqueViolation(error: unknown): boolean {
-    return error instanceof Error && /UNIQUE constraint failed/i.test(error.message);
+    for (let current: unknown = error; current instanceof Error; current = current.cause) {
+        if (/UNIQUE constraint failed|SQLITE_CONSTRAINT_UNIQUE/i.test(current.message)) return true;
+    }
+    return false;
+}
+
+const writeQueues = new WeakMap<Database, Promise<unknown>>();
+
+/**
+ * Runs `write` after every previously queued write on the same database handle. The local libSQL
+ * driver runs each transaction on a dedicated connection with no busy timeout, so ANY write
+ * overlapping an in-flight transaction — another transaction or a plain statement — aborts with
+ * SQLITE_BUSY instead of waiting. Serializing all writes through one FIFO queue is the boring fix,
+ * applied uniformly rather than per-driver so dev and deployed behavior match; reads stay
+ * concurrent (WAL). Writes here are tiny (single upserts, wholesale replaces of small tables), so
+ * throughput is a non-issue.
+ */
+function serializedWrite<T>(db: Database, write: () => Promise<T>): Promise<T> {
+    const prior = writeQueues.get(db) ?? Promise.resolve();
+    const run = prior.then(write);
+    writeQueues.set(
+        db,
+        run.then(
+            () => undefined,
+            () => undefined,
+        ),
+    );
+    return run;
 }
 
 /**
  * Persistence for app-owned reservations. Every reservation query lives here as a method rather than
  * as a free function, so callers reach it through `repos.reservations.*` and never thread a Drizzle
- * instance around. Methods are synchronous because the node:sqlite driver is.
+ * instance around.
  */
 export class ReservationsRepo {
     constructor(private db: Database) {}
@@ -59,13 +89,16 @@ export class ReservationsRepo {
      * {@link RoomAlreadyReservedError}. There is no read-then-write window, so two concurrent bookings
      * of the same slot can't both succeed.
      */
-    create(input: CreateReservationInput): Reservation {
+    async create(input: CreateReservationInput): Promise<Reservation> {
         try {
-            return this.db
-                .insert(Reservations)
-                .values({ ...input, status: "confirmed", createdAt: new Date().toISOString() })
-                .returning()
-                .get()!;
+            const created = await serializedWrite(this.db, () =>
+                this.db
+                    .insert(Reservations)
+                    .values({ ...input, status: "confirmed", createdAt: new Date().toISOString() })
+                    .returning()
+                    .get(),
+            );
+            return created;
         } catch (error) {
             if (isUniqueViolation(error)) throw new RoomAlreadyReservedError();
             throw error;
@@ -73,8 +106,8 @@ export class ReservationsRepo {
     }
 
     /** Looks up a reservation by id, throwing {@link ReservationNotFoundError} if absent. */
-    get(id: number): Reservation {
-        const row = this.db.select().from(Reservations).where(eq(Reservations.id, id)).get();
+    async get(id: number): Promise<Reservation> {
+        const row = await this.db.select().from(Reservations).where(eq(Reservations.id, id)).get();
         if (!row) throw new ReservationNotFoundError();
         return row;
     }
@@ -85,24 +118,30 @@ export class ReservationsRepo {
      * when still `confirmed`) makes this safe under a concurrent cancel: the loser sees zero affected
      * rows and gets {@link CancellationFailedError}.
      */
-    cancel(id: number): Reservation {
-        const existing = this.db.select().from(Reservations).where(eq(Reservations.id, id)).get();
+    async cancel(id: number): Promise<Reservation> {
+        const existing = await this.db
+            .select()
+            .from(Reservations)
+            .where(eq(Reservations.id, id))
+            .get();
         if (!existing) throw new ReservationNotFoundError();
         if (existing.status === "cancelled") throw new CancellationFailedError();
 
-        const cancelled = this.db
-            .update(Reservations)
-            .set({ status: "cancelled" })
-            .where(and(eq(Reservations.id, id), eq(Reservations.status, "confirmed")))
-            .returning()
-            .get();
+        const cancelled = await serializedWrite(this.db, () =>
+            this.db
+                .update(Reservations)
+                .set({ status: "cancelled" })
+                .where(and(eq(Reservations.id, id), eq(Reservations.status, "confirmed")))
+                .returning()
+                .get(),
+        );
 
         if (!cancelled) throw new CancellationFailedError(); // lost the race to another cancel
         return cancelled;
     }
 
     /** Lists reservations (newest first) matching the optional filter. */
-    list(filter: ReservationFilter = {}): Reservation[] {
+    async list(filter: ReservationFilter = {}): Promise<Reservation[]> {
         const conditions = [
             filter.roomId !== undefined ? eq(Reservations.roomId, filter.roomId) : undefined,
             filter.date !== undefined ? eq(Reservations.date, filter.date) : undefined,
@@ -127,8 +166,8 @@ const SYNC_TTL_MS = 5 * 60 * 1000;
 export class SyncStateRepo {
     constructor(private db: Database) {}
 
-    isFresh(source: string, ttlMs = SYNC_TTL_MS): boolean {
-        const row = this.db
+    async isFresh(source: string, ttlMs = SYNC_TTL_MS): Promise<boolean> {
+        const row = await this.db
             .select({ syncedAt: SyncState.syncedAt })
             .from(SyncState)
             .where(eq(SyncState.source, source))
@@ -138,18 +177,20 @@ export class SyncStateRepo {
         return Number.isFinite(age) && age >= 0 && age < ttlMs;
     }
 
-    touch(source: string): void {
+    async touch(source: string): Promise<void> {
         const syncedAt = new Date().toISOString();
-        this.db
-            .insert(SyncState)
-            .values({ source, syncedAt })
-            .onConflictDoUpdate({ target: SyncState.source, set: { syncedAt } })
-            .run();
+        await serializedWrite(this.db, () =>
+            this.db
+                .insert(SyncState)
+                .values({ source, syncedAt })
+                .onConflictDoUpdate({ target: SyncState.source, set: { syncedAt } })
+                .run(),
+        );
     }
 
     /** Forgets every watermark, forcing all sources to re-scrape on next access. */
-    clear(): void {
-        this.db.delete(SyncState).run();
+    async clear(): Promise<void> {
+        await serializedWrite(this.db, () => this.db.delete(SyncState).run());
     }
 }
 
@@ -161,14 +202,16 @@ export class SyncStateRepo {
 export class RoomsRepo {
     constructor(private db: Database) {}
 
-    replaceByKind(kind: RoomKind, rows: NewRoom[]): void {
-        this.db.transaction(tx => {
-            tx.delete(Rooms).where(eq(Rooms.kind, kind)).run();
-            if (rows.length) tx.insert(Rooms).values(rows).run();
-        });
+    async replaceByKind(kind: RoomKind, rows: NewRoom[]): Promise<void> {
+        await serializedWrite(this.db, () =>
+            this.db.transaction(async tx => {
+                await tx.delete(Rooms).where(eq(Rooms.kind, kind)).run();
+                if (rows.length) await tx.insert(Rooms).values(rows).run();
+            }),
+        );
     }
 
-    listByKind(kind: RoomKind): Room[] {
+    async listByKind(kind: RoomKind): Promise<Room[]> {
         return this.db.select().from(Rooms).where(eq(Rooms.kind, kind)).all();
     }
 }
@@ -181,38 +224,42 @@ export class BranchesRepo {
     constructor(private db: Database) {}
 
     /** Upserts branch display names (leaves `path` untouched). */
-    upsertNames(rows: Array<{ locationId: string; name: string }>): void {
+    async upsertNames(rows: Array<{ locationId: string; name: string }>): Promise<void> {
         const syncedAt = new Date().toISOString();
-        for (const row of rows) {
-            this.db
-                .insert(Branches)
-                .values({ locationId: row.locationId, name: row.name, syncedAt })
-                .onConflictDoUpdate({
-                    target: Branches.locationId,
-                    set: { name: row.name, syncedAt },
-                })
-                .run();
-        }
+        await serializedWrite(this.db, async () => {
+            for (const row of rows) {
+                await this.db
+                    .insert(Branches)
+                    .values({ locationId: row.locationId, name: row.name, syncedAt })
+                    .onConflictDoUpdate({
+                        target: Branches.locationId,
+                        set: { name: row.name, syncedAt },
+                    })
+                    .run();
+            }
+        });
     }
 
     /** Seeds location-page paths (leaves `name`/`synced_at` untouched). */
-    seedPaths(pathByLocationId: Record<string, string>): void {
-        for (const [locationId, path] of Object.entries(pathByLocationId)) {
-            this.db
-                .insert(Branches)
-                .values({ locationId, path } satisfies NewBranch)
-                .onConflictDoUpdate({ target: Branches.locationId, set: { path } })
-                .run();
-        }
+    async seedPaths(pathByLocationId: Record<string, string>): Promise<void> {
+        await serializedWrite(this.db, async () => {
+            for (const [locationId, path] of Object.entries(pathByLocationId)) {
+                await this.db
+                    .insert(Branches)
+                    .values({ locationId, path } satisfies NewBranch)
+                    .onConflictDoUpdate({ target: Branches.locationId, set: { path } })
+                    .run();
+            }
+        });
     }
 
-    list(): Branch[] {
+    async list(): Promise<Branch[]> {
         return this.db.select().from(Branches).all();
     }
 
     /** location_id → location-page path, for `apl.getLocationPathMapping`. */
-    pathMap(): Record<string, string> {
-        const rows = this.db
+    async pathMap(): Promise<Record<string, string>> {
+        const rows = await this.db
             .select({ locationId: Branches.locationId, path: Branches.path })
             .from(Branches)
             .all();
@@ -228,14 +275,16 @@ export class BranchesRepo {
 export class BranchDirectoryRepo {
     constructor(private db: Database) {}
 
-    replaceAll(rows: NewBranchDirectoryEntry[]): void {
-        this.db.transaction(tx => {
-            tx.delete(BranchDirectory).run();
-            if (rows.length) tx.insert(BranchDirectory).values(rows).run();
-        });
+    async replaceAll(rows: NewBranchDirectoryEntry[]): Promise<void> {
+        await serializedWrite(this.db, () =>
+            this.db.transaction(async tx => {
+                await tx.delete(BranchDirectory).run();
+                if (rows.length) await tx.insert(BranchDirectory).values(rows).run();
+            }),
+        );
     }
 
-    list() {
+    async list() {
         return this.db.select().from(BranchDirectory).all();
     }
 }
@@ -244,14 +293,16 @@ export class BranchDirectoryRepo {
 export class BranchCoordinatesRepo {
     constructor(private db: Database) {}
 
-    replaceAll(rows: NewBranchCoordinate[]): void {
-        this.db.transaction(tx => {
-            tx.delete(BranchCoordinates).run();
-            if (rows.length) tx.insert(BranchCoordinates).values(rows).run();
-        });
+    async replaceAll(rows: NewBranchCoordinate[]): Promise<void> {
+        await serializedWrite(this.db, () =>
+            this.db.transaction(async tx => {
+                await tx.delete(BranchCoordinates).run();
+                if (rows.length) await tx.insert(BranchCoordinates).values(rows).run();
+            }),
+        );
     }
 
-    list() {
+    async list() {
         return this.db.select().from(BranchCoordinates).all();
     }
 }
@@ -260,14 +311,16 @@ export class BranchCoordinatesRepo {
 export class SpecialDatesRepo {
     constructor(private db: Database) {}
 
-    replaceAll(rows: NewSpecialDate[]): void {
-        this.db.transaction(tx => {
-            tx.delete(SpecialDates).run();
-            if (rows.length) tx.insert(SpecialDates).values(rows).run();
-        });
+    async replaceAll(rows: NewSpecialDate[]): Promise<void> {
+        await serializedWrite(this.db, () =>
+            this.db.transaction(async tx => {
+                await tx.delete(SpecialDates).run();
+                if (rows.length) await tx.insert(SpecialDates).values(rows).run();
+            }),
+        );
     }
 
-    list() {
+    async list() {
         return this.db.select().from(SpecialDates).all();
     }
 }
@@ -276,11 +329,13 @@ export class SpecialDatesRepo {
 export class OperatingHoursRepo {
     constructor(private db: Database) {}
 
-    replaceAll(rows: Array<typeof OperatingHours.$inferInsert>): void {
-        this.db.transaction(tx => {
-            tx.delete(OperatingHours).run();
-            if (rows.length) tx.insert(OperatingHours).values(rows).run();
-        });
+    async replaceAll(rows: Array<typeof OperatingHours.$inferInsert>): Promise<void> {
+        await serializedWrite(this.db, () =>
+            this.db.transaction(async tx => {
+                await tx.delete(OperatingHours).run();
+                if (rows.length) await tx.insert(OperatingHours).values(rows).run();
+            }),
+        );
     }
 }
 
@@ -288,10 +343,12 @@ export class OperatingHoursRepo {
 export class RoomConflictsRepo {
     constructor(private db: Database) {}
 
-    replaceAll(rows: Array<typeof RoomConflicts.$inferInsert>): void {
-        this.db.transaction(tx => {
-            tx.delete(RoomConflicts).run();
-            if (rows.length) tx.insert(RoomConflicts).values(rows).run();
-        });
+    async replaceAll(rows: Array<typeof RoomConflicts.$inferInsert>): Promise<void> {
+        await serializedWrite(this.db, () =>
+            this.db.transaction(async tx => {
+                await tx.delete(RoomConflicts).run();
+                if (rows.length) await tx.insert(RoomConflicts).values(rows).run();
+            }),
+        );
     }
 }

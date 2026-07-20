@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createDatabase, type Database } from "./client.server";
 
 // These tests guard the bootstrap itself: that the committed drizzle migration, applied at runtime by
-// the node:sqlite migrator, produces the schema `schema.ts` describes. They catch migration/schema
+// the libSQL migrator, produces the schema `schema.ts` describes. They catch migration/schema
 // drift — e.g. forgetting to run `db:generate` after editing the schema — which the higher-level repo
 // tests would not surface clearly.
 
@@ -20,26 +20,27 @@ const EXPECTED_TABLES = [
 ].sort();
 
 /** Application tables only — excludes SQLite internals and the migrator's bookkeeping table. */
-function appTableNames(db: Database): string[] {
-    const rows = db.$client
-        .prepare(
-            "SELECT name FROM sqlite_master WHERE type='table' " +
-                "AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '__drizzle%'",
-        )
-        .all() as Array<{ name: string }>;
-    return rows.map(row => row.name).sort();
+async function appTableNames(db: Database): Promise<string[]> {
+    const result = await db.$client.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' " +
+            "AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '__drizzle%'",
+    );
+    return result.rows.map(row => row.name as string).sort();
 }
 
 describe("database bootstrap / migration", () => {
-    it("creates exactly the expected application tables", () => {
-        expect(appTableNames(createDatabase(":memory:"))).toEqual(EXPECTED_TABLES);
+    it("creates exactly the expected application tables", async () => {
+        expect(await appTableNames(await createDatabase(":memory:"))).toEqual(EXPECTED_TABLES);
     });
 
-    it("creates the named indexes, and the reservation-slot index is PARTIAL", () => {
-        const indexes = createDatabase(":memory:")
-            .$client.prepare("SELECT name, sql FROM sqlite_master WHERE type='index'")
-            .all() as Array<{ name: string; sql: string | null }>;
-        const byName = new Map(indexes.map(index => [index.name, index.sql]));
+    it("creates the named indexes, and the reservation-slot index is PARTIAL", async () => {
+        const db = await createDatabase(":memory:");
+        const result = await db.$client.execute(
+            "SELECT name, sql FROM sqlite_master WHERE type='index'",
+        );
+        const byName = new Map(
+            result.rows.map(index => [index.name as string, index.sql as string | null]),
+        );
 
         expect(byName.has("uq_active_reservation_slot")).toBe(true);
         expect(byName.has("ix_rooms_kind_location")).toBe(true);
@@ -48,49 +49,46 @@ describe("database bootstrap / migration", () => {
         expect(byName.get("uq_active_reservation_slot")).toContain("confirmed");
     });
 
-    it("enables the foreign_keys pragma", () => {
-        const row = createDatabase(":memory:").$client.prepare("PRAGMA foreign_keys").get() as {
-            foreign_keys: number;
-        };
-        expect(row.foreign_keys).toBe(1);
+    it("enables the foreign_keys pragma", async () => {
+        const db = await createDatabase(":memory:");
+        const row = (await db.$client.execute("PRAGMA foreign_keys")).rows[0];
+        expect(Number(row.foreign_keys)).toBe(1);
     });
 
-    it("applies room column defaults (booleans default 0; unset nullable columns stay null)", () => {
-        const db = createDatabase(":memory:");
-        db.$client.exec(
+    it("applies room column defaults (booleans default 0; unset nullable columns stay null)", async () => {
+        const db = await createDatabase(":memory:");
+        await db.$client.execute(
             "INSERT INTO rooms (room_id, location_id, kind, synced_at) " +
                 "VALUES ('x', '1', 'meeting-room', 't')",
         );
-        const row = db.$client
-            .prepare(
+        const row = (
+            await db.$client.execute(
                 "SELECT published, airplay, hdmi, whiteboard, capacity, floor FROM rooms WHERE room_id='x'",
             )
-            .get() as Record<string, number | null>;
+        ).rows[0];
 
-        expect(row.published).toBe(0);
-        expect(row.airplay).toBe(0);
-        expect(row.hdmi).toBe(0);
-        expect(row.whiteboard).toBe(0);
+        expect(Number(row.published)).toBe(0);
+        expect(Number(row.airplay)).toBe(0);
+        expect(Number(row.hdmi)).toBe(0);
+        expect(Number(row.whiteboard)).toBe(0);
         expect(row.capacity).toBeNull();
         expect(row.floor).toBeNull();
     });
 
-    it("defaults a reservation's status to 'confirmed'", () => {
-        const db = createDatabase(":memory:");
-        db.$client.exec(
+    it("defaults a reservation's status to 'confirmed'", async () => {
+        const db = await createDatabase(":memory:");
+        await db.$client.execute(
             "INSERT INTO reservations " +
                 "(room_id, room_kind, room_name, branch_name, meeting_topic, full_name, email_address, date, time, created_at) " +
                 "VALUES ('781', 'meeting-room', 'A', 'Central', 'Topic', 'Ada', 'a@e.com', '2026-06-25', '5:00 PM', 't')",
         );
-        const row = db.$client.prepare("SELECT status FROM reservations LIMIT 1").get() as {
-            status: string;
-        };
+        const row = (await db.$client.execute("SELECT status FROM reservations LIMIT 1")).rows[0];
         expect(row.status).toBe("confirmed");
     });
 
-    it("builds independent databases deterministically", () => {
-        expect(appTableNames(createDatabase(":memory:"))).toEqual(
-            appTableNames(createDatabase(":memory:")),
+    it("builds independent databases deterministically", async () => {
+        expect(await appTableNames(await createDatabase(":memory:"))).toEqual(
+            await appTableNames(await createDatabase(":memory:")),
         );
     });
 });

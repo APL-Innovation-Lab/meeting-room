@@ -289,20 +289,21 @@ const MeetingRoomReservationSchema = z.object({
 
 /** The repositories, seeded with static reference data on first use (lazy, so importing this module
  * in a unit test never opens the on-disk database — only the async fetchers below reach the store). */
-function repos(): Repos {
-    const r = getRepos();
-    ensureSeeded(r);
+async function repos(): Promise<Repos> {
+    const r = await getRepos();
+    await ensureSeeded(r);
     return r;
 }
 
-let seeded = false;
+let seeding: Promise<void> | undefined;
 /** Mirrors the static domain constants into their tables on first DB use (idempotent per process). */
-function ensureSeeded(r: Repos): void {
-    if (seeded) return;
-    r.branches.seedPaths(STATIC_LOCATION_PATH_MAPPING);
-    r.operatingHours.replaceAll(operatingHoursSeedRows());
-    r.roomConflicts.replaceAll(roomConflictSeedRows());
-    seeded = true;
+function ensureSeeded(r: Repos): Promise<void> {
+    seeding ??= (async () => {
+        await r.branches.seedPaths(STATIC_LOCATION_PATH_MAPPING);
+        await r.operatingHours.replaceAll(operatingHoursSeedRows());
+        await r.roomConflicts.replaceAll(roomConflictSeedRows());
+    })();
+    return seeding;
 }
 
 function operatingHoursSeedRows(): Array<{
@@ -336,12 +337,12 @@ function roomConflictSeedRows(): Array<{ roomId: string; conflictsWith: string }
 }
 
 /** Read-through freshness watermark: did we sync this source within the TTL? */
-function isFresh(source: string): boolean {
-    return repos().syncState.isFresh(source);
+async function isFresh(source: string): Promise<boolean> {
+    return (await repos()).syncState.isFresh(source);
 }
 
-function markSynced(source: string): void {
-    repos().syncState.touch(source);
+async function markSynced(source: string): Promise<void> {
+    await (await repos()).syncState.touch(source);
 }
 
 /** SLR rooms (a `LiveRoom`) <-> the `rooms` table row. */
@@ -419,8 +420,8 @@ async function mapWithConcurrency<T, U>(
 }
 
 /** location_id -> location-page path. Paths are seeded into `branches` on first DB use. */
-function loadLocationPathMapping(): Record<string, string> {
-    return repos().branches.pathMap();
+async function loadLocationPathMapping(): Promise<Record<string, string>> {
+    return (await repos()).branches.pathMap();
 }
 
 type ParseNode = DefaultTreeAdapterMap["node"];
@@ -786,8 +787,8 @@ async function fetchLiveRooms(baseUrl = DEFAULT_BASE_URL): Promise<LiveRoom[]> {
     const now = Date.now();
     const host = normalizeBaseUrl(baseUrl);
     const source = `slr_rooms:${host}`;
-    if (isFresh(source)) {
-        return repos().rooms.listByKind("shared-learning-room").map(rowToLiveRoom);
+    if (await isFresh(source)) {
+        return (await (await repos()).rooms.listByKind("shared-learning-room")).map(rowToLiveRoom);
     }
 
     const [roomStatesRaw, roomMarkupRaw] = await Promise.all([
@@ -821,11 +822,13 @@ async function fetchLiveRooms(baseUrl = DEFAULT_BASE_URL): Promise<LiveRoom[]> {
         .filter((value): value is LiveRoom => Boolean(value));
 
     const syncedAt = new Date().toISOString();
-    repos().rooms.replaceByKind(
+    await (
+        await repos()
+    ).rooms.replaceByKind(
         "shared-learning-room",
         rooms.map(room => liveRoomToRow(room, syncedAt)),
     );
-    markSynced(source);
+    await markSynced(source);
 
     return rooms;
 }
@@ -838,7 +841,7 @@ async function fetchLiveRooms(baseUrl = DEFAULT_BASE_URL): Promise<LiveRoom[]> {
  */
 async function ensureMeetingRoomsSynced(host: string): Promise<void> {
     const source = `meeting_rooms:${host}`;
-    if (isFresh(source)) return;
+    if (await isFresh(source)) return;
 
     const response = await fetch(`${host}/meeting-rooms/request?t=${Date.now()}`);
     if (!response.ok) {
@@ -878,22 +881,24 @@ async function ensureMeetingRoomsSynced(host: string): Promise<void> {
         })
         .filter((value): value is NewRoom => Boolean(value));
 
-    const r = repos();
-    r.branches.upsertNames(
+    const r = await repos();
+    await r.branches.upsertNames(
         locations.map(loc => ({ locationId: loc.locationId, name: loc.branch })),
     );
-    r.rooms.replaceByKind("meeting-room", roomRows);
-    markSynced(source);
+    await r.rooms.replaceByKind("meeting-room", roomRows);
+    await markSynced(source);
 }
 
 /** Per-location capacities + room count, derived from the meeting rooms in the table. */
-function deriveMeetingRoomBranches(): LiveMeetingRoomBranch[] {
-    const r = repos();
-    const nameByLocation = new Map(r.branches.list().map(b => [b.locationId, b.name ?? ""]));
+async function deriveMeetingRoomBranches(): Promise<LiveMeetingRoomBranch[]> {
+    const r = await repos();
+    const nameByLocation = new Map(
+        (await r.branches.list()).map(b => [b.locationId, b.name ?? ""]),
+    );
     const countByLocation = new Map<string, number>();
     const capacitiesByLocation = new Map<string, Set<number>>();
 
-    for (const room of r.rooms.listByKind("meeting-room")) {
+    for (const room of await r.rooms.listByKind("meeting-room")) {
         countByLocation.set(room.locationId, (countByLocation.get(room.locationId) ?? 0) + 1);
         const capacities = capacitiesByLocation.get(room.locationId) ?? new Set<number>();
         if (room.capacity && room.capacity > 0) capacities.add(room.capacity);
@@ -909,12 +914,14 @@ function deriveMeetingRoomBranches(): LiveMeetingRoomBranch[] {
 }
 
 /** The inventory view (locations + their rooms), grouped from the meeting rooms in the table. */
-function deriveMeetingRoomInventory(): MeetingRoomInventory {
-    const r = repos();
-    const nameByLocation = new Map(r.branches.list().map(b => [b.locationId, b.name ?? ""]));
+async function deriveMeetingRoomInventory(): Promise<MeetingRoomInventory> {
+    const r = await repos();
+    const nameByLocation = new Map(
+        (await r.branches.list()).map(b => [b.locationId, b.name ?? ""]),
+    );
     const roomsByLocation: Record<string, MeetingRoomInventoryRoom[]> = {};
 
-    for (const room of r.rooms.listByKind("meeting-room")) {
+    for (const room of await r.rooms.listByKind("meeting-room")) {
         const hasRoomDetails = room.floor !== null || room.image !== null;
         (roomsByLocation[room.locationId] ??= []).push({
             roomId: room.roomId,
@@ -957,7 +964,7 @@ async function fetchMeetingRoomInventory(
 /** Scrapes the SLR request page once per TTL for branch display names (keyed by location). */
 async function ensureSlrBranchNamesSynced(host: string): Promise<void> {
     const source = `slr_branch_names:${host}`;
-    if (isFresh(source)) return;
+    if (await isFresh(source)) return;
 
     const response = await fetch(`${host}/slr/request?t=${Date.now()}`);
     if (!response.ok) {
@@ -971,18 +978,20 @@ async function ensureSlrBranchNamesSynced(host: string): Promise<void> {
         })
         .filter((value): value is { locationId: string; name: string } => Boolean(value));
 
-    repos().branches.upsertNames(names);
-    markSynced(source);
+    await (await repos()).branches.upsertNames(names);
+    await markSynced(source);
 }
 
 /** Per-branch SLR availability, derived from PUBLISHED SLR rooms grouped by location. */
-function deriveSharedLearningRoomBranches(): LiveSharedLearningRoomBranch[] {
-    const r = repos();
-    const nameByLocation = new Map(r.branches.list().map(b => [b.locationId, b.name ?? ""]));
+async function deriveSharedLearningRoomBranches(): Promise<LiveSharedLearningRoomBranch[]> {
+    const r = await repos();
+    const nameByLocation = new Map(
+        (await r.branches.list()).map(b => [b.locationId, b.name ?? ""]),
+    );
     const countByLocation = new Map<string, number>();
     const capacitiesByLocation = new Map<string, Set<number>>();
 
-    for (const room of r.rooms.listByKind("shared-learning-room")) {
+    for (const room of await r.rooms.listByKind("shared-learning-room")) {
         if (!room.published) continue;
         const locationId = cleanText(room.locationId);
         countByLocation.set(locationId, (countByLocation.get(locationId) ?? 0) + 1);
@@ -1016,15 +1025,13 @@ async function fetchBranchDirectory(
 ): Promise<LiveBranchDirectoryEntry[]> {
     const host = normalizeBaseUrl(baseUrl);
     const source = `branch_directory:${host}`;
-    if (isFresh(source)) {
-        return repos()
-            .branchDirectory.list()
-            .map(row => ({
-                branch: row.branchName,
-                address: row.address ?? "",
-                image: row.image ?? "",
-                path: row.path ?? "",
-            }));
+    if (await isFresh(source)) {
+        return (await (await repos()).branchDirectory.list()).map(row => ({
+            branch: row.branchName,
+            address: row.address ?? "",
+            image: row.image ?? "",
+            path: row.path ?? "",
+        }));
     }
     const response = await fetch(`${host}/locations?t=${Date.now()}`);
     if (!response.ok) {
@@ -1035,7 +1042,9 @@ async function fetchBranchDirectory(
     const branches = parseBranchDirectory(html);
 
     const syncedAt = new Date().toISOString();
-    repos().branchDirectory.replaceAll(
+    await (
+        await repos()
+    ).branchDirectory.replaceAll(
         branches.map(branch => ({
             branchName: branch.branch,
             address: branch.address,
@@ -1044,19 +1053,17 @@ async function fetchBranchDirectory(
             syncedAt,
         })),
     );
-    markSynced(source);
+    await markSynced(source);
     return branches;
 }
 
 async function fetchBranchCoordinates(): Promise<LiveBranchCoordinate[]> {
     const source = "branch_coordinates:global";
-    if (isFresh(source)) {
-        return repos()
-            .branchCoordinates.list()
-            .map(row => ({
-                branch: row.branchName,
-                lngLat: [row.lng, row.lat] as [number, number],
-            }));
+    if (await isFresh(source)) {
+        return (await (await repos()).branchCoordinates.list()).map(row => ({
+            branch: row.branchName,
+            lngLat: [row.lng, row.lat] as [number, number],
+        }));
     }
 
     const response = await fetch(
@@ -1070,7 +1077,9 @@ async function fetchBranchCoordinates(): Promise<LiveBranchCoordinate[]> {
     const coordinates = parseBranchCoordinatesKml(kml);
 
     const syncedAt = new Date().toISOString();
-    repos().branchCoordinates.replaceAll(
+    await (
+        await repos()
+    ).branchCoordinates.replaceAll(
         coordinates.map(coordinate => ({
             branchName: coordinate.branch,
             lng: coordinate.lngLat[0],
@@ -1078,7 +1087,7 @@ async function fetchBranchCoordinates(): Promise<LiveBranchCoordinate[]> {
             syncedAt,
         })),
     );
-    markSynced(source);
+    await markSynced(source);
     return coordinates;
 }
 
@@ -1587,8 +1596,8 @@ async function fetchReservationsForDateByLocation(
 async function fetchSpecialDates(baseUrl = DEFAULT_BASE_URL): Promise<SpecialDates> {
     const host = normalizeBaseUrl(baseUrl);
     const source = `special_dates:${host}`;
-    if (isFresh(source)) {
-        return specialDatesFromRows(repos().specialDates.list());
+    if (await isFresh(source)) {
+        return specialDatesFromRows(await (await repos()).specialDates.list());
     }
 
     const payload = await fetchJson<unknown>(
@@ -1649,8 +1658,8 @@ async function fetchSpecialDates(baseUrl = DEFAULT_BASE_URL): Promise<SpecialDat
         const early = earlyClosings.get(date)!;
         return { date, closed: false, earlyCloseMinute: early.hour * 60 + early.minute, syncedAt };
     });
-    repos().specialDates.replaceAll(rows);
-    markSynced(source);
+    await (await repos()).specialDates.replaceAll(rows);
+    await markSynced(source);
 
     return {
         closedDates,
@@ -2092,7 +2101,9 @@ export const apl = {
             }
 
             const isMeeting = parsed.roomKind === "meeting-room";
-            const row = repos().reservations.create({
+            const row = await (
+                await repos()
+            ).reservations.create({
                 roomId: parsed.roomId,
                 roomKind: parsed.roomKind,
                 roomName: room.info.name,
@@ -2122,12 +2133,12 @@ export const apl = {
 
     /**
      * Looks up a persisted reservation by id — the confirmation page's data source. Reads only the
-     * local database, so it stays correct even if the room later disappears upstream. Synchronous
-     * because the node:sqlite driver is.
+     * local database, so it stays correct even if the room later disappears upstream.
      */
-    getReservation(id: number): SafeResult<Reservation & { id: number }> {
+    async getReservation(id: number): Promise<SafeResult<Reservation & { id: number }>> {
         try {
-            return { data: toReservationDto(repos().reservations.get(id)), error: undefined };
+            const reservation = await (await repos()).reservations.get(id);
+            return { data: toReservationDto(reservation), error: undefined };
         } catch (error: unknown) {
             return {
                 data: undefined,
@@ -2141,9 +2152,10 @@ export const apl = {
      * ReservationNotFoundError for unknown ids, CancellationFailedError when the reservation is
      * already cancelled (the end state the caller wanted, so callers may treat it as settled).
      */
-    cancelReservation(id: number): SafeResult<Reservation & { id: number }> {
+    async cancelReservation(id: number): Promise<SafeResult<Reservation & { id: number }>> {
         try {
-            return { data: toReservationDto(repos().reservations.cancel(id)), error: undefined };
+            const reservation = await (await repos()).reservations.cancel(id);
+            return { data: toReservationDto(reservation), error: undefined };
         } catch (error: unknown) {
             return {
                 data: undefined,
@@ -2155,13 +2167,13 @@ export const apl = {
     async clearCache(): Promise<void> {
         // Invalidates the scraped read-model + watermarks; leaves app-owned reservations and the
         // seeded reference tables (hours/conflicts/branch paths) intact.
-        const r = repos();
-        r.rooms.replaceByKind("shared-learning-room", []);
-        r.rooms.replaceByKind("meeting-room", []);
-        r.branchDirectory.replaceAll([]);
-        r.branchCoordinates.replaceAll([]);
-        r.specialDates.replaceAll([]);
-        r.syncState.clear();
+        const r = await repos();
+        await r.rooms.replaceByKind("shared-learning-room", []);
+        await r.rooms.replaceByKind("meeting-room", []);
+        await r.branchDirectory.replaceAll([]);
+        await r.branchCoordinates.replaceAll([]);
+        await r.specialDates.replaceAll([]);
+        await r.syncState.clear();
     },
 
     async getMeetingRoomBranches(
@@ -2232,7 +2244,7 @@ export const apl = {
 
     async getLocationPathMapping(): Promise<SafeResult<Record<string, string>>> {
         try {
-            const mapping = loadLocationPathMapping();
+            const mapping = await loadLocationPathMapping();
             return {
                 data: mapping,
                 error: undefined,

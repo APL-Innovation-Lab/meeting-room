@@ -13,11 +13,11 @@ import {
     type ReservationConfirmation,
 } from "./confirm.data.server";
 
-export function loader({ params, url }: Route.LoaderArgs) {
+export async function loader({ params, url }: Route.LoaderArgs) {
     const reservationId = Number.parseInt(url.searchParams.get("reservationId") ?? "", 10);
     const confirmation =
         Number.isInteger(reservationId) && reservationId > 0
-            ? loadReservationConfirmation(reservationId, url.origin)
+            ? await loadReservationConfirmation(reservationId, url.origin)
             : undefined;
     if (!confirmation) throw redirect(href("/"));
 

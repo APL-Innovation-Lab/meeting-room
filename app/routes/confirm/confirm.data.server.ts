@@ -27,11 +27,11 @@ export type CalendarLinks = { google: string; yahoo: string; ics: string };
  * `undefined` when no such reservation exists (the caller redirects home). Any other database
  * failure propagates — a broken store must not masquerade as a missing booking.
  */
-export function loadReservationConfirmation(
+export async function loadReservationConfirmation(
     reservationId: number,
     origin: string,
-): ReservationConfirmation | undefined {
-    const result = apl.getReservation(reservationId);
+): Promise<ReservationConfirmation | undefined> {
+    const result = await apl.getReservation(reservationId);
     if (result.error instanceof ReservationNotFoundError) return undefined;
     if (result.error) throw result.error;
     return createReservationConfirmation(result.data, origin);

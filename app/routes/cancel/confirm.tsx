@@ -6,9 +6,9 @@ import type { Route } from "./+types/confirm";
 import { loadCancellationDetails, parseReservationId } from "./cancel.data.server";
 import { ReservationFacts } from "./ReservationFacts";
 
-export function loader({ params, url }: Route.LoaderArgs) {
+export async function loader({ params, url }: Route.LoaderArgs) {
     const reservationId = parseReservationId(url);
-    const details = reservationId ? loadCancellationDetails(reservationId) : undefined;
+    const details = reservationId ? await loadCancellationDetails(reservationId) : undefined;
     if (!details) throw redirect(href("/"));
 
     // A stale or hand-edited URL can pair a reservation with the wrong room kind; canonicalize so

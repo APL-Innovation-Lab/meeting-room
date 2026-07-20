@@ -11,9 +11,9 @@ import type { Route } from "./+types/cancel";
 import { loadCancellationDetails, parseReservationId } from "./cancel.data.server";
 import { ReservationFacts } from "./ReservationFacts";
 
-export function loader({ params, url }: Route.LoaderArgs) {
+export async function loader({ params, url }: Route.LoaderArgs) {
     const reservationId = parseReservationId(url);
-    const details = reservationId ? loadCancellationDetails(reservationId) : undefined;
+    const details = reservationId ? await loadCancellationDetails(reservationId) : undefined;
     if (!details) throw redirect(href("/"));
 
     // A stale or hand-edited URL can pair a reservation with the wrong room kind; canonicalize so
@@ -38,7 +38,7 @@ export async function action({ params, request }: Route.ActionArgs) {
     const reservationId = typeof submitted === "string" ? Number.parseInt(submitted, 10) : NaN;
     if (!Number.isInteger(reservationId) || reservationId <= 0) throw redirect(href("/"));
 
-    const result = apl.cancelReservation(reservationId);
+    const result = await apl.cancelReservation(reservationId);
     if (result.error instanceof ReservationNotFoundError) throw redirect(href("/"));
     // Already cancelled is the state the user asked for — fall through to the receipt.
     if (result.error && !(result.error instanceof CancellationFailedError)) throw result.error;

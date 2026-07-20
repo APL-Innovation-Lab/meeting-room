@@ -7,7 +7,7 @@ const hoisted = vi.hoisted(() => ({ repos: undefined as unknown }));
 
 vi.mock("./db/client.server", async importOriginal => {
     const actual = await importOriginal<typeof import("./db/client.server")>();
-    return { ...actual, getRepos: () => hoisted.repos };
+    return { ...actual, getRepos: async () => hoisted.repos };
 });
 
 import { apl } from "./apl-live-client.server";
@@ -60,8 +60,8 @@ const fetchMock = vi.fn(async (input: unknown) => {
     throw new Error(`unexpected fetch in test: ${url}`);
 });
 
-beforeAll(() => {
-    hoisted.repos = new Repos(createDatabase(":memory:"));
+beforeAll(async () => {
+    hoisted.repos = new Repos(await createDatabase(":memory:"));
 });
 
 beforeEach(async () => {
