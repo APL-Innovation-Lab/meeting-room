@@ -74,7 +74,16 @@ this file is the durable record. No source files were modified as part of this r
   3/rolling-90-days for meeting rooms) are not enforced anywhere server-side — likely acceptable
   given meeting-room bookings are manually processed by staff within two business days, but
   confirm before relying on it.
-- `TEST COVERAGE GAP`: zero test files for `confirm.tsx`, `cancel.tsx`, `cancel/confirm.tsx` —
-  this is why P0-1 and P0-2 shipped undetected.
+- `SPEC GAP` (noted 2026-07-19): the `uq_active_reservation_slot` unique index keys on
+  `(room_id, date, time)` — the start slot only. A multi-slot booking (e.g. 2 hours = eight
+  15-min slots) stores its `duration_minutes` but blocks nothing beyond its start slot, so a
+  second local booking can start inside an earlier booking's window. `createReservation`
+  re-checks the start slot against upstream `availableTimes` at booking time, but upstream
+  never learns about local prototype bookings, so that check can't catch local overlaps.
+  Enforcing it would mean widening the uniqueness check to every 15-min slot in
+  `[time, time + duration)` (plus the `room_conflicts` graph for combined rooms).
+- `TEST COVERAGE GAP`: zero test files for `cancel.tsx` and `cancel/confirm.tsx` — this is why
+  P0-1 and P0-2 shipped undetected. (2026-07-19: the confirm route is now covered by
+  `confirm.data.server.test.ts`; the cancel routes remain untested.)
 - `SUSPICION`: `search-*.js` client bundle is ~1.8 MB / 500 KB gzip (largest asset by far,
   likely `mapbox-gl`), unverified impact on tester devices/networks.
