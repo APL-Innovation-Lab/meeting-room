@@ -41,11 +41,19 @@ this file is the durable record. No source files were modified as part of this r
    server): booked reservation 1 over HTTP, cancelled it, and confirmed both survive an app
    restart; the pre-existing node:sqlite-created `data/apl.db` also opens cleanly on the file path.
 
-4. **No documented/committed Railway persistence strategy** — narrowed by the item-3 fix
-   (2026-07-19): the supported deployment is now "deploy Railway's libSQL Server template
-   (`railway.com/deploy/p121Tx`, volume at `/var/lib/sqld`), set `APL_DB_URL` to its private URL,
-   keep it off the public network or set `SQLD_HTTP_AUTH` + `APL_DB_AUTH_TOKEN`" — the app itself
-   stays stateless. Still missing: committed `railway.json`/docs recording that setup.
+4. ~~**No documented/committed Railway persistence strategy**~~ — FIXED (2026-07-19). The
+   deployment story is now committed: a multi-stage root `Dockerfile` (auto-detected by Railway,
+   so no `railway.json`/`railway.toml` exists on purpose), a deny-by-default `.dockerignore`,
+   and a GitHub Actions workflow (`.github/workflows/deploy.yml`) that gates `railway up --ci`
+   behind typecheck/format/lint/tests — deploys run from Actions with a Railway project token,
+   not Railway's GitHub integration. The README's new "Deployment" section records the
+   two-service setup: the app stays stateless; deploy the libSQL Server template
+   (`railway.com/deploy/p121Tx`, volume at `/var/lib/sqld`), point `APL_DB_URL` at its private
+   URL, keep it off the public network or set `SQLD_HTTP_AUTH` + `APL_DB_AUTH_TOKEN`. Fixing
+   this surfaced that production serving was broken outright: the varlock Vite integration
+   injects `initVarlockEnv()` into the server bundle, which dies at boot unless the process
+   runs under `varlock run` — the `start` script now does exactly that, with `varlock` moved
+   to runtime dependencies and `.env.schema` shipped in the image.
 
 ## P2 — Should fix, not blocking a short user test
 

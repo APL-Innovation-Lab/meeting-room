@@ -78,3 +78,42 @@ node --run test
 # Run tests in watch mode
 npx vitest
 ```
+
+## Deployment
+
+The prototype deploys to [Railway](https://railway.com) as a Docker image. The repo deliberately has **no `railway.json`/`railway.toml`** — Railway auto-detects the root [`Dockerfile`](./Dockerfile), and everything else is service variables. Deploys are driven by GitHub Actions, **not** Railway's GitHub integration.
+
+### Architecture
+
+Two Railway services in one project:
+
+1. **The app** — built from the root `Dockerfile`, stateless. Create it as an **empty service** and do _not_ connect the GitHub repo to it — that would turn on Railway's own autodeploys alongside the Actions workflow.
+2. **libSQL Server** — deploy Railway's [libSQL Server template](https://railway.com/deploy/p121Tx) (a `sqld` instance with a volume at `/var/lib/sqld`). This is where the data lives, so app redeploys never touch it. Keep it off the public network, or set `SQLD_HTTP_AUTH` on it and `APL_DB_AUTH_TOKEN` on the app.
+
+### App service variables
+
+| Variable                | Used at                                                                    | Value                                                                           |
+| ----------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `VITE_APP_MAPBOX_TOKEN` | build (inlined into the client bundle) _and_ boot (varlock env validation) | the public `pk.*` Mapbox token; add the deployed URL to its URL restrictions    |
+| `APL_DB_URL`            | runtime                                                                    | the libSQL service's private URL, e.g. `http://<service>.railway.internal:8080` |
+| `APL_DB_AUTH_TOKEN`     | runtime                                                                    | only if the libSQL server requires auth                                         |
+
+The server boots through `varlock run` (the `start` script), which validates [`.env.schema`](./.env.schema) against the container env and fails fast on a missing required variable. Drizzle migrations under `drizzle/` apply automatically at boot.
+
+### GitHub Actions
+
+[`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) runs the checks (typecheck, format, lint, tests) on every push to `main`, then uploads the repo with `railway up --ci` — Railway builds the Dockerfile and swaps deployments only if that build succeeds. One-time setup:
+
+1. In Railway, create a **project token** (Project Settings → Tokens), scoped to the environment you deploy to.
+2. In GitHub, add the token as the `RAILWAY_TOKEN` repository **secret**, and the app service's name or id as the `RAILWAY_SERVICE_ID` repository **variable**.
+
+Manual deploys: trigger **Run workflow** (`workflow_dispatch`) in the Actions tab, or run `railway up` locally with the Railway CLI.
+
+### Running the image locally
+
+```sh
+docker build --build-arg VITE_APP_MAPBOX_TOKEN="pk.…" -t apl-meeting-rooms .
+docker run --rm -p 3000:3000 -e VITE_APP_MAPBOX_TOKEN="pk.…" apl-meeting-rooms
+```
+
+Without `APL_DB_URL` the container falls back to an ephemeral SQLite file inside the container — fine for poking around, gone when the container exits.
