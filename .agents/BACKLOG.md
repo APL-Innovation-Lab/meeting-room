@@ -7,20 +7,20 @@ this file is the durable record. No source files were modified as part of this r
 
 ## P0 — Blocks user testing
 
-1. **Booking confirmation page shows fabricated data, not the actual reservation**
-   `app/routes/confirm.tsx` (`SharedLearningRoomConfirmation` L19–34, `MeetingRoomConfirmation`
-   L154–262). The route has no `loader`/`action`; `?reservationId=` is appended to the URL by
-   `review.tsx`'s action (L174–176) but never read. Every visit renders hardcoded fixture data
-   ("Austin Central Library, #3" / "Carver Branch #1", `2024-03-04`, 15-minute slot, capacity
-   100), regardless of what was actually booked. The four calendar-export links (Google/Outlook/
-   iCal/Yahoo) are built from that same fake data, so "Add to Calendar" produces an event for the
-   wrong library, date, and time.
-   Repro: book Shared Learning - 615 at Central Library for 2026-07-19, 12:00–2:00 PM → confirm
-   page reads "Austin Central Library, #3", "Mon 3/4/24", "11:00 AM to 11:15 AM", "Capacity: 100".
-   Verified the real booking landed correctly in `data/apl.db` (id 4, correct room/date/time) —
-   this is purely a display/wiring bug, not a persistence bug.
+1. ~~**Booking confirmation page shows fabricated data, not the actual reservation**~~ — FIXED
+   (2026-07-19). The confirm route (now `app/routes/confirm/confirm.tsx` + `confirm.data.server.ts`)
+   has a loader that reads `?reservationId=`, loads the persisted booking via the new
+   `apl.getReservation`, and renders the real branch, room, address, capacity, date, and booked
+   time range. Reservations now snapshot `duration_minutes`, `branch_address`, and `capacity` at
+   booking time (the review form posts the selected duration through its action). Calendar-export
+   links are built from the booked window with DST-correct America/Chicago offsets, and only for
+   shared-learning rooms (meeting-room requests await staff confirmation). Missing/unknown ids
+   redirect home; a room kind that contradicts the reservation redirects to the canonical URL.
+   Verified end-to-end in the browser for both room kinds (reservations 5 and 6 in `data/apl.db`).
 
 2. **Cancel flow claims success without cancelling anything**
+   (2026-07-19 update: the confirmation page's cancel link now carries `?reservationId=`, but the
+   cancel routes still ignore it — the finding below stands.)
    `app/routes/cancel/cancel.tsx`, `app/routes/cancel/confirm.tsx`. Neither route has a
    `loader`/`action`; there is no reservation identifier anywhere in the `/:roomKind/cancel` or
    `/:roomKind/cancel/confirm` URLs, and `repos.reservations.cancel()` (the only code path that
