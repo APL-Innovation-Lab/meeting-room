@@ -1,0 +1,23 @@
+# Deny by default: only what the production build needs enters the build context.
+# Keeps secrets (.env), local databases (data/), node_modules, and repo tooling out,
+# and makes Docker layer caching insensitive to docs/agent-config churn.
+*
+
+# Application source and assets
+!app
+!public
+!drizzle
+!tailwindcss-uswds
+
+# Build inputs
+!package.json
+!package-lock.json
+!vite.config.ts
+!tsconfig.json
+!tailwind.config.ts
+!.env.schema
+
+# Tests never ship in the image; keep them out of the context so test-only edits
+# don't invalidate the build layer cache.
+app/**/*.test.ts
+app/**/*.test.tsx
