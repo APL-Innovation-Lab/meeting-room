@@ -379,9 +379,9 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                 <CardGroup>
                     <Card>
                         <div className="px-5">
-                            <div className="flex flex-wrap items-center justify-between gap-[0.5rem] pr-2">
+                            <div className="flex flex-wrap items-center justify-between gap-[0.5rem] pt-2 pr-3">
                                 <Breadcrumbs
-                                    className="pb-0"
+                                    className="py-0"
                                     links={site.breadcrumbs.search(room)}
                                 />
                                 {searchFilters.location === "all" ? (

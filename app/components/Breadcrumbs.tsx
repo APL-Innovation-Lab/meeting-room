@@ -20,7 +20,7 @@ export namespace Breadcrumbs {
 
 export function Breadcrumbs({ links, className }: Breadcrumbs.Props) {
     return (
-        <BreadcrumbBar className={`ml-2 ${className}`}>
+        <BreadcrumbBar className={`ml-3 ${className}`}>
             {links.map((item, idx) => {
                 const isCurrent = idx === links.length - 1;
                 return (
