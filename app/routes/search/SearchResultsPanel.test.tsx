@@ -35,7 +35,7 @@ const branchResult = {
     branch: "Central Library",
     capacities: [4, 8],
     address: "710 W Cesar Chavez St, Austin, TX 78701",
-    distance: "0.0",
+    lngLat: [-97.7501, 30.2669] as [number, number],
     roomsAvailable: 2,
     maxAvailableDuration: 120,
     image: "https://library.austintexas.gov/library/central.jpg",
@@ -65,7 +65,6 @@ describe("SearchResultsPanel", () => {
                     searchData={{
                         mode: "branches",
                         searchResults: [branchResult],
-                        branchLngLats: [],
                     }}
                     searchFilters={{ ...searchFilters, location: "all" }}
                 />

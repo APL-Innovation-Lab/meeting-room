@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-07
+
+- Added current-location sharing to both search pages (#59), following the "No Current Location Flow" Figma frame: a "Share Current Location for Distance" link now sits opposite the breadcrumbs, clicking it raises the browser's own permission prompt, and an accepted prompt sorts "All Available Locations" nearest-first, labels every branch with its distance in miles, and marks the visitor's position on the branch map. The link then reads "Current Location: <ZIP>".
+- Refusing the prompt leaves sharing off: no distances, no reordering, nothing stored. A refused browser never re-prompts, so clicking the link again opens an "Enable Location" modal with the steps to re-allow location access for the site. Clicking it while a location is in use opens the "Change Current Location" modal — a ZIP code field plus a "Use Current Location" shortcut — so a visitor can measure from a different neighborhood, or from a ZIP instead of a device fix.
+- The visitor's position never leaves the tab: it lives in `sessionStorage` (so leaving the page and coming back doesn't re-prompt), is never sent to the loader, and distances/ordering are computed in the browser by `rankBranchesByDistance` over coordinates the search results already carry. ZIP lookups — reverse for the label, forward for a typed ZIP — call the Mapbox geocoding API with the existing public token.
+- Branch search results now carry their own `lngLat`, matched from the coordinate feed inside `createSearchResults`. That replaces the map-only `branchLngLats` array and the placeholder `distance: "0.0"` field, which had been rendering a bogus "0.0 mi" on every branch summary and "[0.0 mi]" in every Location option.
+
 ## 2026-07-19
 
 - Prepared the repo for Railway deployment (backlog #4): added a multi-stage production `Dockerfile` (Node 24 slim; the public Mapbox token arrives as a build ARG, since Railway only exposes service variables to Dockerfile builds through declared ARGs; the runtime stage ships only the server bundle, production dependencies, `drizzle/` migrations, and `.env.schema`, and runs as the non-root `node` user) plus a deny-by-default `.dockerignore`. No `railway.json`/`railway.toml` on purpose — Railway auto-detects the root Dockerfile.

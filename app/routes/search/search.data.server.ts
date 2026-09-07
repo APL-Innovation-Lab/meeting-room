@@ -6,13 +6,14 @@ import {
     type LiveSharedLearningRoomBranch,
 } from "~/lib/apl-client/apl-live-client.server";
 import { pluralize } from "~/lib/pluralize";
+import { type LngLat } from "~/utils/geo";
 
 export type BranchSearchResult = {
     locationId: string;
     branch: string;
     capacities: number[];
     address: string;
-    distance: string;
+    lngLat?: LngLat;
     roomsAvailable: number;
     maxAvailableDuration?: number;
     image: string;
@@ -71,15 +72,14 @@ export function createSearchParams(
 }
 
 export function formatLocationOptionLabel(result: BranchSearchResult): string {
-    const hasCapacities = result.capacities.length > 0;
+    if (result.capacities.length === 0) return result.branch;
+
     const capacityLabel = pluralize(result.capacities.length, {
-        zero: "",
         one: "Capacity",
         other: "Capacities",
     });
-    const capacities = hasCapacities ? ` (${capacityLabel}: ${result.capacities.join(", ")})` : "";
 
-    return `${result.branch}${capacities} [${result.distance} mi]`;
+    return `${result.branch} (${capacityLabel}: ${result.capacities.join(", ")})`;
 }
 
 export function normalizeBranchName(value: string): string {
@@ -113,6 +113,7 @@ export function toAbsoluteImagePath(image: string): string {
 export function createSearchResults(
     locationBranches: Array<LiveMeetingRoomBranch | LiveSharedLearningRoomBranch>,
     branchDirectory: LiveBranchDirectoryEntry[],
+    branchCoordinates: LiveBranchCoordinate[],
     roomKind: LibraryRoom["info"]["type"],
     filters: SearchFilters,
 ): BranchSearchResult[] {
@@ -139,7 +140,9 @@ export function createSearchResults(
             branch: branch.branch,
             capacities: Array.isArray(branch.capacities) ? branch.capacities : [],
             address: info?.address ?? "",
-            distance: "0.0",
+            lngLat: branchCoordinates.find(candidate =>
+                branchNamesMatch(branch.branch, candidate.branch),
+            )?.lngLat,
             roomsAvailable: branch.roomsAvailable,
             image: toAbsoluteImagePath(info?.image ?? ""),
             searchUrl: `/${roomKind}?${branchSearchParams}`,
@@ -256,18 +259,4 @@ export function createLocationOptions(searchResults: BranchSearchResult[]): Loca
         value: result.branch,
         label: formatLocationOptionLabel(result),
     }));
-}
-
-export function createBranchLngLats(
-    searchResults: BranchSearchResult[],
-    liveBranchCoordinates: LiveBranchCoordinate[],
-): Array<[number, number]> {
-    return searchResults
-        .map(
-            result =>
-                liveBranchCoordinates.find(candidate =>
-                    branchNamesMatch(result.branch, candidate.branch),
-                )?.lngLat,
-        )
-        .filter((value): value is [number, number] => Boolean(value));
 }

@@ -4,16 +4,24 @@ import { useEffect, useRef } from "react";
 
 const CENTER: mapbox.LngLatLike = { lng: -97.74562898838249, lat: 30.311251794566203 };
 const DEFAULT_STYLE = "mapbox://styles/mapbox/streets-v12";
+const BRANCH_MARKER_COLOR = "#006288";
+const USER_MARKER_COLOR = "#d83933";
 
 export namespace Map {
     export interface Props {
         token: string;
         branchLngLats: mapbox.LngLatLike[];
+        userLngLat?: mapbox.LngLatLike;
         className?: string;
     }
 }
 
-export function Map({ token: accessToken, branchLngLats: lngLats, className }: Map.Props) {
+export function Map({
+    token: accessToken,
+    branchLngLats: lngLats,
+    userLngLat,
+    className,
+}: Map.Props) {
     const container = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapbox.Map | null>(null);
     const markersRef = useRef<mapbox.Marker[]>([]);
@@ -50,12 +58,20 @@ export function Map({ token: accessToken, branchLngLats: lngLats, className }: M
         markersRef.current = [];
 
         for (const lngLat of lngLats) {
-            const marker = new mapbox.Marker({ color: "#006288" });
+            const marker = new mapbox.Marker({ color: BRANCH_MARKER_COLOR });
             marker.setLngLat(lngLat);
             marker.addTo(map);
             markersRef.current.push(marker);
         }
-    }, [lngLats]);
+
+        if (userLngLat) {
+            const userMarker = new mapbox.Marker({ color: USER_MARKER_COLOR });
+            userMarker.setLngLat(userLngLat);
+            userMarker.setPopup(new mapbox.Popup().setText("Your current location"));
+            userMarker.addTo(map);
+            markersRef.current.push(userMarker);
+        }
+    }, [lngLats, userLngLat]);
 
     return <div className={className} ref={container} />;
 }

@@ -4,7 +4,9 @@ import { Link } from "react-router";
 
 import { Map as BranchMap } from "~/components/Map";
 import { Spinner } from "~/components/Spinner";
+import { type LngLat } from "~/utils/geo";
 
+import { rankBranchesByDistance, type RankedBranchSearchResult } from "./nearest-branches";
 import { RoomSearchResult } from "./RoomSearchResult";
 import {
     type BranchSearchResult,
@@ -19,7 +21,6 @@ export namespace SearchResultsPanel {
         | {
               mode: "branches";
               searchResults: BranchSearchResult[];
-              branchLngLats: Array<[number, number]>;
           }
         | {
               mode: "rooms";
@@ -34,17 +35,28 @@ export namespace SearchResultsPanel {
         deferredSearchData?: Promise<DeferredSearchData>;
         mapboxToken: string;
         searchFilters: SearchFilters;
+        userLngLat?: LngLat;
     }
 }
 
-function SearchResultsList({ searchResults }: { searchResults: BranchSearchResult[] }) {
+function SearchResultsList({
+    searchResults,
+    userLngLat,
+}: {
+    searchResults: BranchSearchResult[];
+    userLngLat?: LngLat;
+}) {
+    const rankedResults: RankedBranchSearchResult[] = userLngLat
+        ? rankBranchesByDistance(searchResults, userLngLat)
+        : searchResults;
+
     return (
         <ul className="flex flex-col gap-[1rem] divide-y divide-base-light overflow-scroll">
-            {searchResults.filter(Boolean).map((result, index) => (
+            {rankedResults.map((result, index) => (
                 <SearchResult
                     address={result.address}
                     branch={result.branch}
-                    distance={result.distance}
+                    distanceInMiles={result.distanceInMiles}
                     image={result.image}
                     index={index + 1}
                     key={result.locationId}
@@ -59,23 +71,27 @@ function SearchResultsList({ searchResults }: { searchResults: BranchSearchResul
 
 function DeferredSearchResultsList({
     deferredSearchData,
+    userLngLat,
 }: {
     deferredSearchData: Promise<SearchResultsPanel.DeferredSearchData>;
+    userLngLat?: LngLat;
 }) {
     const data = use(deferredSearchData);
     return data.mode === "branches" ? (
-        <SearchResultsList searchResults={data.searchResults} />
+        <SearchResultsList searchResults={data.searchResults} userLngLat={userLngLat} />
     ) : null;
 }
 
 function DeferredBranchMap({
     deferredSearchData,
     mapboxToken,
+    userLngLat,
 }: {
     deferredSearchData: Promise<SearchResultsPanel.DeferredSearchData>;
     mapboxToken: string;
+    userLngLat?: LngLat;
 }) {
-    const [branchLngLats, setBranchLngLats] = useState<Array<[number, number]>>([]);
+    const [branchLngLats, setBranchLngLats] = useState<LngLat[]>([]);
 
     useEffect(() => {
         let isCancelled = false;
@@ -84,7 +100,11 @@ function DeferredBranchMap({
         deferredSearchData
             .then(data => {
                 if (!isCancelled && data.mode === "branches") {
-                    setBranchLngLats(data.branchLngLats);
+                    setBranchLngLats(
+                        data.searchResults
+                            .map(result => result.lngLat)
+                            .filter((lngLat): lngLat is LngLat => Boolean(lngLat)),
+                    );
                 }
             })
             .catch(() => {
@@ -97,7 +117,12 @@ function DeferredBranchMap({
     }, [deferredSearchData]);
 
     return (
-        <BranchMap className="h-full w-full" branchLngLats={branchLngLats} token={mapboxToken} />
+        <BranchMap
+            className="h-full w-full"
+            branchLngLats={branchLngLats}
+            token={mapboxToken}
+            userLngLat={userLngLat}
+        />
     );
 }
 
@@ -123,16 +148,15 @@ function BranchSearchResults({
     heading,
     mapboxToken,
     searchData,
+    userLngLat,
 }: {
     deferredSearchData?: Promise<SearchResultsPanel.DeferredSearchData>;
     heading: string;
     mapboxToken: string;
     searchData?: SearchResultsPanel.DeferredSearchData;
+    userLngLat?: LngLat;
 }) {
-    const branchData =
-        searchData?.mode === "branches"
-            ? searchData
-            : { mode: "branches" as const, searchResults: [], branchLngLats: [] };
+    const branchResults = searchData?.mode === "branches" ? searchData.searchResults : [];
 
     return (
         <div className="flex flex-col gap-[0.5rem] overflow-hidden px-4 pb-4">
@@ -149,21 +173,26 @@ function BranchSearchResults({
                             >
                                 <DeferredSearchResultsList
                                     deferredSearchData={deferredSearchData}
+                                    userLngLat={userLngLat}
                                 />
                             </ErrorBoundary>
                         </Suspense>
                         <DeferredBranchMap
                             deferredSearchData={deferredSearchData}
                             mapboxToken={mapboxToken}
+                            userLngLat={userLngLat}
                         />
                     </>
                 ) : (
                     <>
-                        <SearchResultsList searchResults={branchData.searchResults} />
+                        <SearchResultsList searchResults={branchResults} userLngLat={userLngLat} />
                         <BranchMap
                             className="h-full w-full"
-                            branchLngLats={branchData.branchLngLats}
+                            branchLngLats={branchResults
+                                .map(result => result.lngLat)
+                                .filter((lngLat): lngLat is LngLat => Boolean(lngLat))}
                             token={mapboxToken}
+                            userLngLat={userLngLat}
                         />
                     </>
                 )}
@@ -302,6 +331,7 @@ export function SearchResultsPanel({
     mapboxToken,
     searchData,
     searchFilters,
+    userLngLat,
 }: SearchResultsPanel.Props) {
     const isRoomMode = searchFilters.location !== "all" || searchData?.mode === "rooms";
 
@@ -312,6 +342,7 @@ export function SearchResultsPanel({
                 heading={heading}
                 mapboxToken={mapboxToken}
                 searchData={searchData}
+                userLngLat={userLngLat}
             />
         );
     }

@@ -11,7 +11,6 @@ describe("SearchResult", () => {
                 <SearchResult
                     address="710 W Cesar Chavez St, Austin, TX 78701"
                     branch="Central Library"
-                    distance="0.0"
                     image="https://library.austintexas.gov/library/central.jpg"
                     index={1}
                     roomsAvailable={2}

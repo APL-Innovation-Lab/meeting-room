@@ -59,6 +59,7 @@ describe("search result contracts", () => {
                     path: "/central-library",
                 },
             ],
+            [],
             "shared-learning-room",
             filters,
         );
@@ -66,6 +67,18 @@ describe("search result contracts", () => {
         expect(result.searchUrl).toBe(
             "/shared-learning-room?location=Central+Library&date=2026-07-15&duration=120&people=4&display=on&whiteboard=on",
         );
+    });
+
+    it("matches the coordinate feed's own spelling of a branch name", () => {
+        const [result] = createSearchResults(
+            [branch],
+            [],
+            [{ branch: "Austin Central Library (Faulk Building)", lngLat: [-97.7501, 30.2669] }],
+            "shared-learning-room",
+            filters,
+        );
+
+        expect(result.lngLat).toEqual([-97.7501, 30.2669]);
     });
 
     it("normalizes room details and falls back to the selected branch metadata", () => {
@@ -79,6 +92,7 @@ describe("search result contracts", () => {
                     path: "/central-library",
                 },
             ],
+            [],
             "shared-learning-room",
             filters,
         );

@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { Link } from "react-router";
 
 import { pluralize } from "~/lib/pluralize";
@@ -8,7 +7,7 @@ export namespace SearchResult {
         index: number;
         branch: string;
         address: string;
-        distance: string;
+        distanceInMiles?: number;
         roomsAvailable: number;
         maxAvailableDuration?: number;
         image: string;
@@ -25,8 +24,6 @@ function formatDurationLabel(minutes: number): string {
 }
 
 export function SearchResult(props: SearchResult.Props) {
-    const shouldShowDistance = false;
-
     return (
         <li className="flex w-full gap-[1rem] not-last:pb-2">
             <img
@@ -48,14 +45,11 @@ export function SearchResult(props: SearchResult.Props) {
                             {props.index}. {props.branch}
                         </h4>
                     </Link>
-                    <span
-                        className={clsx(
-                            "font-sans text-sans-3xs text-base-darker",
-                            shouldShowDistance && "hidden",
-                        )}
-                    >
-                        {props.distance} mi
-                    </span>
+                    {props.distanceInMiles === undefined ? null : (
+                        <span className="font-sans text-sans-3xs text-base-darker">
+                            {props.distanceInMiles.toFixed(1)} mi
+                        </span>
+                    )}
                 </div>
                 <span>{props.address}</span>
                 <div className="flex w-full items-center justify-between gap-[1rem]">

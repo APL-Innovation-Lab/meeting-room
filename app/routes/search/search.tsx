@@ -2,18 +2,14 @@ import { Card, CardGroup, CardHeader } from "@trussworks/react-uswds";
 import { Suspense, use } from "react";
 
 import { Breadcrumbs } from "~/components/Breadcrumbs";
-import {
-    apl,
-    type LiveBranchCoordinate,
-    type SearchOptions,
-} from "~/lib/apl-client/apl-live-client.server";
+import { apl, type SearchOptions } from "~/lib/apl-client/apl-live-client.server";
 import { Room } from "~/lib/room";
 import { site } from "~/lib/site";
 
 import { Route } from "./+types/search";
+import { CurrentLocationLink } from "./CurrentLocationLink";
 import {
     branchNamesMatch,
-    createBranchLngLats,
     createLocationOptions,
     createRoomSearchResults,
     createSearchFilters,
@@ -29,6 +25,7 @@ import {
 import { SearchDescription } from "./SearchDescription";
 import { SearchFiltersForm } from "./SearchFiltersForm";
 import { SearchResultsPanel } from "./SearchResultsPanel";
+import { useCurrentLocation } from "./useCurrentLocation";
 
 // Default the search date to Austin's calendar day, not the server's. Without an explicit timeZone
 // this formats in the host zone, so an evening Austin visitor on a UTC host would default to
@@ -111,7 +108,6 @@ type DeferredSearchData =
     | {
           mode: "branches";
           searchResults: BranchSearchResult[];
-          branchLngLats: Array<[number, number]>;
       }
     | {
           mode: "rooms";
@@ -130,13 +126,11 @@ async function resolveDeferredSearchData({
     currentDate,
     searchFilters,
     initialSearchResults,
-    liveBranchCoordinates,
 }: {
     currentDate: string;
     roomKind: Room.Kind;
     searchFilters: SearchFilters;
     initialSearchResults: BranchSearchResult[];
-    liveBranchCoordinates: LiveBranchCoordinate[];
 }): Promise<DeferredSearchData> {
     const parsedDate = new Date(searchFilters.date);
     const parsedPeople = Number.parseInt(searchFilters.people, 10);
@@ -234,7 +228,6 @@ async function resolveDeferredSearchData({
     return {
         mode: "branches",
         searchResults: resolvedSearchResults,
-        branchLngLats: createBranchLngLats(resolvedSearchResults, liveBranchCoordinates),
     };
 }
 
@@ -258,13 +251,14 @@ async function resolveSearchPageData({
 
     const locationBranches = !meetingOrSharedResult.error ? meetingOrSharedResult.data : [];
     const branchDirectory = !branchDirectoryResult.error ? branchDirectoryResult.data : [];
-    const liveBranchCoordinates =
+    const branchCoordinates =
         !branchCoordinatesResult.error && branchCoordinatesResult.data
             ? branchCoordinatesResult.data
             : [];
     const allSearchResults = createSearchResults(
         locationBranches,
         branchDirectory,
+        branchCoordinates,
         roomKind,
         searchFilters,
     );
@@ -274,7 +268,6 @@ async function resolveSearchPageData({
         roomKind,
         searchFilters,
         initialSearchResults,
-        liveBranchCoordinates,
     });
     const maybeResolved = await Promise.race([
         deferredSearchDataPromise.then(
@@ -377,6 +370,7 @@ export default function Component({ loaderData }: Route.ComponentProps) {
         deferredSearchData,
     } = loaderData;
     const room = new Room(roomKind);
+    const currentLocation = useCurrentLocation(mapboxToken);
 
     return (
         <>
@@ -385,7 +379,15 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                 <CardGroup>
                     <Card>
                         <div className="px-5">
-                            <Breadcrumbs className="pb-0" links={site.breadcrumbs.search(room)} />
+                            <div className="flex flex-wrap items-center justify-between gap-[0.5rem] pr-2">
+                                <Breadcrumbs
+                                    className="pb-0"
+                                    links={site.breadcrumbs.search(room)}
+                                />
+                                {searchFilters.location === "all" ? (
+                                    <CurrentLocationLink {...currentLocation} />
+                                ) : null}
+                            </div>
                             <CardHeader className="flex flex-col gap-[0.75rem]">
                                 <h1 className="font-sans text-sans-2xl font-bold usa-card__heading">
                                     {room.displayName}
@@ -414,6 +416,7 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                                 heading={searchResultsHeading}
                                 mapboxToken={mapboxToken}
                                 searchFilters={searchFilters}
+                                userLngLat={currentLocation.location?.lngLat}
                             />
                         </div>
                     </Card>
